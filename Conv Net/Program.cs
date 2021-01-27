@@ -10,13 +10,33 @@ using MathNet.Numerics;
 namespace Conv_Net {
     static class Program {
         //[STAThread]
-        public static Double[][,,] train_image_array;
-        public static Double[][,,] train_label_array;
-        public static Double[][,,] test_image_array;
-        public static Double[][,,] test_label_array;
+        public static Double[][,,] trainImageArray;
+        public static Double[][,,] trainLabelArray;
+        public static Double[][,,] testImageArray;
+        public static Double[][,,] testLabelArray;
 
         public static MathNet.Numerics.Distributions.Normal normalDist = new MathNet.Numerics.Distributions.Normal(0, 1, new Random(0));
         public static Double eta = 0.001;
+
+        public static int layer1size = 20;
+        public static int layer2size = 16;
+        public static int layer3size = 10;
+
+
+        public static InputLayer Input = new InputLayer(28, 28, 1);
+        public static FlattenLayer Flatten = new FlattenLayer();
+        public static InnerProductLayer Inner1 = new InnerProductLayer(784, layer1size);
+        public static ReluLayer Relu1 = new ReluLayer();
+        public static InnerProductLayer Inner2 = new InnerProductLayer(layer1size, layer2size);
+        public static ReluLayer Relu2 = new ReluLayer();
+        public static InnerProductLayer Inner3 = new InnerProductLayer(layer2size, layer3size);
+        public static SoftmaxLayer Softmax = new SoftmaxLayer();
+        public static LossLayer Loss = new LossLayer();
+
+        public static Double[,,] x1, x1_flat, z1, a1, z2, a2, z3, a3;
+        public static Double[,,] ltot, l1, l2, l3, l4, l5, l6, l7, l8, l9;
+
+        public static Stopwatch stopwatch = new Stopwatch();
 
         static void Main() {
             /*Application.EnableVisualStyles();
@@ -25,87 +45,28 @@ namespace Conv_Net {
 
             loadMNIST(60000, 10000, 28, 28, 1, 10);
 
-            int correct = 0;
-            Double totalCrossEntropyLoss = 0.0;
-            Double averageCrossEntropyLoss;
 
-            Input_Layer Input = new Input_Layer(28, 28, 1);
-            Flatten_Layer Flatten = new Flatten_Layer();
-            Inner_Product_Layer Inner_1 = new Inner_Product_Layer(784, 100);
-            Relu_Layer Relu_1 = new Relu_Layer();
-            Inner_Product_Layer Inner_2 = new Inner_Product_Layer(100, 50);
-            Relu_Layer Relu_2 = new Relu_Layer();
-            Inner_Product_Layer Inner_3 = new Inner_Product_Layer(50, 10);
-            Softmax_Layer Softmax = new Softmax_Layer();
-            LossLayer loss = new LossLayer();
 
-            Double[,,] x1 = Input.forward(train_image_array[0]);
-            Double[,,] x1_flat = Flatten.forward(x1);
-            Double[,,] z1 = Inner_1.forward(x1_flat);
-            Double[,,] a1 = Relu_1.forward(z1);
-            Double[,,] z2 = Inner_2.forward(a1);
-            Double[,,] a2 = Relu_2.forward(z2);
-            Double[,,] z3 = Inner_3.forward(a2);
-            Double[,,] a3 = Softmax.forward(z3);
 
-            Double[,,] l1 = loss.backward(a3, train_label_array[0]);
-            Double[,,] l2 = Softmax.backward(z3);
-            Double[,,] l3 = hadamardProduct(l1, l2); // Gradient output layer
-
-            Double[,,] l4 = new Double[1, 1, 50];
-            for (int i = 0; i < 50; i++) {
-                l4[0, 0, i] = dotProduct(l3, transpose(Inner_3.weights)[i]);
+            test();
+            for (int epoch=0; epoch < 10; epoch++) {
+                stopwatch.Start();
+                Console.WriteLine("++++++++++++++++++++++++++++++++");
+                Console.WriteLine("Epoch: " + epoch);
+                train();
+                test();
+                stopwatch.Stop();
+                Console.WriteLine("Time elapsed: " + stopwatch.Elapsed);
+                stopwatch.Reset();
             }
-            Double[,,] l5 = Relu_2.backward(z2);
-            Double[,,] l6 = hadamardProduct(l4, l5); // Gradient hidden layer 2
-
-
-            Double[,,] l7 = new Double[1, 1, 100];
-            for (int i = 0; i < 100; i++) {
-                l7[0, 0, i] = dotProduct(l6, transpose(Inner_2.weights)[i]);
-            }
-            Double[,,] l8 = Relu_1.backward(z1);
-            Double[,,] l9 = hadamardProduct(l7, l8); // Gradient hidden layer 1
-
-
-
-
-            Inner_3.weights = updateWeights(Inner_3.weights, l3, a2);
-            Inner_3.biases = updateBiases(Inner_3.biases, l3);
-            Inner_2.weights = updateWeights(Inner_2.weights, l6, a1);
-            Inner_2.biases = updateBiases(Inner_2.biases, l6);
-            Inner_1.weights = updateWeights(Inner_1.weights, l9, x1_flat);
-            Inner_1.biases = updateBiases(Inner_1.biases, l9);
-
-            /*for (int i = 0; i < 10000; i++) {
-                Double[,,] x1 = Input.forward(test_image_array[i]);
-                Double[,,] x1_flat = Flatten.forward(x1);
-                Double[,,] z1 = Inner_1.forward(x1_flat);
-                Double[,,] a1 = Relu_1.forward(z1);
-                Double[,,] z2 = Inner_2.forward(a1);
-                Double[,,] a2 = Relu_2.forward(z2);
-                Double[,,] z3 = Inner_3.forward(a2);
-                Double[,,] a3 = Softmax.forward(z3);
-                Double[,,] l1 = loss.forward(a3, test_label_array[i]);
-                totalCrossEntropyLoss += l1[0, 0, 0];
-                if (indexMaxValue(a3) == indexMaxValue(test_label_array[i])) {
-                    correct++;
-                }
-            }
-            Console.WriteLine(correct + " correct out of 10,000. \t Accuracy " + (Double)correct / 10000 * 100 + "%");
-            Console.WriteLine("Average cross entropy loss: " + totalCrossEntropyLoss / 10000);*/
-
-
-
-
         }
 
-        static void loadMNIST(int num_train, int num_test, int input_size_x, int input_size_y, int input_size_z, int label_size_z) {
-            Double[][,,] temp_train_image_array = new Double[num_train][,,];
-            Double[][,,] temp_train_label_array = new Double[num_train][,,];
+        static void loadMNIST(int numTrain, int numTest, int inputSizeX, int inputSizeY, int inputSizeZ, int labelSize) {
+            Double[][,,] tempTrainImageArray = new Double[numTrain][,,];
+            Double[][,,] tempTrainLabelArray = new Double[numTrain][,,];
 
-            Double[][,,] temp_test_image_array = new Double[num_test][,,];
-            Double[][,,] temp_test_label_array = new Double[num_test][,,];
+            Double[][,,] tempTestImageArray = new Double[numTest][,,];
+            Double[][,,] tempTestLabelArray = new Double[numTest][,,];
 
             try {
                 // Load training data
@@ -125,26 +86,26 @@ namespace Conv_Net {
                 int numLabels = brTrainLabels.ReadInt32();
 
                 // Load image, labels, and targets into array
-                for (int image_num = 0; image_num < num_train; image_num++) {
+                for (int image_num = 0; image_num < numTrain; image_num++) {
 
-                    Double[,,] temp_image = new Double[input_size_x, input_size_y, input_size_z];
+                    Double[,,] temp_image = new Double[inputSizeX, inputSizeY, inputSizeZ];
 
                     // Load image
-                    for (int image_pos_x = 0; image_pos_x < input_size_x; image_pos_x++) {
-                        for (int image_pos_y = 0; image_pos_y < input_size_y; image_pos_y++) {
-                            for (int image_pos_z = 0; image_pos_z < input_size_z; image_pos_z++) {
+                    for (int image_pos_x = 0; image_pos_x < inputSizeX; image_pos_x++) {
+                        for (int image_pos_y = 0; image_pos_y < inputSizeY; image_pos_y++) {
+                            for (int image_pos_z = 0; image_pos_z < inputSizeZ; image_pos_z++) {
                                 Double b = brTrainImages.ReadByte();
                                 b = (-1 + (b / 127.5));
                                 temp_image[image_pos_x, image_pos_y, image_pos_z] = b;
-                                temp_train_image_array[image_num] = temp_image;
+                                tempTrainImageArray[image_num] = temp_image;
                             }
                         }
                     }
                     // Load label
                     int label = brTrainLabels.ReadByte();
-                    Double[,,] temp_label = new Double[1, 1, label_size_z];
+                    Double[,,] temp_label = new Double[1, 1, labelSize];
                     temp_label[0, 0, label] = 1.0;
-                    temp_train_label_array[image_num] = temp_label;
+                    tempTrainLabelArray[image_num] = temp_label;
                 }
                 trainImagesStream.Close();
                 brTrainImages.Close();
@@ -169,26 +130,26 @@ namespace Conv_Net {
                 numLabels = brTestLabels.ReadInt32();
 
                 // Load image, labels, and targets into array
-                for (int image_num = 0; image_num < num_test; image_num++) {
+                for (int image_num = 0; image_num < numTest; image_num++) {
 
-                    Double[,,] temp_image = new Double[input_size_x, input_size_y, input_size_z];
+                    Double[,,] temp_image = new Double[inputSizeX, inputSizeY, inputSizeZ];
 
                     // Load image
-                    for (int image_pos_x = 0; image_pos_x < input_size_x; image_pos_x++) {
-                        for (int image_pos_y = 0; image_pos_y < input_size_y; image_pos_y++) {
-                            for (int image_pos_z = 0; image_pos_z < input_size_z; image_pos_z++) {
+                    for (int image_pos_x = 0; image_pos_x < inputSizeX; image_pos_x++) {
+                        for (int image_pos_y = 0; image_pos_y < inputSizeY; image_pos_y++) {
+                            for (int image_pos_z = 0; image_pos_z < inputSizeZ; image_pos_z++) {
                                 Double b = brTestImages.ReadByte();
                                 b = (-1 + (b / 127.5));
                                 temp_image[image_pos_x, image_pos_y, image_pos_z] = b;
-                                temp_test_image_array[image_num] = temp_image;
+                                tempTestImageArray[image_num] = temp_image;
                             }
                         }
                     }
                     // Load label
                     int label = brTestLabels.ReadByte();
-                    Double[,,] temp_label = new Double[1, 1, label_size_z];
+                    Double[,,] temp_label = new Double[1, 1, labelSize];
                     temp_label[0, 0, label] = 1.0;
-                    temp_test_label_array[image_num] = temp_label;
+                    tempTestLabelArray[image_num] = temp_label;
                 }
                 testImagesStream.Close();
                 brTestImages.Close();
@@ -196,12 +157,115 @@ namespace Conv_Net {
                 testLabelsStream.Close();
                 brTestLabels.Close();
 
-                train_image_array = temp_train_image_array;
-                train_label_array = temp_train_label_array;
-                test_image_array = temp_test_image_array;
-                test_label_array = temp_test_label_array;
+                trainImageArray = tempTrainImageArray;
+                trainLabelArray = tempTrainLabelArray;
+                testImageArray = tempTestImageArray;
+                testLabelArray = tempTestLabelArray;
             } catch {
 
+            }
+        }
+
+        static void test () {
+            int correct = 0;
+            Double totalCrossEntropyLoss = 0.0;
+            Double averageCrossEntropyLoss = 0.0;
+
+            for (int testIndex = 0; testIndex < 10000; testIndex++) {
+                x1 = Input.forward(testImageArray[testIndex]);
+                x1_flat = Flatten.forward(x1);
+                z1 = Inner1.forward(x1_flat);
+                a1 = Relu1.forward(z1);
+                z2 = Inner2.forward(a1);
+                a2 = Relu2.forward(z2);
+                z3 = Inner3.forward(a2);
+                a3 = Softmax.forward(z3);
+                ltot = Loss.forward(a3, testLabelArray[testIndex]);
+                totalCrossEntropyLoss += ltot[0, 0, 0];
+                if (indexMaxValue(a3) == indexMaxValue(testLabelArray[testIndex])) {
+                    correct++;
+                }
+            }
+            averageCrossEntropyLoss = totalCrossEntropyLoss / 10000;
+
+            Console.WriteLine(correct + " correct out of 10,000. \t Accuracy " + (Double)correct / 10000 * 100 + "%");
+            Console.WriteLine("Average cross entropy loss: " + averageCrossEntropyLoss);
+        }
+
+        static void train () {
+            for (int trainIndex = 0; trainIndex < 60000; trainIndex++) {
+                x1 = Input.forward(trainImageArray[trainIndex]);
+                x1_flat = Flatten.forward(x1);
+                z1 = Inner1.forward(x1_flat);
+                a1 = Relu1.forward(z1);
+                z2 = Inner2.forward(a1);
+                a2 = Relu2.forward(z2);
+                z3 = Inner3.forward(a2);
+                a3 = Softmax.forward(z3);
+                
+                l1 = Loss.backward(a3, trainLabelArray[trainIndex]);
+                l2 = Softmax.backward(z3);
+                l3 = hadamardProduct(l1, l2); // Gradient output layer
+
+                l4 = new Double[1, 1, layer2size];
+                for (int i = 0; i < layer2size; i++) {
+                    l4[0, 0, i] = dotProduct(l3, transpose(Inner3.weights)[i]);
+                }
+                l5 = Relu2.backward(z2);
+                l6 = hadamardProduct(l4, l5); // Gradient hidden layer 2
+
+                l7 = new Double[1, 1, layer1size];
+                for (int i = 0; i < layer1size; i++) {
+                    l7[0, 0, i] = dotProduct(l6, transpose(Inner2.weights)[i]);
+                }
+                l8 = Relu1.backward(z1);
+                l9 = hadamardProduct(l7, l8); // Gradient hidden layer 1
+
+                Inner3.weights = updateWeights(Inner3.weights, l3, a2);
+                Inner3.biases = updateBiases(Inner3.biases, l3);
+                Inner2.weights = updateWeights(Inner2.weights, l6, a1);
+                Inner2.biases = updateBiases(Inner2.biases, l6);
+                Inner1.weights = updateWeights(Inner1.weights, l9, x1_flat);
+                Inner1.biases = updateBiases(Inner1.biases, l9);
+            }
+        }
+
+        static void printWeightsBiases () {
+
+            Console.WriteLine("Layer 1 weights");
+            for (int i=0; i < Inner1.weights.Count(); i++) {
+                for (int j=0; j < Inner1.weights[0].GetLength(2); j++) {
+                    Console.WriteLine(Inner1.weights[i][0, 0, j]);
+                }
+            }
+
+            Console.WriteLine("Layer 2 weights");
+            for (int i = 0; i < Inner2.weights.Count(); i++) {
+                for (int j = 0; j < Inner2.weights[0].GetLength(2); j++) {
+                    Console.WriteLine(Inner2.weights[i][0, 0, j]);
+                }
+            }
+
+            Console.WriteLine("Layer 3 weights");
+            for (int i = 0; i < Inner3.weights.Count(); i++) {
+                for (int j = 0; j < Inner3.weights[0].GetLength(2); j++) {
+                    Console.WriteLine(Inner3.weights[i][0, 0, j]);
+                }
+            }
+
+            Console.WriteLine("Layer 1 biases");
+            for (int i = 0; i < Inner1.biases.Count(); i++) {
+                Console.WriteLine(Inner1.biases[i][0, 0, 0]);
+            }
+
+            Console.WriteLine("Layer 2 biases");
+            for (int i = 0; i < Inner2.biases.Count(); i++) {
+                Console.WriteLine(Inner2.biases[i][0, 0, 0]);
+            }
+
+            Console.WriteLine("Layer 3 biases");
+            for (int i = 0; i < Inner3.biases.Count(); i++) {
+                Console.WriteLine(Inner3.biases[i][0, 0, 0]);
             }
         }
 
@@ -333,20 +397,18 @@ namespace Conv_Net {
         }
 
 
-        static void test() {
-           
-        }
+
     }
 
 
 
-    class Input_Layer {
+    class InputLayer {
 
         private int input_size_x;
         private int input_size_y;
         private int input_size_z;
 
-        public Input_Layer (int input_size_x, int input_size_y, int input_size_z) {
+        public InputLayer (int input_size_x, int input_size_y, int input_size_z) {
             this.input_size_x = input_size_x;
             this.input_size_y = input_size_y;
             this.input_size_z = input_size_z;
@@ -366,9 +428,9 @@ namespace Conv_Net {
 
     }
 
-    class Flatten_Layer {
+    class FlattenLayer {
 
-        public Flatten_Layer () {
+        public FlattenLayer () {
 
         }
 
@@ -390,7 +452,7 @@ namespace Conv_Net {
         }
     }
 
-    class Inner_Product_Layer {
+    class InnerProductLayer {
 
         private int previous_layer_size;
         private int layer_size;
@@ -399,7 +461,7 @@ namespace Conv_Net {
         private Double[][,,] weightGradients;
         private Double[][,,] biasGradients;
 
-        public Inner_Product_Layer(int previous_layer_size, int layer_size) {
+        public InnerProductLayer(int previous_layer_size, int layer_size) {
             this.previous_layer_size = previous_layer_size;
             this.layer_size = layer_size;
             this.weights = new Double[layer_size][,,];
@@ -435,15 +497,15 @@ namespace Conv_Net {
             Double[,,] output = new Double[1, 1, layer_size];
             for (int i=0; i < layer_size; i ++) {
 
-                output[0, 0, i] = Program.dotProduct(input, weights[i]) + biases[0][0, 0, 0];
+                output[0, 0, i] = Program.dotProduct(input, weights[i]) + biases[i][0, 0, 0];
             }
             return output;
         }
     }
 
-    class Relu_Layer {
+    class ReluLayer {
 
-        public Relu_Layer () {
+        public ReluLayer () {
         
         }
 
@@ -480,9 +542,9 @@ namespace Conv_Net {
         }
     }
 
-    class Softmax_Layer {
+    class SoftmaxLayer {
 
-        public Softmax_Layer () {
+        public SoftmaxLayer () {
         }
         public Double[,,] forward (Double [,,] input) {
 

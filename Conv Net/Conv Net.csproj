@@ -54,6 +54,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Layers\ConvolutionLayer.cs" />
+    <Compile Include="Layers\FlattenLayer.cs" />
+    <Compile Include="Layers\FullyConnectedLayer.cs" />
+    <Compile Include="Layers\InputLayer.cs" />
+    <Compile Include="Layers\LossLayer.cs" />
+    <Compile Include="Layers\ReluLayer.cs" />
+    <Compile Include="Layers\SoftmaxLayer.cs" />
+    <Compile Include="Utils.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>

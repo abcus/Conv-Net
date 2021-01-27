@@ -66,6 +66,8 @@ namespace Conv_Net {
         }
 
 
+
+
         static void printWeightsBiases(FullyConnectedLayer Inner1, FullyConnectedLayer Inner2, FullyConnectedLayer Inner3) {
 
             Console.WriteLine("Layer 1 weights");

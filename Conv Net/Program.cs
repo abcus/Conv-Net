@@ -19,17 +19,15 @@ namespace Conv_Net {
         
         public static Double eta = 0.001;
 
-        public static int layer1size = 5;
-        public static int layer2size = 6;
-        public static int layer3size = 10;
+        public static Net NN = new Net();
 
         public static InputLayer Input = new InputLayer(28, 28, 1);
         public static FlattenLayer Flatten = new FlattenLayer();
-        public static FullyConnectedLayer Inner1 = new FullyConnectedLayer(784, layer1size);
+        public static FullyConnectedLayer FC1 = new FullyConnectedLayer(784, 5);
         public static ReluLayer Relu1 = new ReluLayer();
-        public static FullyConnectedLayer Inner2 = new FullyConnectedLayer(layer1size, layer2size);
+        public static FullyConnectedLayer FC2 = new FullyConnectedLayer(5, 6);
         public static ReluLayer Relu2 = new ReluLayer();
-        public static FullyConnectedLayer Inner3 = new FullyConnectedLayer(layer2size, layer3size);
+        public static FullyConnectedLayer FC3 = new FullyConnectedLayer(6, 10);
         public static SoftmaxLayer Softmax = new SoftmaxLayer();
         public static LossLayer Loss = new LossLayer();
 
@@ -45,6 +43,7 @@ namespace Conv_Net {
 
             loadMNIST(60000, 10000, 28, 28, 1, 10);
 
+            
 
 
 
@@ -174,11 +173,11 @@ namespace Conv_Net {
             for (int testIndex = 0; testIndex < 10000; testIndex++) {
                 x0 = Input.forward(testImageArray[testIndex]);
                 x0Flat = Flatten.forward(x0);
-                z1 = Inner1.forward(x0Flat);
+                z1 = FC1.forward(x0Flat);
                 a1 = Relu1.forward(z1);
-                z2 = Inner2.forward(a1);
+                z2 = FC2.forward(a1);
                 a2 = Relu2.forward(z2);
-                z3 = Inner3.forward(a2);
+                z3 = FC3.forward(a2);
                 a3 = Softmax.forward(z3);
                 ltot = Loss.forward(a3, testLabelArray[testIndex]);
                 totalCrossEntropyLoss += ltot[0, 0, 0];
@@ -200,15 +199,15 @@ namespace Conv_Net {
                 x0Flat = Flatten.forward(x0);
                 
                 // Hidden layer 1
-                z1 = Inner1.forward(x0Flat);
+                z1 = FC1.forward(x0Flat);
                 a1 = Relu1.forward(z1);
                 
                 // Hidden layer 2
-                z2 = Inner2.forward(a1);
+                z2 = FC2.forward(a1);
                 a2 = Relu2.forward(z2);
                 
                 // Hidden layer 3
-                z3 = Inner3.forward(a2);
+                z3 = FC3.forward(a2);
                 a3 = Softmax.forward(z3);
                 c4 = Loss.forward(a3, trainLabelArray[trainIndex]);
 
@@ -217,21 +216,21 @@ namespace Conv_Net {
                 // for output layer
                 d1 = Loss.backward();   
                 d2 = Softmax.backward(d1); 
-                d3 = Inner3.backward(d2);
+                d3 = FC3.backward(d2);
 
                 // Hidden layer 2
                 d4 = Relu2.backward(d3);              
-                d5 = Inner2.backward(d4);
+                d5 = FC2.backward(d4);
 
                 // Hidden layer 1
                 d6 = Relu1.backward(d5); 
 
-                Inner3.weights = updateWeights(Inner3.weights, d2, a2);
-                Inner3.biases = updateBiases(Inner3.biases, d2);
-                Inner2.weights = updateWeights(Inner2.weights, d4, a1);
-                Inner2.biases = updateBiases(Inner2.biases, d4);
-                Inner1.weights = updateWeights(Inner1.weights, d6, x0Flat);
-                Inner1.biases = updateBiases(Inner1.biases, d6);
+                FC3.weights = updateWeights(FC3.weights, d2, FC3.inputs);
+                FC3.biases = updateBiases(FC3.biases, d2);
+                FC2.weights = updateWeights(FC2.weights, d4, FC2.inputs);
+                FC2.biases = updateBiases(FC2.biases, d4);
+                FC1.weights = updateWeights(FC1.weights, d6, FC1.inputs);
+                FC1.biases = updateBiases(FC1.biases, d6);
             }
         }        
         static public Double[][,,] updateBiases(Double[][,,] biases, Double[,,] gradients) {

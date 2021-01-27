@@ -13,6 +13,7 @@ namespace Conv_Net {
         public Double[][,,] biases;
         private Double[][,,] weightGradients;
         private Double[][,,] biasGradients;
+        public Double[,,] inputs;
 
         public FullyConnectedLayer(int previous_layer_size, int layer_size) {
             this.previous_layer_size = previous_layer_size;
@@ -47,6 +48,7 @@ namespace Conv_Net {
         }
 
         public Double[,,] forward(Double[,,] input) {
+            this.inputs = input;
             Double[,,] output = new Double[1, 1, layer_size];
             for (int i = 0; i < layer_size; i++) {
 

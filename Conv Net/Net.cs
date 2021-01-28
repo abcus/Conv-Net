@@ -45,5 +45,28 @@ namespace Conv_Net {
         public Double[,,] loss (Double [,,] input, Double[,,] target) {
             return Loss.forward(input, target);
         }
+
+        public void backward () {
+            Double[,,] gradient;
+            
+            // for output layer
+            gradient = Loss.backward();
+            gradient = Softmax.backward(gradient);
+            gradient = FC3.backward(gradient);
+
+            // Hidden layer 2
+            gradient = Relu2.backward(gradient);
+            gradient = FC2.backward(gradient);
+
+            // Hidden layer 1
+            gradient = Relu1.backward(gradient);
+            FC1.storeGradient(gradient);
+        }
+
+        public void update () {
+            FC3.update();
+            FC2.update();
+            FC1.update();
+        }
     }
 }

@@ -19,7 +19,7 @@ namespace Conv_Net {
         
         public static Double eta = 0.001;
 
-        public static Net NN = new Net();
+        //public static Net NN = new Net();
 
         public static InputLayer Input = new InputLayer(28, 28, 1);
         public static FlattenLayer Flatten = new FlattenLayer();
@@ -31,9 +31,6 @@ namespace Conv_Net {
         public static SoftmaxLayer Softmax = new SoftmaxLayer();
         public static LossLayer Loss = new LossLayer();
 
-        public static Double[,,] x0, x0Flat, z1, a1, z2, a2, z3, a3, c4;
-        public static Double[,,] ltot, d1, d2, d3, d4, d5, d6;
-
         public static Stopwatch stopwatch = new Stopwatch();
 
         static void Main() {
@@ -41,11 +38,44 @@ namespace Conv_Net {
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());*/
 
-            loadMNIST(60000, 10000, 28, 28, 1, 10);
-
+            Utils.loadMNIST(60000, 10000, 28, 28, 1, 10);
             
+            
+            /*Double totalCrossEntropyLosss = 0.0;
+            int correctt = 0;
 
+            for (int i=0; i < 10000; i++) {
+                
+                Double [,,] result = NN.forward(testImageArray[i]);
+                Double[,,] loss = NN.loss(result, testLabelArray[i]);
+                totalCrossEntropyLosss += loss[0, 0, 0];
+                if (Utils.indexMaxValue(result) == Utils.indexMaxValue(testLabelArray[i])) {
+                    correctt++;
+                }
 
+            }
+            Console.WriteLine(totalCrossEntropyLosss / 10000);
+            Console.WriteLine(correctt);
+
+            for (int i=0; i < 60000; i ++) {
+                Double[,,] result = NN.forward(trainImageArray[i]);
+                Double[,,] loss = NN.loss(result, trainLabelArray[i]);
+                NN.backward();
+                NN.update();
+            }
+
+            for (int i = 0; i < 10000; i++) {
+
+                Double[,,] result = NN.forward(testImageArray[i]);
+                Double[,,] loss = NN.loss(result, testLabelArray[i]);
+                totalCrossEntropyLosss += loss[0, 0, 0];
+                if (Utils.indexMaxValue(result) == Utils.indexMaxValue(testLabelArray[i])) {
+                    correctt++;
+                }
+
+            }
+            Console.WriteLine(totalCrossEntropyLosss / 10000);
+            Console.WriteLine(correctt);*/
 
             test();
             for (int epoch=0; epoch < 10; epoch++) {
@@ -60,109 +90,43 @@ namespace Conv_Net {
             }
         }
 
-        static void loadMNIST(int numTrain, int numTest, int inputSizeX, int inputSizeY, int inputSizeZ, int labelSize) {
-            Double[][,,] tempTrainImageArray = new Double[numTrain][,,];
-            Double[][,,] tempTrainLabelArray = new Double[numTrain][,,];
 
-            Double[][,,] tempTestImageArray = new Double[numTest][,,];
-            Double[][,,] tempTestLabelArray = new Double[numTest][,,];
+        static Double[,,] forward(Double[,,] input) {
+            Double[,,] t;
+            t = Input.forward(input);
+            t = Flatten.forward(t);
+            t = FC1.forward(t);
+            t = Relu1.forward(t);
+            t = FC2.forward(t);
+            t = Relu2.forward(t);
+            t = FC3.forward(t);
+            t = Softmax.forward(t);
+            return t;
+        }
+        static Double[,,] loss(Double[,,] input, Double[,,] target) {
+            return Loss.forward(input, target);
+        }
 
-            try {
-                // Load training data
-                FileStream trainImagesStream = new FileStream(@"train-images.idx3-ubyte", FileMode.Open);
-                BinaryReader brTrainImages = new BinaryReader(trainImagesStream);
+        static void backward () {
+            Double[,,] l;
+            // for output layer
+            l = Loss.backward();
+            l = Softmax.backward(l);
+            l = FC3.backward(l);
 
-                FileStream trainLabelsStream = new FileStream(@"train-labels.idx1-ubyte", FileMode.Open);
-                BinaryReader brTrainLabels = new BinaryReader(trainLabelsStream);
+            // Hidden layer 2
+            l = Relu2.backward(l);
+            l = FC2.backward(l);
 
-                // Read header information and discard
-                int a1 = brTrainImages.ReadInt32();
-                int numImages = brTrainImages.ReadInt32();
-                int numRows = brTrainImages.ReadInt32();
-                int numCols = brTrainImages.ReadInt32();
+            // Hidden layer 1
+            l = Relu1.backward(l);
+            FC1.storeGradient(l);
+        }
 
-                int a2 = brTrainLabels.ReadInt32();
-                int numLabels = brTrainLabels.ReadInt32();
-
-                // Load image, labels, and targets into array
-                for (int image_num = 0; image_num < numTrain; image_num++) {
-
-                    Double[,,] temp_image = new Double[inputSizeX, inputSizeY, inputSizeZ];
-
-                    // Load image
-                    for (int image_pos_x = 0; image_pos_x < inputSizeX; image_pos_x++) {
-                        for (int image_pos_y = 0; image_pos_y < inputSizeY; image_pos_y++) {
-                            for (int image_pos_z = 0; image_pos_z < inputSizeZ; image_pos_z++) {
-                                Double b = brTrainImages.ReadByte();
-                                b = (-1 + (b / 127.5));
-                                temp_image[image_pos_x, image_pos_y, image_pos_z] = b;
-                                tempTrainImageArray[image_num] = temp_image;
-                            }
-                        }
-                    }
-                    // Load label
-                    int label = brTrainLabels.ReadByte();
-                    Double[,,] temp_label = new Double[1, 1, labelSize];
-                    temp_label[0, 0, label] = 1.0;
-                    tempTrainLabelArray[image_num] = temp_label;
-                }
-                trainImagesStream.Close();
-                brTrainImages.Close();
-
-                trainLabelsStream.Close();
-                brTrainLabels.Close();
-
-                // Load test data
-                FileStream testImagesStream = new FileStream(@"t10k-images.idx3-ubyte", FileMode.Open);
-                BinaryReader brTestImages = new BinaryReader(testImagesStream);
-
-                FileStream testLabelsStream = new FileStream(@"t10k-labels.idx1-ubyte", FileMode.Open);
-                BinaryReader brTestLabels = new BinaryReader(testLabelsStream);
-
-                // Read header information and discard
-                a1 = brTestImages.ReadInt32();
-                numImages = brTestImages.ReadInt32();
-                numRows = brTestImages.ReadInt32();
-                numCols = brTestImages.ReadInt32();
-
-                a2 = brTestLabels.ReadInt32();
-                numLabels = brTestLabels.ReadInt32();
-
-                // Load image, labels, and targets into array
-                for (int image_num = 0; image_num < numTest; image_num++) {
-
-                    Double[,,] temp_image = new Double[inputSizeX, inputSizeY, inputSizeZ];
-
-                    // Load image
-                    for (int image_pos_x = 0; image_pos_x < inputSizeX; image_pos_x++) {
-                        for (int image_pos_y = 0; image_pos_y < inputSizeY; image_pos_y++) {
-                            for (int image_pos_z = 0; image_pos_z < inputSizeZ; image_pos_z++) {
-                                Double b = brTestImages.ReadByte();
-                                b = (-1 + (b / 127.5));
-                                temp_image[image_pos_x, image_pos_y, image_pos_z] = b;
-                                tempTestImageArray[image_num] = temp_image;
-                            }
-                        }
-                    }
-                    // Load label
-                    int label = brTestLabels.ReadByte();
-                    Double[,,] temp_label = new Double[1, 1, labelSize];
-                    temp_label[0, 0, label] = 1.0;
-                    tempTestLabelArray[image_num] = temp_label;
-                }
-                testImagesStream.Close();
-                brTestImages.Close();
-
-                testLabelsStream.Close();
-                brTestLabels.Close();
-
-                trainImageArray = tempTrainImageArray;
-                trainLabelArray = tempTrainLabelArray;
-                testImageArray = tempTestImageArray;
-                testLabelArray = tempTestLabelArray;
-            } catch {
-
-            }
+        static void update() {
+            FC3.update();
+            FC2.update();
+            FC1.update();
         }
 
         static void test () {
@@ -171,19 +135,13 @@ namespace Conv_Net {
             Double averageCrossEntropyLoss = 0.0;
 
             for (int testIndex = 0; testIndex < 10000; testIndex++) {
-                x0 = Input.forward(testImageArray[testIndex]);
-                x0Flat = Flatten.forward(x0);
-                z1 = FC1.forward(x0Flat);
-                a1 = Relu1.forward(z1);
-                z2 = FC2.forward(a1);
-                a2 = Relu2.forward(z2);
-                z3 = FC3.forward(a2);
-                a3 = Softmax.forward(z3);
-                ltot = Loss.forward(a3, testLabelArray[testIndex]);
-                totalCrossEntropyLoss += ltot[0, 0, 0];
-                if (Utils.indexMaxValue(a3) == Utils.indexMaxValue(testLabelArray[testIndex])) {
+                Double[,,] t;
+                t = forward(testImageArray[testIndex]);
+                if (Utils.indexMaxValue(t) == Utils.indexMaxValue(testLabelArray[testIndex])) {
                     correct++;
                 }
+                t = loss(t, testLabelArray[testIndex]);
+                totalCrossEntropyLoss += t[0, 0, 0];
             }
             averageCrossEntropyLoss = totalCrossEntropyLoss / 10000;
 
@@ -193,69 +151,14 @@ namespace Conv_Net {
 
         static void train () {
             for (int trainIndex = 0; trainIndex < 60000; trainIndex++) {
-                
-                // input layer
-                x0 = Input.forward(trainImageArray[trainIndex]);
-                x0Flat = Flatten.forward(x0);
-                
-                // Hidden layer 1
-                z1 = FC1.forward(x0Flat);
-                a1 = Relu1.forward(z1);
-                
-                // Hidden layer 2
-                z2 = FC2.forward(a1);
-                a2 = Relu2.forward(z2);
-                
-                // Hidden layer 3
-                z3 = FC3.forward(a2);
-                a3 = Softmax.forward(z3);
-                c4 = Loss.forward(a3, trainLabelArray[trainIndex]);
 
-
-
-                // for output layer
-                d1 = Loss.backward();   
-                d2 = Softmax.backward(d1); 
-                d3 = FC3.backward(d2);
-
-                // Hidden layer 2
-                d4 = Relu2.backward(d3);              
-                d5 = FC2.backward(d4);
-
-                // Hidden layer 1
-                d6 = Relu1.backward(d5); 
-
-                FC3.weights = updateWeights(FC3.weights, d2, FC3.inputs);
-                FC3.biases = updateBiases(FC3.biases, d2);
-                FC2.weights = updateWeights(FC2.weights, d4, FC2.inputs);
-                FC2.biases = updateBiases(FC2.biases, d4);
-                FC1.weights = updateWeights(FC1.weights, d6, FC1.inputs);
-                FC1.biases = updateBiases(FC1.biases, d6);
+                Double[,,] t;
+                t = forward(trainImageArray[trainIndex]);
+                t = loss(t, trainLabelArray[trainIndex]);
+                backward();
+                update();
             }
         }        
-        static public Double[][,,] updateBiases(Double[][,,] biases, Double[,,] gradients) {
-            Debug.Assert(biases.Count() == gradients.GetLength(2));
-
-            Double[][,,] output = new Double[biases.Count()][,,];
-            for (int i=0; i < biases.Count(); i++) {
-                output[i] = new Double[1, 1, 1];
-                output[i][0, 0, 0] = biases[i][0, 0, 0] - gradients[0, 0, i] * 1 * eta;
-            }
-            return output;
-        }
-
-        static public Double[][,,] updateWeights(Double[][,,] weights, Double[,,] gradients, Double[,,] outputsPreviousLayer) {
-            Debug.Assert(weights.Count() == gradients.GetLength(2));
-            
-            Double[][,,] output = new Double[weights.Count()][,,];
-            for (int i=0; i < weights.Count(); i++) {
-                output[i] = new Double[1, 1, weights[0].GetLength(2)];
-                for (int j=0; j < weights[0].GetLength(2); j++) {
-                    output[i][0, 0, j] = weights[i][0, 0, j] - gradients[0, 0, i] * outputsPreviousLayer[0,0,j] * eta;
-                }
-            }
-            return output;
-        }
     }
 
 
@@ -271,16 +174,15 @@ namespace Conv_Net {
 }
 
 /* To Do:
-Padding
+
 ADAM
 Regularization (dropout, L2)
 Batch normalization
- */
 
+convolusion with padding
+max pool
 
-// Forward convolusion
-
-
+*/
 
 
 

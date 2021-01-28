@@ -8,51 +8,58 @@ using Conv_Net;
 namespace Conv_Net {
     class ConvolutionLayer {
 
-        private int num_filters;
-        private int filter_size;
+        private int numFilters;
+        private int filterSize;
         private int stride;
-        private Double[,,,] filter;
-        private Double[] biases;
+        private Double[][,,] filter;
+        private Double[][,,] biases;
 
 
-        public ConvolutionLayer(int input_z, int num_filters, int filter_size, int stride) {
+        public ConvolutionLayer(int inputZ, int numFilters, int filterSize, int stride, Double[,,] inputFilter, Double[,,] inputFilter2) {
 
-            this.num_filters = num_filters;
-            this.filter_size = filter_size;
+            this.numFilters = numFilters;
+            this.filterSize = filterSize;
             this.stride = stride;
+            filter = new Double[numFilters][,,];
+            biases = new Double[numFilters][,,];
 
-            filter = new Double[num_filters, filter_size, filter_size, input_z];
+            for (int i=0; i < numFilters; i++) {
+                filter[i] = new Double[filterSize, filterSize, inputZ];
+                biases[i] = new Double[1, 1, 1];
+            }
             // Initialize filter weights
-
-            biases = new Double[num_filters];
+            this.filter[0] = inputFilter;
+            this.filter[1] = inputFilter2;
         }
 
-        private Double[,,] forward(Double[,,] input) {
-            int input_x = input.GetLength(0);
-            int input_y = input.GetLength(1);
-            int input_z = input.GetLength(2);
+        public Double[,,] forward(Double[,,] input) {
+            // Dimensions of the input array
+            int inputX = input.GetLength(0);
+            int inputY = input.GetLength(1);
+            int inputZ = input.GetLength(2);
 
-            int output_x = (input_x - filter_size) / stride + 1;
-            int output_y = (input_y - filter_size) / stride + 1;
-            int output_z = num_filters;
+            // Dimensions of the output arrat
+            int outputX = (inputX - filterSize) / stride + 1;
+            int outputY = (inputY - filterSize) / stride + 1;
+            int outputZ = numFilters;
 
-            Double[,,] output = new Double[output_x, output_y, output_z];
+            Double[,,] output = new Double[outputX, outputY, outputZ];
 
-            Double dot_product = 0.0;
+            Double dotProduct = 0.0;
 
-            for (int filter_index = 0; filter_index < num_filters; filter_index++) {
-                for (int input_x_pos = 0; input_x_pos <= input_x - filter_size; input_x_pos += stride) {
-                    for (int input_y_pos = 0; input_y_pos <= input_y - filter_size; input_y_pos += stride) {
-                        for (int filter_x_pos = 0; filter_x_pos < filter_size; filter_x_pos++) {
-                            for (int filter_y_pos = 0; filter_y_pos < filter_size; filter_y_pos++) {
-                                for (int filter_z_pos = 0; filter_z_pos < input_z; filter_z_pos++) {
-                                    dot_product += filter[filter_index, filter_x_pos, filter_y_pos, filter_z_pos] * input[input_x_pos, input_y_pos, filter_z_pos];
+            for (int filter_index = 0; filter_index < numFilters; filter_index++) {
+                for (int input_x_pos = 0; input_x_pos <= inputX - filterSize; input_x_pos += stride) {
+                    for (int input_y_pos = 0; input_y_pos <= inputY - filterSize; input_y_pos += stride) {
+                        for (int filter_x_pos = 0; filter_x_pos < filterSize; filter_x_pos++) {
+                            for (int filter_y_pos = 0; filter_y_pos < filterSize; filter_y_pos++) {
+                                for (int filter_z_pos = 0; filter_z_pos < inputZ; filter_z_pos++) {
+                                    dotProduct += filter[filter_index][filter_x_pos, filter_y_pos, filter_z_pos] * input[input_x_pos + filter_x_pos, input_y_pos + filter_y_pos, filter_z_pos];
                                 }
                             }
                         }
-                        dot_product += biases[filter_index];
-                        output[input_x_pos / stride, input_y_pos / stride, filter_index] = dot_product;
-                        dot_product = 0.0;
+                        dotProduct += biases[filter_index][0, 0, 0];
+                        output[input_x_pos / stride, input_y_pos / stride, filter_index] = dotProduct;
+                        dotProduct = 0.0;
                     }
                 }
             }

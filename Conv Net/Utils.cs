@@ -277,7 +277,7 @@ namespace Conv_Net {
                         }
                     }
                     if (j < y - 1) {
-                        Console.WriteLine(", ");
+                        Console.Write(", ");
                     } else {
                         Console.Write("");
                     }

@@ -15,27 +15,40 @@ namespace Conv_Net {
         public LossLayer Loss;
 
         public Net () {
+
+            // Input layer
             Input = new InputLayer(28, 28, 1);
             Flatten = new FlattenLayer();
+            
+            // Hidden layer 1
             FC1 = new FullyConnectedLayer(784, 5);
             Relu1 = new ReluLayer();
+            
+            // Hidden layer 2
             FC2 = new FullyConnectedLayer(5, 6);
             Relu2 = new ReluLayer();
+            
+            // Hidden layer 3
             FC3 = new FullyConnectedLayer(6, 10);
             Softmax = new SoftmaxLayer();
             Loss = new LossLayer();
         }
 
         public Double[,,] forward (Double[,,] input) {
+            
+            // Input layer
             Double[,,] output = Input.forward(input);
             output = Flatten.forward(output);
 
+            // Hidden layer 1
             output = FC1.forward(output);
             output = Relu1.forward(output);
 
+            // Hidden layer 2
             output = FC2.forward(output);
             output = Relu2.forward(output);
 
+            // Output layer
             output = FC3.forward(output);
             output = Softmax.forward(output);
 
@@ -47,20 +60,20 @@ namespace Conv_Net {
         }
 
         public void backward () {
-            Double[,,] gradient;
+            Double[,,] grad;
             
-            // for output layer
-            gradient = Loss.backward();
-            gradient = Softmax.backward(gradient);
-            gradient = FC3.backward(gradient);
+            // Output layer
+            grad = Loss.backward();
+            grad = Softmax.backward(grad);
+            grad = FC3.backward(grad);
 
             // Hidden layer 2
-            gradient = Relu2.backward(gradient);
-            gradient = FC2.backward(gradient);
+            grad = Relu2.backward(grad);
+            grad = FC2.backward(grad);
 
             // Hidden layer 1
-            gradient = Relu1.backward(gradient);
-            FC1.storeGradient(gradient);
+            grad = Relu1.backward(grad);
+            FC1.storeGradient(grad);
         }
 
         public void update () {

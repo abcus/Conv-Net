@@ -15,68 +15,20 @@ namespace Conv_Net {
         public static Double[][,,] testImageArray;
         public static Double[][,,] testLabelArray;
 
-        public static MathNet.Numerics.Distributions.Normal normalDist = new MathNet.Numerics.Distributions.Normal(0, 1, new Random(0));
-        
-        public static Double eta = 0.001;
-
-        //public static Net NN = new Net();
-
-        public static InputLayer Input = new InputLayer(28, 28, 1);
-        public static FlattenLayer Flatten = new FlattenLayer();
-        public static FullyConnectedLayer FC1 = new FullyConnectedLayer(784, 5);
-        public static ReluLayer Relu1 = new ReluLayer();
-        public static FullyConnectedLayer FC2 = new FullyConnectedLayer(5, 6);
-        public static ReluLayer Relu2 = new ReluLayer();
-        public static FullyConnectedLayer FC3 = new FullyConnectedLayer(6, 10);
-        public static SoftmaxLayer Softmax = new SoftmaxLayer();
-        public static LossLayer Loss = new LossLayer();
-
+        public static MathNet.Numerics.Distributions.Normal normalDist = new MathNet.Numerics.Distributions.Normal(0, 1, new Random(0));     
         public static Stopwatch stopwatch = new Stopwatch();
+
+        public static Net NN = new Net();
+        public static Double eta = 0.001;
 
         static void Main() {
             /*Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());*/
 
-            Utils.loadMNIST(60000, 10000, 28, 28, 1, 10);
+            /*Utils.loadMNIST(60000, 10000, 28, 28, 1, 10);
             
             
-            /*Double totalCrossEntropyLosss = 0.0;
-            int correctt = 0;
-
-            for (int i=0; i < 10000; i++) {
-                
-                Double [,,] result = NN.forward(testImageArray[i]);
-                Double[,,] loss = NN.loss(result, testLabelArray[i]);
-                totalCrossEntropyLosss += loss[0, 0, 0];
-                if (Utils.indexMaxValue(result) == Utils.indexMaxValue(testLabelArray[i])) {
-                    correctt++;
-                }
-
-            }
-            Console.WriteLine(totalCrossEntropyLosss / 10000);
-            Console.WriteLine(correctt);
-
-            for (int i=0; i < 60000; i ++) {
-                Double[,,] result = NN.forward(trainImageArray[i]);
-                Double[,,] loss = NN.loss(result, trainLabelArray[i]);
-                NN.backward();
-                NN.update();
-            }
-
-            for (int i = 0; i < 10000; i++) {
-
-                Double[,,] result = NN.forward(testImageArray[i]);
-                Double[,,] loss = NN.loss(result, testLabelArray[i]);
-                totalCrossEntropyLosss += loss[0, 0, 0];
-                if (Utils.indexMaxValue(result) == Utils.indexMaxValue(testLabelArray[i])) {
-                    correctt++;
-                }
-
-            }
-            Console.WriteLine(totalCrossEntropyLosss / 10000);
-            Console.WriteLine(correctt);*/
-
             test();
             for (int epoch=0; epoch < 10; epoch++) {
                 stopwatch.Start();
@@ -87,46 +39,15 @@ namespace Conv_Net {
                 stopwatch.Stop();
                 Console.WriteLine("Time elapsed: " + stopwatch.Elapsed);
                 stopwatch.Reset();
-            }
-        }
+            }*/
 
-
-        static Double[,,] forward(Double[,,] input) {
-            Double[,,] t;
-            t = Input.forward(input);
-            t = Flatten.forward(t);
-            t = FC1.forward(t);
-            t = Relu1.forward(t);
-            t = FC2.forward(t);
-            t = Relu2.forward(t);
-            t = FC3.forward(t);
-            t = Softmax.forward(t);
-            return t;
-        }
-        static Double[,,] loss(Double[,,] input, Double[,,] target) {
-            return Loss.forward(input, target);
-        }
-
-        static void backward () {
-            Double[,,] l;
-            // for output layer
-            l = Loss.backward();
-            l = Softmax.backward(l);
-            l = FC3.backward(l);
-
-            // Hidden layer 2
-            l = Relu2.backward(l);
-            l = FC2.backward(l);
-
-            // Hidden layer 1
-            l = Relu1.backward(l);
-            FC1.storeGradient(l);
-        }
-
-        static void update() {
-            FC3.update();
-            FC2.update();
-            FC1.update();
+            Double[,,] test = { { {1,10 },{2,11 },{3,12 } },{ {4,13 },{5,14 },{6,15 } },{ {7,16 },{8,17 },{9,18 } } };
+            Double[,,] filter = { { {2,6 },{3,7 } }, { {4,8 },{5,9 } } };
+            Double[,,] filter2 = { { {4, 4 },{7, 5 } },{ {8, 7 },{9, 9 } } };
+            Utils.printArray(test);
+            Utils.printArray(filter);
+            ConvolutionLayer conv = new ConvolutionLayer(2, 2, 2, 1, filter, filter2);
+            Utils.printArray(conv.forward(test));
         }
 
         static void test () {
@@ -136,11 +57,11 @@ namespace Conv_Net {
 
             for (int testIndex = 0; testIndex < 10000; testIndex++) {
                 Double[,,] t;
-                t = forward(testImageArray[testIndex]);
+                t = NN.forward(testImageArray[testIndex]);
                 if (Utils.indexMaxValue(t) == Utils.indexMaxValue(testLabelArray[testIndex])) {
                     correct++;
                 }
-                t = loss(t, testLabelArray[testIndex]);
+                t = NN.loss(t, testLabelArray[testIndex]);
                 totalCrossEntropyLoss += t[0, 0, 0];
             }
             averageCrossEntropyLoss = totalCrossEntropyLoss / 10000;
@@ -153,10 +74,10 @@ namespace Conv_Net {
             for (int trainIndex = 0; trainIndex < 60000; trainIndex++) {
 
                 Double[,,] t;
-                t = forward(trainImageArray[trainIndex]);
-                t = loss(t, trainLabelArray[trainIndex]);
-                backward();
-                update();
+                t = NN.forward(trainImageArray[trainIndex]);
+                t = NN.loss(t, trainLabelArray[trainIndex]);
+                NN.backward();
+                NN.update();
             }
         }        
     }

@@ -13,49 +13,51 @@ namespace Conv_Net {
         }
         public Double[,,] forward(Double[,,] input) {
             this.input = input;
-            int layer_size = input.GetLength(2);
+            int layerSize = input.GetLength(2);
 
-            Double[,,] output = new Double[1, 1, layer_size];
+            Double[,,] output = new Double[1, 1, layerSize];
 
             // Find max value of input array
             Double max = Double.MinValue;
-            for (int i = 0; i < layer_size; i++) {
+            for (int i = 0; i < layerSize; i++) {
                 if (input[0, 0, i] > max) {
                     max = input[0, 0, i];
                 }
             }
 
             // Subtract max value of input array from all values
-            for (int i = 0; i < layer_size; i++) {
+            for (int i = 0; i < layerSize; i++) {
                 input[0, 0, i] -= max;
             }
 
             // Calculate denominator of softmax
             Double denominator = 0.0;
-            for (int i = 0; i < layer_size; i++) {
+            for (int i = 0; i < layerSize; i++) {
                 denominator += Math.Exp(input[0, 0, i]);
             }
 
             // Set output array
-            for (int i = 0; i < layer_size; i++) {
+            for (int i = 0; i < layerSize; i++) {
                 output[0, 0, i] = Math.Exp(input[0, 0, i]) / denominator;
             }
-
             return output;
         }
 
-        public Double[,,] backward(Double[,,] inputGradient) {
+        public Double[,,] backward(Double[,,] gradientOutput) {
             Double numerator = 0.0;
             Double denominator = 0.0;
             int layerSize = this.input.GetLength(2);
-            Double[,,] output = new Double[1, 1, layerSize];
+            
+            // Gradient of output with respect to input
+            Double[,,] gradientLocal = new Double[1, 1, layerSize];
+
+            // Gradient of loss with respect to input
+            Double[,,] gradientInput = new Double[1, 1, layerSize];
 
             for (int i = 0; i < layerSize; i++) {
                 denominator += Math.Exp(this.input[0, 0, i]);
             }
             denominator = Math.Pow(denominator, 2);
-
-
 
             for (int i = 0; i < layerSize; i++) {
                 numerator = 0.0;
@@ -65,9 +67,10 @@ namespace Conv_Net {
                     }
                 }
                 numerator *= Math.Exp(this.input[0, 0, i]);
-                output[0, 0, i] = numerator / denominator;
+                gradientLocal[0, 0, i] = numerator / denominator;
             }
-            return Utils.elementwiseProduct(inputGradient, output);
+            gradientInput = Utils.elementwiseProduct(gradientOutput, gradientLocal);
+            return gradientInput;
         }
     }
 }

@@ -8,42 +8,46 @@ namespace Conv_Net {
     class ReluLayer {
 
         Double[,,] input;
-
         public ReluLayer() {
 
         }
 
         public Double[,,] forward(Double[,,] input) {
-            int input_size_x = input.GetLength(0);
-            int input_size_y = input.GetLength(1);
-            int input_size_z = input.GetLength(2);
+            int inputSizeY = input.GetLength(0);
+            int inputSizeX = input.GetLength(1);
+            int inputSizeZ = input.GetLength(2);
             this.input = input;
-            Double[,,] output = new Double[input_size_x, input_size_y, input_size_z];
+            Double[,,] output = new Double[inputSizeY, inputSizeX, inputSizeZ];
 
-            for (int i = 0; i < input_size_x; i++) {
-                for (int j = 0; j < input_size_y; j++) {
-                    for (int k = 0; k < input_size_z; k++) {
+            for (int i = 0; i < inputSizeY; i++) {
+                for (int j = 0; j < inputSizeX; j++) {
+                    for (int k = 0; k < inputSizeZ; k++) {
                         output[i, j, k] = input[i, j, k] >= 0 ? input[i, j, k] : 0;
                     }
                 }
             }
             return output;
         }
+        public Double[,,] backward(Double[,,] gradientOutput) {
+            int inputSizeY = this.input.GetLength(0);
+            int inputSizeX = this.input.GetLength(1);
+            int inputSizeZ = this.input.GetLength(2);
 
-        public Double[,,] backward(Double[,,] inputGradient) {
-            int input_size_x = this.input.GetLength(0);
-            int input_size_y = this.input.GetLength(1);
-            int input_size_z = this.input.GetLength(2);
-            Double[,,] output = new Double[input_size_x, input_size_y, input_size_z];
+            // Gradient of output with respect to input
+            Double[,,] gradientLocal = new Double[inputSizeY, inputSizeX, inputSizeZ];
+            
+            // Gradient of loss with respect to input
+            Double[,,] gradientInput = new Double[inputSizeY, inputSizeX, inputSizeZ];
 
-            for (int i = 0; i < input_size_x; i++) {
-                for (int j = 0; j < input_size_y; j++) {
-                    for (int k = 0; k < input_size_z; k++) {
-                        output[i, j, k] = this.input[i, j, k] >= 0 ? 1 : 0;
+            for (int i = 0; i < inputSizeY; i++) {
+                for (int j = 0; j < inputSizeX; j++) {
+                    for (int k = 0; k < inputSizeZ; k++) {
+                        gradientLocal[i, j, k] = this.input[i, j, k] >= 0 ? 1 : 0;
                     }
                 }
             }
-            return Utils.elementwiseProduct(inputGradient, output);
+            gradientInput = Utils.elementwiseProduct(gradientOutput, gradientLocal);
+            return gradientInput;
         }
     }
 }

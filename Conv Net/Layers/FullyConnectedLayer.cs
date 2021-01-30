@@ -7,92 +7,99 @@ using System.Threading.Tasks;
 namespace Conv_Net {
     class FullyConnectedLayer {
 
-        private int previous_layer_size;
-        private int layer_size;
+        private int previousLayerSize;
+        private int layerSize;
         public Double[][,,] weights;
         public Double[][,,] biases;
-        public Double[][,,] weightGradients;
-        public Double[][,,] biasGradients;
-        public Double[,,] inputs;
+        public Double[][,,] gradientWeights;
+        public Double[][,,] gradientBiases;
+        public Double[,,] input;
 
-        public FullyConnectedLayer(int previous_layer_size, int layer_size) {
-            this.previous_layer_size = previous_layer_size;
-            this.layer_size = layer_size;
-            this.weights = new Double[layer_size][,,];
-            this.biases = new Double[layer_size][,,];
-            this.weightGradients = new Double[layer_size][,,];
-            this.biasGradients = new Double[layer_size][,,];
+        public FullyConnectedLayer(int previousLayerSize, int layerSize) {
+            this.previousLayerSize = previousLayerSize;
+            this.layerSize = layerSize;
+            this.weights = new Double[layerSize][,,];
+            this.biases = new Double[layerSize][,,];
+            this.gradientWeights = new Double[layerSize][,,];
+            this.gradientBiases = new Double[layerSize][,,];
 
-            for (int i = 0; i < layer_size; i++) {
-                Double[,,] temp_weights = new Double[1, 1, previous_layer_size];
+            // Weight initialization
+            for (int i = 0; i < layerSize; i++) {
+                Double[,,] tempWeights = new Double[1, 1, previousLayerSize];
 
-                for (int j = 0; j < previous_layer_size; j++) {
-                    temp_weights[0, 0, j] = Program.normalDist.Sample() * Math.Sqrt(2 / (Double)previous_layer_size);
+                for (int j = 0; j < previousLayerSize; j++) {
+                    // Set weight to random value from normal distribution * sqrt(2/previous layer size)
+                    tempWeights[0, 0, j] = Program.normalDist.Sample() * Math.Sqrt(2 / (Double)previousLayerSize);
                 }
-                this.weights[i] = temp_weights;
+                this.weights[i] = tempWeights;
             }
 
-            for (int i = 0; i < layer_size; i++) {
-                Double[,,] temp_biases = new Double[1, 1, 1];
-                temp_biases[0, 0, 0] = 0.0;
-                this.biases[i] = temp_biases;
+            // Bias initialization (set to 0)
+            for (int i = 0; i < layerSize; i++) {
+                Double[,,] tempBiases = new Double[1, 1, 1];
+                tempBiases[0, 0, 0] = 0.0;
+                this.biases[i] = tempBiases;
             }
 
-            for (int i = 0; i < layer_size; i++) {
-                Double[,,] tempWeightGradient = new Double[1, 1, previous_layer_size];
-                this.weightGradients[i] = tempWeightGradient;
+            // Initialize gradient of weights and biases with respect to loss (have to store these for gradient descent)
+            for (int i = 0; i < layerSize; i++) {
+                Double[,,] tempWeightGradient = new Double[1, 1, previousLayerSize];
+                this.gradientWeights[i] = tempWeightGradient;
 
                 Double[,,] tempBiasGradient = new Double[1, 1, 1];
-                this.biasGradients[i] = tempBiasGradient;
+                this.gradientBiases[i] = tempBiasGradient;
             }
         }
 
         public Double[,,] forward(Double[,,] input) {
-            this.inputs = input;
-            Double[,,] output = new Double[1, 1, layer_size];
-            for (int i = 0; i < layer_size; i++) {
+            this.input = input;
+            Double[,,] output = new Double[1, 1, layerSize];
 
+            // Output is dot product of input and corresponding weights + bias
+            for (int i = 0; i < layerSize; i++) {
                 output[0, 0, i] = Utils.dotProduct(input, weights[i]) + biases[i][0, 0, 0];
             }
             return output;
         }
 
-        public Double[,,] backward(Double[,,] inputGradient) {
+        public Double[,,] backward(Double[,,] gradientOutput) {
 
-            // Calculate gradients for all weights and biases
-            for (int i=0; i < layer_size; i++) {
-                this.biasGradients[i][0, 0, 0] = inputGradient[0, 0, i] * 1;
+            // Calculate gradients of loss with respect to weights and biases and stores them for gradient descent
+            for (int i=0; i < layerSize; i++) {
+                this.gradientBiases[i][0, 0, 0] = gradientOutput[0, 0, i] * 1;
 
-                for (int j = 0; j < previous_layer_size; j++) {
-                    this.weightGradients[i][0, 0, j] = inputGradient[0, 0, i] * inputs[0,0,j];
+                for (int j = 0; j < previousLayerSize; j++) {
+                    this.gradientWeights[i][0, 0, j] = gradientOutput[0, 0, i] * input[0,0,j];
                 }
             }
 
-            Double[,,] output = new Double[1, 1, previous_layer_size];
-            for (int i = 0; i < previous_layer_size; i++) {
-                output[0, 0, i] = Utils.dotProduct(inputGradient, Utils.transpose(this.weights)[i]);
+            // Calculate gradients of loss with respect to input, returns this value
+            Double[,,] gradientInput = new Double[1, 1, previousLayerSize];
+            for (int i = 0; i < previousLayerSize; i++) {
+                gradientInput[0, 0, i] = Utils.dotProduct(gradientOutput, Utils.transpose(this.weights)[i]);
             }
-            return output;
+            return gradientInput;
         }
 
         // Calculate gradients for all weights and biases, used in first fully connected layer (where backward is not called)
         public void storeGradient (Double[,,] inputGradient) {
 
-            for (int i = 0; i < layer_size; i++) {
-                this.biasGradients[i][0, 0, 0] = inputGradient[0, 0, i] * 1;
+            for (int i = 0; i < layerSize; i++) {
+                this.gradientBiases[i][0, 0, 0] = inputGradient[0, 0, i] * 1;
 
-                for (int j = 0; j < previous_layer_size; j++) {
-                    this.weightGradients[i][0, 0, j] = inputGradient[0, 0, i] * inputs[0, 0, j];
+                for (int j = 0; j < previousLayerSize; j++) {
+                    this.gradientWeights[i][0, 0, j] = inputGradient[0, 0, i] * input[0, 0, j];
                 }
             }
         }
 
+        // Update weights and biases
         public void update () {
-            for (int i=0; i < layer_size; i++) {
-                this.biases[i][0,0,0] -= this.biasGradients[i][0,0,0] * Program.eta;
+            for (int i = 0; i < layerSize; i ++) {
+                this.biases[i][0,0,0] -= this.gradientBiases[i][0,0,0] * Program.eta;
 
-                for (int j=0; j < previous_layer_size; j++) {
-                    this.weights[i][0, 0, j] -= this.weightGradients[i][0, 0, j] * Program.eta;
+                for (int j=0; j < previousLayerSize; j++) {
+                    this.weights[i][0, 0, j] -= this.gradientWeights[i][0, 0, j] * Program.eta;
                 }
             }
         }

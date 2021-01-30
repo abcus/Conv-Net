@@ -26,7 +26,7 @@ namespace Conv_Net {
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());*/
 
-            /*Utils.loadMNIST(60000, 10000, 28, 28, 1, 10);
+            Utils.loadMNIST(60000, 10000, 28, 28, 1, 10);
             
             
             test();
@@ -39,15 +39,9 @@ namespace Conv_Net {
                 stopwatch.Stop();
                 Console.WriteLine("Time elapsed: " + stopwatch.Elapsed);
                 stopwatch.Reset();
-            }*/
+            }
 
-            Double[,,] test = { { {1,10 },{2,11 },{3,12 } },{ {4,13 },{5,14 },{6,15 } },{ {7,16 },{8,17 },{9,18 } } };
-            Double[,,] filter = { { {2,6 },{3,7 } }, { {4,8 },{5,9 } } };
-            Double[,,] filter2 = { { {4, 4 },{7, 5 } },{ {8, 7 },{9, 9 } } };
-            Utils.printArray(test);
-            Utils.printArray(filter);
-            ConvolutionLayer conv = new ConvolutionLayer(2, 2, 2, 1, filter, filter2);
-            Utils.printArray(conv.forward(test));
+           
         }
 
         static void test () {
@@ -96,13 +90,19 @@ namespace Conv_Net {
 
 /* To Do:
 
-ADAM
+// 
+Image pre-processing
+Bath normalization
 Regularization (dropout, L2)
-Batch normalization
+Cross valication
+Gradient descent (Adam)
 
-convolusion with padding
+
+
+convolusion with padding and different stride 
 max pool
-
+Fix loss function (right now it is for binary classification)
+Refactor backwards function for fully connected layer, add last layer flag
 */
 
 

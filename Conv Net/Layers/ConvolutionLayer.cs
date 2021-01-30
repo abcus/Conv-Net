@@ -15,7 +15,7 @@ namespace Conv_Net {
         private Double[][,,] biases;
 
 
-        public ConvolutionLayer(int inputZ, int numFilters, int filterSize, int stride, Double[,,] inputFilter, Double[,,] inputFilter2) {
+        public ConvolutionLayer(int inputZ, int numFilters, int filterSize, int stride = 1) {
 
             this.numFilters = numFilters;
             this.filterSize = filterSize;
@@ -28,8 +28,6 @@ namespace Conv_Net {
                 biases[i] = new Double[1, 1, 1];
             }
             // Initialize filter weights
-            this.filter[0] = inputFilter;
-            this.filter[1] = inputFilter2;
         }
 
         public Double[,,] forward(Double[,,] input) {
@@ -66,5 +64,30 @@ namespace Conv_Net {
             return output;
         }
 
+        /*
+       // Returns gradient of cost with respect to input (dC/da = dC/dz * dz/da)
+        public Double [,,] backwardInput (Double [,,] inputGradient) {
+            // inputGradient dC/dz will have same dimensions as output
+            // dC/da = Full convolution of dC/dz over rotated filter
+            // dC/da will have same dimension as input
+        }*/
+
+        // Returns gradient of cost with respect to filter (dC/dw = dC/dz * dz/dw)
+        public Double [][,,] backwardFilter (Double [,,] inputGradient, Double[,,] image, Double[][,,] filter, Double[][,,] bias) {
+            // Input gradient dC/dz will have same dimension as output
+            // dC/dw = convolution of dC/dz over input
+            // dC/dw will have same dimension as filter
+
+
+
+            Double[,,] dFilter = new Double[1,1,1];
+            Double[,,] dBias = new Double[1, 1, 1];
+            Double[,,] dImage = new Double[1,1,1];
+            Double[][,,] output = new Double[3][,,];
+            output[0] = dFilter;
+            output[1] = dBias;
+            output[2] = dImage;
+            return output;
+        }
     }
 }

@@ -23,26 +23,21 @@ namespace Conv_Net {
             this.gradientWeights = new Double[layerSize][,,];
             this.gradientBiases = new Double[layerSize][,,];
 
-            // Weight initialization
             for (int i = 0; i < layerSize; i++) {
-                Double[,,] tempWeights = new Double[1, 1, previousLayerSize];
-
-                for (int j = 0; j < previousLayerSize; j++) {
-                    // Set weight to random value from normal distribution * sqrt(2/previous layer size)
-                    tempWeights[0, 0, j] = Program.normalDist.Sample() * Math.Sqrt(2 / (Double)previousLayerSize);
-                }
-                this.weights[i] = tempWeights;
-            }
-
-            // Bias initialization (set to 0)
-            for (int i = 0; i < layerSize; i++) {
+                
+                // Bias initialization (set to 0)
                 Double[,,] tempBiases = new Double[1, 1, 1];
                 tempBiases[0, 0, 0] = 0.0;
                 this.biases[i] = tempBiases;
-            }
 
-            // Initialize gradient of weights and biases with respect to loss (have to store these for gradient descent)
-            for (int i = 0; i < layerSize; i++) {
+                // Weight initialization (set to random value from normal distribution * sqrt(2/previous layer size)
+                Double[,,] tempWeights = new Double[1, 1, previousLayerSize];
+                for (int j = 0; j < previousLayerSize; j++) {
+                    tempWeights[0, 0, j] = Program.normalDist.Sample() * Math.Sqrt(2 / (Double)previousLayerSize);
+                }
+                this.weights[i] = tempWeights;
+
+                // Initialize gradient of weights and biases with respect to loss (have to store these for gradient descent)
                 Double[,,] tempWeightGradient = new Double[1, 1, previousLayerSize];
                 this.gradientWeights[i] = tempWeightGradient;
 
@@ -62,34 +57,26 @@ namespace Conv_Net {
             return output;
         }
 
-        public Double[,,] backward(Double[,,] gradientOutput) {
+        public Double[,,] backward(Double[,,] gradientOutput, bool firstLayer) {
 
             // Calculate gradients of loss with respect to weights and biases and stores them for gradient descent
             for (int i=0; i < layerSize; i++) {
                 this.gradientBiases[i][0, 0, 0] = gradientOutput[0, 0, i] * 1;
 
                 for (int j = 0; j < previousLayerSize; j++) {
-                    this.gradientWeights[i][0, 0, j] = gradientOutput[0, 0, i] * input[0,0,j];
+                    this.gradientWeights[i][0, 0, j] = gradientOutput[0, 0, i] * input[0, 0, j];
                 }
             }
 
-            // Calculate gradients of loss with respect to input, returns this value
-            Double[,,] gradientInput = new Double[1, 1, previousLayerSize];
-            for (int i = 0; i < previousLayerSize; i++) {
-                gradientInput[0, 0, i] = Utils.dotProduct(gradientOutput, Utils.transpose(this.weights)[i]);
-            }
-            return gradientInput;
-        }
-
-        // Calculate gradients for all weights and biases, used in first fully connected layer (where backward is not called)
-        public void storeGradient (Double[,,] inputGradient) {
-
-            for (int i = 0; i < layerSize; i++) {
-                this.gradientBiases[i][0, 0, 0] = inputGradient[0, 0, i] * 1;
-
-                for (int j = 0; j < previousLayerSize; j++) {
-                    this.gradientWeights[i][0, 0, j] = inputGradient[0, 0, i] * input[0, 0, j];
+            // If not first layer then have to calculate gradient of loss with respect to input and return, if first layer then return null
+            if (firstLayer == false) {
+                Double[,,] gradientInput = new Double[1, 1, previousLayerSize];
+                for (int i = 0; i < previousLayerSize; i++) {
+                    gradientInput[0, 0, i] = Utils.dotProduct(gradientOutput, Utils.transpose(this.weights)[i]);
                 }
+                return gradientInput;
+            } else {
+                return null;
             }
         }
 

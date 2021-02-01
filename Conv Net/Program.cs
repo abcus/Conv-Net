@@ -99,10 +99,12 @@ Gradient descent (Adam)
 
 
 
-convolusion with padding and different stride 
+convolusion with padding and different stride, test analytic gradient with changes to function, refactor forward function
 max pool
 Fix loss function (right now it is for binary classification)
-Refactor backwards function for fully connected layer, add last layer flag
+
+// Test analytic gradient with changes to function
+
 */
 
 

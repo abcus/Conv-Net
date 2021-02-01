@@ -65,15 +65,15 @@ namespace Conv_Net {
             // Output layer
             grad = Loss.backward();
             grad = Softmax.backward(grad);
-            grad = FC3.backward(grad);
+            grad = FC3.backward(grad, false);
 
             // Hidden layer 2
             grad = Relu2.backward(grad);
-            grad = FC2.backward(grad);
+            grad = FC2.backward(grad, false);
 
             // Hidden layer 1
             grad = Relu1.backward(grad);
-            FC1.storeGradient(grad);
+            FC1.backward(grad, true);
         }
 
         public void update () {

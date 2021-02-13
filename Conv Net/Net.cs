@@ -11,8 +11,7 @@ namespace Conv_Net {
         public FlattenLayer Flatten;
         public FullyConnectedLayer FC1, FC2, FC3;
         public ReluLayer Relu1, Relu2;
-        public SoftmaxLayer Softmax;
-        public LossLayer Loss;
+        public SoftmaxLossLayer Softmax;
 
         public Net () {
 
@@ -30,8 +29,7 @@ namespace Conv_Net {
             
             // Hidden layer 3
             FC3 = new FullyConnectedLayer(6, 10, true);
-            Softmax = new SoftmaxLayer();
-            Loss = new LossLayer();
+            Softmax = new SoftmaxLossLayer();
         }
 
         public Tuple<Double[,,], Double[,,]> forward (Double[,,] input, Double[,,] target) {
@@ -57,18 +55,16 @@ namespace Conv_Net {
             output = Softmax.forward(output);
 
             // Loss layer
-            loss = Loss.forward(output, target);
-            
+            loss = Softmax.categoricalCrossEntropyLoss(target);
             return Tuple.Create(output, loss);
         }
         
         public void backward () {
-            // Gradient of loss with respect to loss
-            Double[,,] grad = { { { 1 } } };
             
+            Double[,,] grad;
+
             // Output layer
-            grad = Loss.backward(grad);
-            grad = Softmax.backward(grad);
+            grad = Softmax.backward();
             grad = FC3.backward(grad);
 
             // Hidden layer 2

@@ -5,17 +5,20 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class SoftmaxLayer {
+    class SoftmaxLossLayer {
 
         private Double[,,] input;
+        private Double[,,] softmaxOutput;
+        private Double[,,] target;
 
-        public SoftmaxLayer() {
+        public SoftmaxLossLayer() {
+        
         }
         public Double[,,] forward(Double[,,] input) {
             this.input = input;
             int layerSize = input.GetLength(2);
 
-            Double[,,] output = new Double[1, 1, layerSize];
+            Double[,,] softmaxOutput = new Double[1, 1, layerSize];
 
             // Find max value of input array
             Double max = Double.MinValue;
@@ -38,36 +41,34 @@ namespace Conv_Net {
 
             // Set output array
             for (int i = 0; i < layerSize; i++) {
-                output[0, 0, i] = Math.Exp(input[0, 0, i]) / denominator;
+                softmaxOutput[0, 0, i] = Math.Exp(input[0, 0, i]) / denominator;
             }
-            return output;
+            this.softmaxOutput = softmaxOutput;
+            return softmaxOutput;
         }
 
-        // Backpropagation
-        public Double[,,] backward(Double[,,] gradientOutput) {
-            Double numerator = 0.0;
-            Double denominator = 0.0;
-            int layerSize = this.input.GetLength(2);
+        public Double[,,] categoricalCrossEntropyLoss(Double[,,] target) {
+
+            this.target = target;
+            int layerSize = this.softmaxOutput.GetLength(2);
+            Double[,,] loss = new Double[1, 1, 1];
             
-            // dL/dI
-            Double[,,] gradientInput = new Double[1, 1, layerSize];
-
             for (int i = 0; i < layerSize; i++) {
-                denominator += Math.Exp(this.input[0, 0, i]);
+                loss[0, 0, 0] += (target[0, 0, i] * Math.Log(this.softmaxOutput[0, 0, i]));
             }
-            denominator = Math.Pow(denominator, 2);
+            loss[0, 0, 0] *= -1;
+            return loss;
+        }
 
-            for (int i = 0; i < layerSize; i++) {
-                numerator = 0.0;
-                for (int j = 0; j < layerSize; j++) {
-                    if (j != i) {
-                        numerator += Math.Exp(this.input[0, 0, j]);
-                    }
-                }
-                numerator *= Math.Exp(this.input[0, 0, i]);
+        public Double[,,] backward () {
+            int layerSize = this.input.GetLength(2);
 
-                // dL/dI = dL/dO * dO/dI
-                gradientInput[0, 0, i] = gradientOutput[0, 0, i] * (numerator / denominator);
+            // dL/dI
+            Double[,,] gradientInput = new double[1, 1, layerSize];
+
+            // dL/dI = (softmax output - target)
+            for (int i=0; i < layerSize; i++) {
+                gradientInput[0, 0, i] = this.softmaxOutput[0, 0, i] - this.target[0, 0, i];
             }
             return gradientInput;
         }

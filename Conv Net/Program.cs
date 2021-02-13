@@ -15,11 +15,12 @@ namespace Conv_Net {
         public static Double[][,,] testImageArray;
         public static Double[][,,] testLabelArray;
 
-        public static MathNet.Numerics.Distributions.Normal normalDist = new MathNet.Numerics.Distributions.Normal(0, 1, new Random(0));
+        public static Random rand = new Random(0);
+        public static MathNet.Numerics.Distributions.Normal normalDist = new MathNet.Numerics.Distributions.Normal(0, 1, rand);
         public static Stopwatch stopwatch = new Stopwatch();
 
         public static Net NN = new Net();
-        public static Double eta = 0.01;
+        public static Double eta = 0.001;
 
         static void Main() {
             /*Application.EnableVisualStyles();
@@ -33,7 +34,8 @@ namespace Conv_Net {
                 stopwatch.Start();
                 Console.WriteLine("++++++++++++++++++++++++++++++++");
                 Console.WriteLine("Epoch: " + epoch);
-                train(64);
+                Utils.shuffleTrainingSet();
+                train(1);
                 test();
                 stopwatch.Stop();
                 Console.WriteLine("Time elapsed: " + stopwatch.Elapsed);

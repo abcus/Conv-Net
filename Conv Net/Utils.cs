@@ -172,6 +172,14 @@ namespace Conv_Net {
             }
         }
 
+        public static void shuffleTrainingSet() {
+            for (int i = 60000 -1; i > 0; i--) {
+                int j = Program.rand.Next(0, i);
+                (Program.trainImageArray[i], Program.trainImageArray[j]) = (Program.trainImageArray[j], Program.trainImageArray[i]);
+                (Program.trainLabelArray[i], Program.trainLabelArray[j]) = (Program.trainLabelArray[j], Program.trainLabelArray[i]);
+            }
+        }
+
         static void printWeightsBiases(FullyConnectedLayer Inner1, FullyConnectedLayer Inner2, FullyConnectedLayer Inner3) {
 
             Console.WriteLine("Layer 1 weights");

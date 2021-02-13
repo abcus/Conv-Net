@@ -28,7 +28,6 @@ namespace Conv_Net {
 
             Utils.loadMNIST(60000, 10000, 28, 28, 1, 10);
             
-            
             test();
             for (int epoch=0; epoch < 10; epoch++) {
                 stopwatch.Start();
@@ -50,13 +49,12 @@ namespace Conv_Net {
             Double averageCrossEntropyLoss = 0.0;
 
             for (int testIndex = 0; testIndex < 10000; testIndex++) {
-                Double[,,] t;
-                t = NN.forward(testImageArray[testIndex]);
-                if (Utils.indexMaxValue(t) == Utils.indexMaxValue(testLabelArray[testIndex])) {
+                Tuple <Double[,,], Double[,,]> t;
+                t = NN.forward(testImageArray[testIndex], testLabelArray[testIndex]);
+                if (Utils.indexMaxValue(t.Item1) == Utils.indexMaxValue(testLabelArray[testIndex])) {
                     correct++;
                 }
-                t = NN.loss(t, testLabelArray[testIndex]);
-                totalCrossEntropyLoss += t[0, 0, 0];
+                totalCrossEntropyLoss += t.Item2[0, 0, 0];
             }
             averageCrossEntropyLoss = totalCrossEntropyLoss / 10000;
 
@@ -66,10 +64,8 @@ namespace Conv_Net {
 
         static void train () {
             for (int trainIndex = 0; trainIndex < 60000; trainIndex++) {
-
-                Double[,,] t;
-                t = NN.forward(trainImageArray[trainIndex]);
-                t = NN.loss(t, trainLabelArray[trainIndex]);
+                Tuple <Double[,,], Double[,,]> t;
+                t = NN.forward(trainImageArray[trainIndex], trainLabelArray[trainIndex]);
                 NN.backward();
                 NN.update();
             }

@@ -13,40 +13,41 @@ namespace Conv_Net {
         }
 
         public Double[,,] forward(Double[,,] input) {
-            int inputSizeY = input.GetLength(0);
-            int inputSizeX = input.GetLength(1);
-            int inputSizeZ = input.GetLength(2);
+            int numInputRows = input.GetLength(0);
+            int numInputColumns = input.GetLength(1);
+            int numInputChannels = input.GetLength(2);
             this.input = input;
-            Double[,,] output = new Double[inputSizeY, inputSizeX, inputSizeZ];
+            Double[,,] output = new Double[numInputRows, numInputColumns, numInputChannels];
 
-            for (int i = 0; i < inputSizeY; i++) {
-                for (int j = 0; j < inputSizeX; j++) {
-                    for (int k = 0; k < inputSizeZ; k++) {
+            for (int i = 0; i < numInputRows; i++) {
+                for (int j = 0; j < numInputColumns; j++) {
+                    for (int k = 0; k < numInputChannels; k++) {
                         output[i, j, k] = input[i, j, k] >= 0 ? input[i, j, k] : 0;
                     }
                 }
             }
             return output;
         }
+
+        // Backpropagation
+        // gradientOutput = dL/dO
         public Double[,,] backward(Double[,,] gradientOutput) {
-            int inputSizeY = this.input.GetLength(0);
-            int inputSizeX = this.input.GetLength(1);
-            int inputSizeZ = this.input.GetLength(2);
-
-            // Gradient of output with respect to input
-            Double[,,] gradientLocal = new Double[inputSizeY, inputSizeX, inputSizeZ];
+            int numInputRows = this.input.GetLength(0);
+            int numInputColumns = this.input.GetLength(1);
+            int numInputChannels = this.input.GetLength(2);
             
-            // Gradient of loss with respect to input
-            Double[,,] gradientInput = new Double[inputSizeY, inputSizeX, inputSizeZ];
+            // dL/dI
+            Double[,,] gradientInput = new Double[numInputRows, numInputColumns, numInputChannels];
 
-            for (int i = 0; i < inputSizeY; i++) {
-                for (int j = 0; j < inputSizeX; j++) {
-                    for (int k = 0; k < inputSizeZ; k++) {
-                        gradientLocal[i, j, k] = this.input[i, j, k] >= 0 ? 1 : 0;
+            for (int i = 0; i < numInputRows; i++) {
+                for (int j = 0; j < numInputColumns; j++) {
+                    for (int k = 0; k < numInputChannels; k++) {
+
+                        // dL/dI = dL/dO * dO/dI
+                        gradientInput[i, j, k] = gradientOutput[i, j, k] * (this.input[i, j, k] >= 0 ? 1 : 0);
                     }
                 }
             }
-            gradientInput = Utils.elementwiseProduct(gradientOutput, gradientLocal);
             return gradientInput;
         }
     }

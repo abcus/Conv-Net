@@ -21,23 +21,27 @@ namespace Conv_Net {
             Flatten = new FlattenLayer();
             
             // Hidden layer 1
-            FC1 = new FullyConnectedLayer(784, 5);
+            FC1 = new FullyConnectedLayer(784, 5, false);
             Relu1 = new ReluLayer();
             
             // Hidden layer 2
-            FC2 = new FullyConnectedLayer(5, 6);
+            FC2 = new FullyConnectedLayer(5, 6, true);
             Relu2 = new ReluLayer();
             
             // Hidden layer 3
-            FC3 = new FullyConnectedLayer(6, 10);
+            FC3 = new FullyConnectedLayer(6, 10, true);
             Softmax = new SoftmaxLayer();
             Loss = new LossLayer();
         }
 
-        public Double[,,] forward (Double[,,] input) {
-            
+        public Tuple<Double[,,], Double[,,]> forward (Double[,,] input, Double[,,] target) {
+
             // Input layer
-            Double[,,] output = Input.forward(input);
+            Double[,,] output;
+            Double[,,] loss;
+            
+            // Input and flatten layer
+            output = Input.forward(input);
             output = Flatten.forward(output);
 
             // Hidden layer 1
@@ -52,28 +56,29 @@ namespace Conv_Net {
             output = FC3.forward(output);
             output = Softmax.forward(output);
 
-            return output;
+            // Loss layer
+            loss = Loss.forward(output, target);
+            
+            return Tuple.Create(output, loss);
         }
         
-        public Double[,,] loss (Double [,,] input, Double[,,] target) {
-            return Loss.forward(input, target);
-        }
-
         public void backward () {
-            Double[,,] grad;
+            // Gradient of loss with respect to loss
+            Double[,,] grad = { { { 1 } } };
             
             // Output layer
-            grad = Loss.backward();
+            grad = Loss.backward(grad);
             grad = Softmax.backward(grad);
-            grad = FC3.backward(grad, false);
+            grad = FC3.backward(grad);
 
             // Hidden layer 2
             grad = Relu2.backward(grad);
-            grad = FC2.backward(grad, false);
+            grad = FC2.backward(grad);
 
-            // Hidden layer 1
+            // Hidden layer 1 
+            // FC1.backward returns null as gradient of loss with respect to FC1 inputs (which is the image) is not needed
             grad = Relu1.backward(grad);
-            FC1.backward(grad, true);
+            grad = FC1.backward(grad);
         }
 
         public void update () {

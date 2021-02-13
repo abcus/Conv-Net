@@ -9,15 +9,17 @@ namespace Conv_Net {
 
         private int previousLayerSize;
         private int layerSize;
+        private bool needsGradient;
         public Double[][,,] weights;
         public Double[][,,] biases;
         public Double[][,,] gradientWeights;
         public Double[][,,] gradientBiases;
         public Double[,,] input;
 
-        public FullyConnectedLayer(int previousLayerSize, int layerSize) {
+        public FullyConnectedLayer(int previousLayerSize, int layerSize, bool needsGradient) {
             this.previousLayerSize = previousLayerSize;
             this.layerSize = layerSize;
+            this.needsGradient = needsGradient;
             this.weights = new Double[layerSize][,,];
             this.biases = new Double[layerSize][,,];
             this.gradientWeights = new Double[layerSize][,,];
@@ -57,20 +59,24 @@ namespace Conv_Net {
             return output;
         }
 
-        public Double[,,] backward(Double[,,] gradientOutput, bool firstLayer) {
+        public Double[,,] backward(Double[,,] gradientOutput) {
 
-            // Calculate gradients of loss with respect to weights and biases and stores them for gradient descent
+            Double[,,] gradientInput = new Double[1, 1, previousLayerSize];
+
             for (int i=0; i < layerSize; i++) {
+
+                // dL/dB = dL/dO * dO/dB, stores it for gradient descent
                 this.gradientBiases[i][0, 0, 0] = gradientOutput[0, 0, i] * 1;
 
                 for (int j = 0; j < previousLayerSize; j++) {
+
+                    // dL/dW = dL/dO * dO/dW, stores it for gradient descent
                     this.gradientWeights[i][0, 0, j] = gradientOutput[0, 0, i] * input[0, 0, j];
                 }
             }
 
-            // If not first layer then have to calculate gradient of loss with respect to input and return, if first layer then return null
-            if (firstLayer == false) {
-                Double[,,] gradientInput = new Double[1, 1, previousLayerSize];
+            // If gradient needed (i.e. not first layer) then return dL/dI = dL/dO * dO/dI; otherwise return null
+            if (this.needsGradient == true) {
                 for (int i = 0; i < previousLayerSize; i++) {
                     gradientInput[0, 0, i] = Utils.dotProduct(gradientOutput, Utils.transpose(this.weights)[i]);
                 }

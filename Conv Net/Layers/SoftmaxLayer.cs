@@ -43,15 +43,13 @@ namespace Conv_Net {
             return output;
         }
 
+        // Backpropagation
         public Double[,,] backward(Double[,,] gradientOutput) {
             Double numerator = 0.0;
             Double denominator = 0.0;
             int layerSize = this.input.GetLength(2);
             
-            // Gradient of output with respect to input
-            Double[,,] gradientLocal = new Double[1, 1, layerSize];
-
-            // Gradient of loss with respect to input
+            // dL/dI
             Double[,,] gradientInput = new Double[1, 1, layerSize];
 
             for (int i = 0; i < layerSize; i++) {
@@ -67,9 +65,10 @@ namespace Conv_Net {
                     }
                 }
                 numerator *= Math.Exp(this.input[0, 0, i]);
-                gradientLocal[0, 0, i] = numerator / denominator;
+
+                // dL/dI = dL/dO * dO/dI
+                gradientInput[0, 0, i] = gradientOutput[0, 0, i] * (numerator / denominator);
             }
-            gradientInput = Utils.elementwiseProduct(gradientOutput, gradientLocal);
             return gradientInput;
         }
     }

@@ -15,6 +15,8 @@ namespace Conv_Net {
         }
 
         public Double[,,] forward(Double[,,] input, Double[,,] target) {
+            
+            // this.input is output of NN
             this.input = input;
             this.target = target;
 
@@ -23,19 +25,22 @@ namespace Conv_Net {
             Double loss = 0.0;
 
             for (int i = 0; i < layerSize; i++) {
-                loss += (target[0, 0, i] * Math.Log(input[0, 0, i]) + (1 - target[0, 0, i]) * Math.Log(1 - input[0, 0, i]));
+                output[0, 0, 0] += (target[0, 0, i] * Math.Log(input[0, 0, i]));
             }
-            loss *= -1 / (Double)layerSize;
-            output[0, 0, 0] = loss;
+            output[0, 0, 0] *= -1;
             return output;
         }
 
-        public Double[,,] backward() {
+        public Double[,,] backward(Double [,,] gradientOutput) {
             int layerSize = this.input.GetLength(2);
+            
+            // dL/dI
             Double[,,] gradientInput = new Double[1, 1, layerSize];
             
             for (int i = 0; i < layerSize; i++) {
-                gradientInput[0, 0, i] = (-this.target[0, 0, i] + this.input[0, 0, i]) / (this.input[0, 0, i] * (1 - this.input[0, 0, i]));
+                
+                // dL/dI = dL/dO * dO/dI = dL/dL * dL/dI = 1 * dL/dI
+                gradientInput[0, 0, i] = gradientOutput[0, 0, 0] * ((-this.target[0, 0, i] + this.input[0, 0, i]) / (this.input[0, 0, i] * (1 - this.input[0, 0, i])));
             }
             return gradientInput;
         }

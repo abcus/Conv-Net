@@ -77,10 +77,10 @@ namespace Conv_Net {
             grad = FC1.backward(grad);
         }
 
-        public void update () {
-            FC3.update();
-            FC2.update();
-            FC1.update();
+        public void update (int batchSize) {
+            FC3.update(batchSize);
+            FC2.update(batchSize);
+            FC1.update(batchSize);
         }
     }
 }

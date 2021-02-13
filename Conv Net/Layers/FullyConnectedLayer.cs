@@ -66,12 +66,12 @@ namespace Conv_Net {
             for (int i=0; i < layerSize; i++) {
 
                 // dL/dB = dL/dO * dO/dB, stores it for gradient descent
-                this.gradientBiases[i][0, 0, 0] = gradientOutput[0, 0, i] * 1;
+                this.gradientBiases[i][0, 0, 0] += gradientOutput[0, 0, i] * 1;
 
                 for (int j = 0; j < previousLayerSize; j++) {
 
                     // dL/dW = dL/dO * dO/dW, stores it for gradient descent
-                    this.gradientWeights[i][0, 0, j] = gradientOutput[0, 0, i] * input[0, 0, j];
+                    this.gradientWeights[i][0, 0, j] += gradientOutput[0, 0, i] * input[0, 0, j];
                 }
             }
 
@@ -87,12 +87,14 @@ namespace Conv_Net {
         }
 
         // Update weights and biases
-        public void update () {
+        public void update (int batchSize) {
             for (int i = 0; i < layerSize; i ++) {
-                this.biases[i][0,0,0] -= this.gradientBiases[i][0,0,0] * Program.eta;
+                this.biases[i][0,0,0] -= (this.gradientBiases[i][0,0,0] * Program.eta / batchSize);
+                this.gradientBiases[i][0, 0, 0] = 0.0;
 
                 for (int j=0; j < previousLayerSize; j++) {
-                    this.weights[i][0, 0, j] -= this.gradientWeights[i][0, 0, j] * Program.eta;
+                    this.weights[i][0, 0, j] -= (this.gradientWeights[i][0, 0, j] * Program.eta / batchSize);
+                    this.gradientWeights[i][0, 0, j] = 0.0;
                 }
             }
         }

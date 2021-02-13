@@ -47,6 +47,7 @@ namespace Conv_Net {
             return softmaxOutput;
         }
 
+        // Categorical cross entropy loss
         public Double[,,] categoricalCrossEntropyLoss(Double[,,] target) {
 
             this.target = target;

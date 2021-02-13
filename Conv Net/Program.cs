@@ -15,11 +15,11 @@ namespace Conv_Net {
         public static Double[][,,] testImageArray;
         public static Double[][,,] testLabelArray;
 
-        public static MathNet.Numerics.Distributions.Normal normalDist = new MathNet.Numerics.Distributions.Normal(0, 1, new Random(0));     
+        public static MathNet.Numerics.Distributions.Normal normalDist = new MathNet.Numerics.Distributions.Normal(0, 1, new Random(0));
         public static Stopwatch stopwatch = new Stopwatch();
 
         public static Net NN = new Net();
-        public static Double eta = 0.001;
+        public static Double eta = 0.01;
 
         static void Main() {
             /*Application.EnableVisualStyles();
@@ -27,31 +27,31 @@ namespace Conv_Net {
             Application.Run(new Form1());*/
 
             Utils.loadMNIST(60000, 10000, 28, 28, 1, 10);
-            
+
             test();
-            for (int epoch=0; epoch < 10; epoch++) {
+            for (int epoch = 0; epoch < 10; epoch++) {
                 stopwatch.Start();
                 Console.WriteLine("++++++++++++++++++++++++++++++++");
                 Console.WriteLine("Epoch: " + epoch);
-                train();
+                train(64);
                 test();
                 stopwatch.Stop();
                 Console.WriteLine("Time elapsed: " + stopwatch.Elapsed);
                 stopwatch.Reset();
             }
 
-           
+
         }
 
-        static void test () {
+        static void test() {
             int correct = 0;
             Double totalCrossEntropyLoss = 0.0;
             Double averageCrossEntropyLoss = 0.0;
 
-            for (int testIndex = 0; testIndex < 10000; testIndex++) {
-                Tuple <Double[,,], Double[,,]> t;
-                t = NN.forward(testImageArray[testIndex], testLabelArray[testIndex]);
-                if (Utils.indexMaxValue(t.Item1) == Utils.indexMaxValue(testLabelArray[testIndex])) {
+            for (int i = 0; i < 10000; i++) {
+                Tuple<Double[,,], Double[,,]> t;
+                t = NN.forward(testImageArray[i], testLabelArray[i]);
+                if (Utils.indexMaxValue(t.Item1) == Utils.indexMaxValue(testLabelArray[i])) {
                     correct++;
                 }
                 totalCrossEntropyLoss += t.Item2[0, 0, 0];
@@ -62,52 +62,15 @@ namespace Conv_Net {
             Console.WriteLine("Average cross entropy loss: " + averageCrossEntropyLoss);
         }
 
-        static void train () {
-            for (int trainIndex = 0; trainIndex < 60000; trainIndex++) {
-                Tuple <Double[,,], Double[,,]> t;
-                t = NN.forward(trainImageArray[trainIndex], trainLabelArray[trainIndex]);
+        static void train(int batchSize) {
+            for (int i = 0; i < 60000; i++) {
+                Tuple<Double[,,], Double[,,]> t;
+                t = NN.forward(trainImageArray[i], trainLabelArray[i]);
                 NN.backward();
-                NN.update();
+                if (i % batchSize == 0 || i == 59999) {
+                    NN.update(batchSize);
+                }
             }
-        }        
+        }
     }
-
-
-
-    
-
-    
-
-   
-
-
-    
 }
-
-/* To Do:
-
-// 
-Image pre-processing
-Bath normalization
-Regularization (dropout, L2)
-Cross valication
-Gradient descent (Adam)
-
-
-
-convolusion with padding and different stride, test analytic gradient with changes to function, refactor forward function
-max pool
-Fix loss function (right now it is for binary classification)
-
-// Test analytic gradient with changes to function
-
-*/
-
-
-
-
-
-
-
-
-

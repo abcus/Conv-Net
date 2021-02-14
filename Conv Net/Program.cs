@@ -30,26 +30,20 @@ namespace Conv_Net {
 
             Utils.loadMNIST(60000, 10000, 28, 28, 1, 10);
 
-            ConvolutionLayer conv1 = new ConvolutionLayer(1, 5, 3, 3);
+            ConvolutionLayer conv1 = new ConvolutionLayer(1, 4, 3, 3);
             ReluLayer relu1 = new ReluLayer();
             MaxPoolingLayer pool1 = new MaxPoolingLayer(2, 2, 2);
             FlattenLayer flatten1 = new FlattenLayer();
-            FullyConnectedLayer FC1 = new FullyConnectedLayer(3380, 10, true);
+            FullyConnectedLayer FC1 = new FullyConnectedLayer(676, 10, true);
             SoftmaxLossLayer softmax = new SoftmaxLossLayer();
 
-            Double[,,] test = { {{12, 1 },{20, 2},{30, 3},{0, 4} },{ {8, 5 },{12, 6 },{2, 7 },{0, 8 } },{ {34, 9 },{70, 10 },{37, 11 },{4, 12 } },{ {112, 13 },{100, 14 },{25, 15},{12, 16 } } };
-            Utils.printArray(test);
-            test = pool1.forward(test);
-            Utils.printArray(test);
-
-            Utils.printArray(pool1.backward(test));
-
-            /*for (int i=0; i < 200; i++) {
+            for (int i=0; i < 5000; i++) {
                 Double[,,] output = trainImageArray[i];
                 Double[,,] loss;
 
                 output = conv1.forward(output);
                 output = relu1.forward(output);
+                output = pool1.forward(output);
                 output = flatten1.forward(output);
                 output = FC1.forward(output);
                 output = softmax.forward(output);
@@ -61,6 +55,7 @@ namespace Conv_Net {
                 grad = softmax.backward();
                 grad = FC1.backward(grad);
                 grad = flatten1.backward(grad);
+                grad = pool1.backward(grad);
                 grad = relu1.backward(grad);
                 grad = conv1.backward(grad);
 
@@ -69,25 +64,27 @@ namespace Conv_Net {
             }
 
             int correct = 0;
-            for (int i=0; i < 100; i++) {
-                Double[,,] output = testImageArray[i + 1000];
+            for (int i=0; i < 10000; i++) {
+                Double[,,] output = testImageArray[i];
                 Double[,,] loss;
 
                 output = conv1.forward(output);
+                output = relu1.forward(output);
+                output = pool1.forward(output);
                 output = flatten1.forward(output);
                 output = FC1.forward(output);
                 output = softmax.forward(output);
-                if (Utils.indexMaxValue(output) == Utils.indexMaxValue(testLabelArray[i + 1000])) {
+                if (Utils.indexMaxValue(output) == Utils.indexMaxValue(testLabelArray[i])) {
                     correct++;
                 }
-                Console.WriteLine(correct + " correct out of " + (i));
-            }*/
+            }
+            Console.WriteLine(correct + " correct out of 10000");
 
 
-        
-            
 
-            
+
+
+
 
 
             /*test();

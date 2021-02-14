@@ -20,6 +20,7 @@ namespace Conv_Net {
         public static Stopwatch stopwatch = new Stopwatch();
 
         public static Net NN = new Net();
+        public static ConvNet CNN = new ConvNet();
         public static Double eta = 0.01;
         public static int batchSize = 16;
 
@@ -30,78 +31,65 @@ namespace Conv_Net {
 
             Utils.loadMNIST(60000, 10000, 28, 28, 1, 10);
 
-            ConvolutionLayer conv1 = new ConvolutionLayer(1, 4, 3, 3);
-            ReluLayer relu1 = new ReluLayer();
-            MaxPoolingLayer pool1 = new MaxPoolingLayer(2, 2, 2);
-            FlattenLayer flatten1 = new FlattenLayer();
-            FullyConnectedLayer FC1 = new FullyConnectedLayer(676, 10, true);
-            SoftmaxLossLayer softmax = new SoftmaxLossLayer();
-
-            for (int i=0; i < 5000; i++) {
-                Double[,,] output = trainImageArray[i];
-                Double[,,] loss;
-
-                output = conv1.forward(output);
-                output = relu1.forward(output);
-                output = pool1.forward(output);
-                output = flatten1.forward(output);
-                output = FC1.forward(output);
-                output = softmax.forward(output);
-                loss = softmax.categoricalCrossEntropyLoss(trainLabelArray[i]);
-
-                Console.WriteLine(i);
-
-                Double[,,] grad;
-                grad = softmax.backward();
-                grad = FC1.backward(grad);
-                grad = flatten1.backward(grad);
-                grad = pool1.backward(grad);
-                grad = relu1.backward(grad);
-                grad = conv1.backward(grad);
-
-                FC1.update(1);
-                conv1.update(1);
+            testCNN();
+            for (int epoch = 0; epoch < 10; epoch ++) {
+                stopwatch.Start();
+                Console.WriteLine("@@@@@@@@@@@@@@@@@@@@@@@@@@");
+                Console.WriteLine("Epoch: " + epoch);
+                Utils.shuffleTrainingSet();
+                trainCNN(4);
+                testCNN();
+                stopwatch.Stop();
+                Console.WriteLine("Time elapsed: " + stopwatch.Elapsed);
+                stopwatch.Reset();
             }
 
-            int correct = 0;
-            for (int i=0; i < 10000; i++) {
-                Double[,,] output = testImageArray[i];
-                Double[,,] loss;
 
-                output = conv1.forward(output);
-                output = relu1.forward(output);
-                output = pool1.forward(output);
-                output = flatten1.forward(output);
-                output = FC1.forward(output);
-                output = softmax.forward(output);
-                if (Utils.indexMaxValue(output) == Utils.indexMaxValue(testLabelArray[i])) {
-                    correct++;
-                }
-            }
-            Console.WriteLine(correct + " correct out of 10000");
-
-
-
-
-
-
-
-
-            /*test();
+            /*testNN();
             for (int epoch = 0; epoch < 10; epoch++) {
                 stopwatch.Start();
                 Console.WriteLine("++++++++++++++++++++++++++++++++");
                 Console.WriteLine("Epoch: " + epoch);
                 Utils.shuffleTrainingSet();
-                train(batchSize);
-                test();
+                trainNN(batchSize);
+                testNN();
                 stopwatch.Stop();
                 Console.WriteLine("Time elapsed: " + stopwatch.Elapsed);
                 stopwatch.Reset();
             }*/
         }
 
-        static void test() {
+        static void testCNN() {
+            int correct = 0;
+            Double totalCrossEntropyLoss = 0.0;
+            Double averageCrossEntropyLoss = 0.0;
+
+            for (int i = 0; i < 10000; i++) {
+                Tuple<Double[,,], Double[,,]> t;
+                t = CNN.forward(testImageArray[i], testLabelArray[i]);
+                if (Utils.indexMaxValue(t.Item1) == Utils.indexMaxValue(testLabelArray[i])) {
+                    correct++;
+                }
+                totalCrossEntropyLoss += t.Item2[0, 0, 0];
+            }
+            averageCrossEntropyLoss = totalCrossEntropyLoss / 10000;
+
+            Console.WriteLine(correct + " correct out of 10,000. \t Accuracy " + (Double)correct / 10000 * 100 + "%");
+            Console.WriteLine("Average cross entropy loss: " + averageCrossEntropyLoss);
+        }
+
+        static void trainCNN(int batchSize) {
+            for (int i = 0; i < 1000; i++) {
+                Tuple<Double[,,], Double[,,]> t;
+                t = CNN.forward(trainImageArray[i], trainLabelArray[i]);
+                CNN.backward();
+                if (i % batchSize == 0 || i == 59999) {
+                    CNN.update(batchSize);
+                }
+            }
+        }
+
+        static void testNN() {
             int correct = 0;
             Double totalCrossEntropyLoss = 0.0;
             Double averageCrossEntropyLoss = 0.0;
@@ -120,7 +108,7 @@ namespace Conv_Net {
             Console.WriteLine("Average cross entropy loss: " + averageCrossEntropyLoss);
         }
 
-        static void train(int batchSize) {
+        static void trainNN(int batchSize) {
             for (int i = 0; i < 60000; i++) {
                 Tuple<Double[,,], Double[,,]> t;
                 t = NN.forward(trainImageArray[i], trainLabelArray[i]);

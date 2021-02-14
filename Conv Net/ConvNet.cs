@@ -5,30 +5,34 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class Net {
+    class ConvNet {
 
         public InputLayer Input;
-        public FlattenLayer Flatten;
-        public FullyConnectedLayer FC1, FC2, FC3;
+        public ConvolutionLayer Conv1, Conv2;
         public ReluLayer Relu1, Relu2;
+        public MaxPoolingLayer Pool1, Pool2;
+        public FlattenLayer Flatten3;
+        public FullyConnectedLayer FC3;
         public SoftmaxLossLayer Softmax;
 
-        public Net () {
-
+        public ConvNet () {
+            
             // Input layer
             Input = new InputLayer(28, 28, 1);
-            Flatten = new FlattenLayer();
-            
-            // Hidden layer 1
-            FC1 = new FullyConnectedLayer(784, 5, false);
+
+            // Conv layer 1
+            Conv1 = new ConvolutionLayer(1, 4, 5, 5, false);
             Relu1 = new ReluLayer();
-            
-            // Hidden layer 2
-            FC2 = new FullyConnectedLayer(5, 6, true);
+            Pool1 = new MaxPoolingLayer(2, 2, 2); // 12 x 12 x 4
+
+            // Conv layer 2
+            Conv2 = new ConvolutionLayer(4, 4, 5, 5, true);
             Relu2 = new ReluLayer();
-            
-            // Hidden layer 3
-            FC3 = new FullyConnectedLayer(6, 10, true);
+            Pool2 = new MaxPoolingLayer(2, 2, 2);  // 4 x 4 x 4
+
+            // Fully connected layer 2
+            Flatten3 = new FlattenLayer();
+            FC3 = new FullyConnectedLayer(4 * 4 * 4, 10, true);
             Softmax = new SoftmaxLossLayer();
         }
 
@@ -36,50 +40,51 @@ namespace Conv_Net {
 
             Double[,,] output;
             Double[,,] loss;
-            
-            // Input and flatten layer
+
             output = Input.forward(input);
-            output = Flatten.forward(output);
 
-            // Hidden layer 1
-            output = FC1.forward(output);
+            output = Conv1.forward(output);
             output = Relu1.forward(output);
+            output = Pool1.forward(output);
 
-            // Hidden layer 2
-            output = FC2.forward(output);
+            output = Conv2.forward(output);
             output = Relu2.forward(output);
-
-            // Output layer
+            output = Pool2.forward(output);
+            
+            output = Flatten3.forward(output);
             output = FC3.forward(output);
             output = Softmax.forward(output);
 
-            // Loss layer
             loss = Softmax.categoricalCrossEntropyLoss(target);
             return Tuple.Create(output, loss);
         }
-        
+
         public void backward () {
-            
             Double[,,] grad;
 
-            // Output layer
             grad = Softmax.backward();
             grad = FC3.backward(grad);
+            grad = Flatten3.backward(grad);
 
-            // Hidden layer 2
+            grad = Pool2.backward(grad);
             grad = Relu2.backward(grad);
-            grad = FC2.backward(grad);
+            grad = Conv2.backward(grad);
 
-            // Hidden layer 1 
-            // FC1.backward returns null as gradient of loss with respect to FC1 inputs (which is the image) is not needed
+            grad = Pool1.backward(grad);
             grad = Relu1.backward(grad);
-            grad = FC1.backward(grad);
+            grad = Conv1.backward(grad);
         }
-
+         
         public void update (int batchSize) {
             FC3.update(batchSize);
-            FC2.update(batchSize);
-            FC1.update(batchSize);
+            Conv2.update(batchSize);
+            Conv1.update(batchSize);
         }
+            
+            
+
+        
+        
+
     }
 }

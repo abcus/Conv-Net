@@ -54,6 +54,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConvNet.cs" />
     <Compile Include="Layers\ConvolutionLayer.cs" />
     <Compile Include="Layers\FlattenLayer.cs" />
     <Compile Include="Layers\FullyConnectedLayer.cs" />

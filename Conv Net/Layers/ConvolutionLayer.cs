@@ -30,6 +30,8 @@ namespace Conv_Net {
         private int numGradientOutputColumns;
         private int numGradientOutputChannels;
 
+        private bool needsGradient;
+
         public Double[][,,] filters;
         public Double[][,,] biases;
         public Double[][,,] gradientFilters;
@@ -38,7 +40,7 @@ namespace Conv_Net {
 
 
 
-        public ConvolutionLayer(int numInputChannels, int numFilters, int numFilterRows, int numFilterColumns, int stride = 1) {
+        public ConvolutionLayer(int numInputChannels, int numFilters, int numFilterRows, int numFilterColumns, bool needsGradient, int stride = 1) {
 
             this.numInputChannels = numInputChannels;
 
@@ -49,6 +51,8 @@ namespace Conv_Net {
             this.stride = stride;
 
             this.numBiases = numFilters;
+
+            this.needsGradient = needsGradient;
 
             this.filters = new Double[this.numFilters][,,];
             this.biases = new Double[this.numBiases][,,];
@@ -193,39 +197,43 @@ namespace Conv_Net {
                 }
             }
 
-            // Calculate gradient of loss with respect to input
-            elementwiseProduct = 0.0;
+            if (this.needsGradient == true) {
+                // Calculate gradient of loss with respect to input
+                elementwiseProduct = 0.0;
 
-            // Select the Z position of the input gradient to be calculated
-            for (int i = 0; i < this.numInputChannels; i++) {
+                // Select the Z position of the input gradient to be calculated
+                for (int i = 0; i < this.numInputChannels; i++) {
 
-                // Loop through each filter
-                for (int j = 0; j < this.numFilters; j++) {
+                    // Loop through each filter
+                    for (int j = 0; j < this.numFilters; j++) {
 
-                    // For all filterIndex, calculate the full convolutions from right to left, bottom to top of gradientOutput[__,__, filterIndex] over 180 rotated filter [filterIndex][__,__,gradientInputPosZ] 
-                    // gradientInput[__,__,gradientInputPosZ] is the elementwise sum of those convolutions
+                        // For all filterIndex, calculate the full convolutions from right to left, bottom to top of gradientOutput[__,__, filterIndex] over 180 rotated filter [filterIndex][__,__,gradientInputPosZ] 
+                        // gradientInput[__,__,gradientInputPosZ] is the elementwise sum of those convolutions
 
-                    // Select the Y position of the input gradient to be calculated (to get the Y position on the rotated filter where the top left corner of the output gradient is positioned for convolution, reflect across X axis)
-                    for (int k = 0; k < this.numInputRows; k++) {
+                        // Select the Y position of the input gradient to be calculated (to get the Y position on the rotated filter where the top left corner of the output gradient is positioned for convolution, reflect across X axis)
+                        for (int k = 0; k < this.numInputRows; k++) {
 
-                        // Select the X position of the input gradient to be calculated (to get the X position on the rotated filter where the top left corner of the output gradient is positioned for convolution, reflect across Y axis)
-                        for (int l = 0; l < this.numInputColumns; l++) {
+                            // Select the X position of the input gradient to be calculated (to get the X position on the rotated filter where the top left corner of the output gradient is positioned for convolution, reflect across Y axis)
+                            for (int l = 0; l < this.numInputColumns; l++) {
 
-                            // Loop through each element of the output gradient and multiply by the corresponding element in the filter, add the products
-                            for (int m = 0; m < this.numGradientOutputRows; m++) {
-                                for (int n = 0; n < this.numGradientOutputColumns; n++) {
-                                    elementwiseProduct += gradientOutput[m, n, j] * zeroPadded180RotatedFilters[j][this.numInputRows- k - 1 + m, this.numInputColumns- l - 1 + n, i];
+                                // Loop through each element of the output gradient and multiply by the corresponding element in the filter, add the products
+                                for (int m = 0; m < this.numGradientOutputRows; m++) {
+                                    for (int n = 0; n < this.numGradientOutputColumns; n++) {
+                                        elementwiseProduct += gradientOutput[m, n, j] * zeroPadded180RotatedFilters[j][this.numInputRows - k - 1 + m, this.numInputColumns - l - 1 + n, i];
 
+                                    }
                                 }
+                                // Increment the value of the input gradient (value is incremented each loop through filterIndex)
+                                gradientInput[k, l, i] += elementwiseProduct;
+                                elementwiseProduct = 0.0;
                             }
-                            // Increment the value of the input gradient (value is incremented each loop through filterIndex)
-                            gradientInput[k, l, i] += elementwiseProduct;
-                            elementwiseProduct = 0.0;
                         }
                     }
                 }
+                return gradientInput;
+            } else {
+                return null;
             }
-            return gradientInput;
         }
 
         // Update filters and biases

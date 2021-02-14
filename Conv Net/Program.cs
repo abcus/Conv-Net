@@ -29,10 +29,7 @@ namespace Conv_Net {
             Application.Run(new Form1());*/
 
             ConvolutionLayer convTest = new ConvolutionLayer(16, 32, 3, 3);
-            for (int i=0; i < 32; i++) {
-                Console.WriteLine("Filter " + i);
-                Utils.printArray(convTest.gradientFilters[i]);
-            }
+
             
             
             

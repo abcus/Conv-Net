@@ -30,38 +30,61 @@ namespace Conv_Net {
 
             Utils.loadMNIST(60000, 10000, 28, 28, 1, 10);
 
-            ConvolutionLayer convTest = new ConvolutionLayer(1, 5, 3, 3);
-            FlattenLayer flattenTest = new FlattenLayer();
-            FullyConnectedLayer FCTest = new FullyConnectedLayer(3380, 10, true);
-            SoftmaxLossLayer softmaxTest = new SoftmaxLossLayer();
+            ConvolutionLayer conv1 = new ConvolutionLayer(1, 5, 3, 3);
+            ReluLayer relu1 = new ReluLayer();
+            MaxPoolingLayer pool1 = new MaxPoolingLayer(2, 2, 2);
+            FlattenLayer flatten1 = new FlattenLayer();
+            FullyConnectedLayer FC1 = new FullyConnectedLayer(3380, 10, true);
+            SoftmaxLossLayer softmax = new SoftmaxLossLayer();
 
-            Utils.printImages(testImageArray[0]);
-            Utils.printLabels(testLabelArray[0]);
+            Double[,,] test = { {{12, 1 },{20, 2},{30, 3},{0, 4} },{ {8, 5 },{12, 6 },{2, 7 },{0, 8 } },{ {34, 9 },{70, 10 },{37, 11 },{4, 12 } },{ {112, 13 },{100, 14 },{25, 15},{12, 16 } } };
+            Utils.printArray(test);
+            test = pool1.forward(test);
+            Utils.printArray(test);
 
-            for (int i=0; i < 10; i++) {
-                Double[,,] output = testImageArray[0];
+            Utils.printArray(pool1.backward(test));
+
+            /*for (int i=0; i < 200; i++) {
+                Double[,,] output = trainImageArray[i];
                 Double[,,] loss;
 
-                output = convTest.forward(output);
-                output = flattenTest.forward(output);
-                output = FCTest.forward(output);
-                output = softmaxTest.forward(output);
-                Utils.printArray(output);
-                
-                loss = softmaxTest.categoricalCrossEntropyLoss(testLabelArray[0]);
+                output = conv1.forward(output);
+                output = relu1.forward(output);
+                output = flatten1.forward(output);
+                output = FC1.forward(output);
+                output = softmax.forward(output);
+                loss = softmax.categoricalCrossEntropyLoss(trainLabelArray[i]);
 
-                Utils.printArray(loss);
+                Console.WriteLine(i);
 
                 Double[,,] grad;
+                grad = softmax.backward();
+                grad = FC1.backward(grad);
+                grad = flatten1.backward(grad);
+                grad = relu1.backward(grad);
+                grad = conv1.backward(grad);
 
-                grad = softmaxTest.backward();
-                grad = FCTest.backward(grad);
-                grad = flattenTest.backward(grad);
-                grad = convTest.backward(grad);
-
-                FCTest.update(1);
-                convTest.update(1);
+                FC1.update(1);
+                conv1.update(1);
             }
+
+            int correct = 0;
+            for (int i=0; i < 100; i++) {
+                Double[,,] output = testImageArray[i + 1000];
+                Double[,,] loss;
+
+                output = conv1.forward(output);
+                output = flatten1.forward(output);
+                output = FC1.forward(output);
+                output = softmax.forward(output);
+                if (Utils.indexMaxValue(output) == Utils.indexMaxValue(testLabelArray[i + 1000])) {
+                    correct++;
+                }
+                Console.WriteLine(correct + " correct out of " + (i));
+            }*/
+
+
+        
             
 
             

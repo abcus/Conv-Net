@@ -60,6 +60,7 @@
     <Compile Include="Layers\InputLayer.cs" />
     <Compile Include="Layers\ReluLayer.cs" />
     <Compile Include="Layers\SoftmaxLossLayer.cs" />
+    <Compile Include="Layers\MaxPoolingLayer.cs" />
     <Compile Include="Net.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="Form1.cs">

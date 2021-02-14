@@ -13,15 +13,16 @@ namespace Conv_Net {
         }
 
         public Double[,,] forward(Double[,,] input) {
-            int numInputRows = input.GetLength(0);
-            int numInputColumns = input.GetLength(1);
-            int numInputChannels = input.GetLength(2);
             this.input = input;
-            Double[,,] output = new Double[numInputRows, numInputColumns, numInputChannels];
 
-            for (int i = 0; i < numInputRows; i++) {
-                for (int j = 0; j < numInputColumns; j++) {
-                    for (int k = 0; k < numInputChannels; k++) {
+            int numOutputRows = input.GetLength(0);
+            int numOutputColumns = input.GetLength(1);
+            int numOutputChannels = input.GetLength(2);
+            Double[,,] output = new Double[numOutputRows, numOutputColumns, numOutputChannels];
+
+            for (int i = 0; i < numOutputRows; i++) {
+                for (int j = 0; j < numOutputColumns; j++) {
+                    for (int k = 0; k < numOutputChannels; k++) {
                         output[i, j, k] = input[i, j, k] >= 0 ? input[i, j, k] : 0;
                     }
                 }

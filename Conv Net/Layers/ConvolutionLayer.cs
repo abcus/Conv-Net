@@ -4,19 +4,27 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Conv_Net;
+using System.Diagnostics;
 
 namespace Conv_Net {
     class ConvolutionLayer {
 
+        private int numInputRows;
+        private int numInputColumns;
         private int numInputChannels;
 
         private int numFilters;
         private int numFilterRows;
         private int numFilterColumns;
         private int numFilterChannels;
-        private int stride;
 
         private int numBiases;
+
+        private int numOutputRows;
+        private int numOutputColumns;
+        private int numOutputChannels;
+
+        private int stride;
 
         public Double[][,,] filters;
         public Double[][,,] biases;
@@ -68,6 +76,48 @@ namespace Conv_Net {
                 Double[,,] tempFilterGradient = new Double[this.numFilterRows, this.numFilterColumns, this.numFilterChannels];
                 this.gradientFilters[i] = tempFilterGradient;
             }
+        }
+
+        public Double[,,] forward (Double[,,] input) {
+            this.numInputRows = input.GetLength(0);
+            this.numInputColumns = input.GetLength(1);
+
+            Debug.Assert(this.numInputChannels == input.GetLength(2));
+
+            this.numOutputRows= (this.numInputRows - this.numFilterRows) / this.stride + 1;
+            this.numOutputColumns = (this.numInputColumns - this.numFilterRows) / this.stride + 1;
+            this.numOutputChannels = this.numFilters;
+            Double[,,] output = new Double[this.numOutputRows, this.numOutputColumns, this.numOutputChannels];
+
+            Double elementwiseProduct = 0.0;
+
+            // Select the filter
+            for (int i = 0; i < this.numFilters; i++) {
+
+                // Select the row on the input where the top left corner of the filter is positioned 
+                for (int j = 0; j <= this.numInputRows - this.numFilterRows; j += this.stride) {
+
+                    // Select the column on the input where the top left corner of the filter is positioned 
+                    for (int k = 0; k <= this.numInputColumns - this.numFilterColumns; k += this.stride) {
+
+                        // Loop through each element of the filter and multiply by the corresponding element of the input, add the products
+                        for (int l = 0; l < this.numFilterRows; l++) {
+                            for (int m = 0; m < this.numFilterColumns; m++) {
+                                for (int n = 0; n < this.numFilterChannels; n++) {
+                                    elementwiseProduct += filters[i][l, m, n] * input[j + l, k + m, n];
+                                }
+                            }
+                        }
+                        // Add the bias to elementwise product
+                        elementwiseProduct += this.biases[i][0, 0, 0];
+
+                        // Set the value of output
+                        output[j / stride, k / stride, i] = elementwiseProduct;
+                        elementwiseProduct = 0.0;
+                    }
+                }
+            }
+            return output;
         }
 
         /*public Double[,,] forward(Double[,,] input) {

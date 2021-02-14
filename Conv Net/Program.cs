@@ -28,16 +28,12 @@ namespace Conv_Net {
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());*/
 
-            ConvolutionLayer convTest = new ConvolutionLayer(16, 32, 3, 3);
+            Utils.loadMNIST(60000, 10000, 28, 28, 1, 10);
 
-            
-            
-            
-            
-            
-            /*Utils.loadMNIST(60000, 10000, 28, 28, 1, 10);
+            ConvolutionLayer convTest = new ConvolutionLayer(1, 5, 3, 3);
+            Utils.printArray(convTest.forward(trainImageArray[0]));
 
-            test();
+            /*test();
             for (int epoch = 0; epoch < 10; epoch++) {
                 stopwatch.Start();
                 Console.WriteLine("++++++++++++++++++++++++++++++++");

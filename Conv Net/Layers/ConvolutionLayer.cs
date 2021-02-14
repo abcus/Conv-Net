@@ -26,6 +26,10 @@ namespace Conv_Net {
 
         private int stride;
 
+        private int numGradientOutputRows;
+        private int numGradientOutputColumns;
+        private int numGradientOutputChannels;
+
         public Double[][,,] filters;
         public Double[][,,] biases;
         public Double[][,,] gradientFilters;
@@ -79,6 +83,7 @@ namespace Conv_Net {
         }
 
         public Double[,,] forward (Double[,,] input) {
+            this.input = input;
             this.numInputRows = input.GetLength(0);
             this.numInputColumns = input.GetLength(1);
 
@@ -120,64 +125,125 @@ namespace Conv_Net {
             return output;
         }
 
-        /*public Double[,,] forward(Double[,,] input) {
-            // Dimensions of the input array
-            int inputX = input.GetLength(0);
-            int inputY = input.GetLength(1);
-            int inputZ = input.GetLength(2);
+        public Double [,,] backward (Double[,,] gradientOutput) {
+            this.numGradientOutputRows = gradientOutput.GetLength(0);
+            this.numGradientOutputColumns = gradientOutput.GetLength(1);
+            this.numGradientOutputChannels = gradientOutput.GetLength(2);
 
-            // Dimensions of the output arrat
-            int outputX = (inputX - filterSize) / stride + 1;
-            int outputY = (inputY - filterSize) / stride + 1;
-            int outputZ = numFilters;
+            Debug.Assert(this.numGradientOutputRows == this.numOutputRows);
+            Debug.Assert(this.numGradientOutputColumns == this.numOutputColumns);
+            Debug.Assert(this.numGradientOutputChannels == this.numOutputChannels);
 
-            Double[,,] output = new Double[outputX, outputY, outputZ];
+            Double[,,] gradientInput = new Double[this.numInputRows, this.numInputColumns, this.numInputChannels];
 
-            Double dotProduct = 0.0;
+            Double[][,,] zeroPadded180RotatedFilters = new Double[this.numFilters][,,];
 
-            for (int filter_index = 0; filter_index < numFilters; filter_index++) {
-                for (int input_x_pos = 0; input_x_pos <= inputX - filterSize; input_x_pos += stride) {
-                    for (int input_y_pos = 0; input_y_pos <= inputY - filterSize; input_y_pos += stride) {
-                        for (int filter_x_pos = 0; filter_x_pos < filterSize; filter_x_pos++) {
-                            for (int filter_y_pos = 0; filter_y_pos < filterSize; filter_y_pos++) {
-                                for (int filter_z_pos = 0; filter_z_pos < inputZ; filter_z_pos++) {
-                                    dotProduct += filter[filter_index][filter_x_pos, filter_y_pos, filter_z_pos] * input[input_x_pos + filter_x_pos, input_y_pos + filter_y_pos, filter_z_pos];
+            Double elementwiseProduct = 0.0;
+
+            // Initialize zero padded, 180 degree rotated filter
+            // During backpropagation, will convolve the gradient of output over the padded, rotated filters so pad the filters on each side by (gradient of output size - 1)
+            for (int i = 0; i < this.numFilters; i++) {
+
+                // Check that the gradient of output is square
+                Debug.Assert(this.numGradientOutputRows == this.numGradientOutputColumns);
+                zeroPadded180RotatedFilters[i] = Utils.zeroPad(this.numGradientOutputRows - 1, Utils.rotate180(this.filters[i]));
+            }
+
+            // CALCULATING GRADIENTS-------------------------------------------------------------------------------------------------------------------------
+
+            // Calculate gradient of loss with respect to biases
+            for (int i = 0; i < this.numBiases; i++) {
+                Double sum = 0.0;
+                for (int j = 0; j < this.numGradientOutputRows; j++) {
+                    for (int k = 0; k < this.numGradientOutputColumns; k++) {
+                        sum += gradientOutput[j, k, i];
+                    }
+                }
+                this.gradientBiases[i][0, 0, 0] += sum;
+                sum = 0.0;
+            }
+
+            // Calculate gradient of loss with respect to filters
+            elementwiseProduct = 0.0;
+
+            // Select the filter gradient
+            for (int i = 0; i < this.numFilters; i++) {
+
+                // Select the Z position of the filter gradient to be calculated
+                for (int j = 0; j < this.numFilterChannels; j++) {
+
+                    // gradientFilters[gradientFilterIndex][__,__,gradientFilterPosZ] is the convolution of gradientOutput[__,__,gradientFilterIndex] over input [__,__,gradientFilterPosZ]
+                    // Select the Y position of the filter gradient to be calculated (also the Y position on the input where the top left corner of the output gradient is positioned for the convolution)
+                    for (int k = 0; k < this.numFilterRows; k++) {
+
+                        // Select the X position of the filter gradient to be calculated (also the X position on the input where the top left corner of the output gradient is positioned for the convolution)
+                        for (int l = 0; l < this.numFilterColumns; l++) {
+
+                            // Loop through each element of the output gradient and multiply by the corresponding element in the input, add the products
+                            for (int m = 0; m < this.numGradientOutputRows; m++) {
+                                for (int n = 0; n < this.numGradientOutputColumns; n++) {
+                                    elementwiseProduct += gradientOutput[m, n, i] * this.input[k + m, l + n, j];
                                 }
                             }
+                            // Set the value of the filter gradient
+                            this.gradientFilters[i][k, l, j] += elementwiseProduct;
+                            elementwiseProduct = 0.0;
                         }
-                        dotProduct += biases[filter_index][0, 0, 0];
-                        output[input_x_pos / stride, input_y_pos / stride, filter_index] = dotProduct;
-                        dotProduct = 0.0;
                     }
                 }
             }
-            return output;
-        }*/
 
-        /*
-       // Returns gradient of cost with respect to input (dC/da = dC/dz * dz/da)
-        public Double [,,] backwardInput (Double [,,] inputGradient) {
-            // inputGradient dC/dz will have same dimensions as output
-            // dC/da = Full convolution of dC/dz over rotated filter
-            // dC/da will have same dimension as input
-        }*/
+            // Calculate gradient of loss with respect to input
+            elementwiseProduct = 0.0;
 
-        // Returns gradient of cost with respect to filter (dC/dw = dC/dz * dz/dw)
-        public Double [][,,] backwardFilter (Double [,,] inputGradient, Double[,,] image, Double[][,,] filter, Double[][,,] bias) {
-            // Input gradient dC/dz will have same dimension as output
-            // dC/dw = convolution of dC/dz over input
-            // dC/dw will have same dimension as filter
+            // Select the Z position of the input gradient to be calculated
+            for (int i = 0; i < this.numInputChannels; i++) {
 
+                // Loop through each filter
+                for (int j = 0; j < this.numFilters; j++) {
 
+                    // For all filterIndex, calculate the full convolutions from right to left, bottom to top of gradientOutput[__,__, filterIndex] over 180 rotated filter [filterIndex][__,__,gradientInputPosZ] 
+                    // gradientInput[__,__,gradientInputPosZ] is the elementwise sum of those convolutions
 
-            Double[,,] dFilter = new Double[1,1,1];
-            Double[,,] dBias = new Double[1, 1, 1];
-            Double[,,] dImage = new Double[1,1,1];
-            Double[][,,] output = new Double[3][,,];
-            output[0] = dFilter;
-            output[1] = dBias;
-            output[2] = dImage;
-            return output;
+                    // Select the Y position of the input gradient to be calculated (to get the Y position on the rotated filter where the top left corner of the output gradient is positioned for convolution, reflect across X axis)
+                    for (int k = 0; k < this.numInputRows; k++) {
+
+                        // Select the X position of the input gradient to be calculated (to get the X position on the rotated filter where the top left corner of the output gradient is positioned for convolution, reflect across Y axis)
+                        for (int l = 0; l < this.numInputColumns; l++) {
+
+                            // Loop through each element of the output gradient and multiply by the corresponding element in the filter, add the products
+                            for (int m = 0; m < this.numGradientOutputRows; m++) {
+                                for (int n = 0; n < this.numGradientOutputColumns; n++) {
+                                    elementwiseProduct += gradientOutput[m, n, j] * zeroPadded180RotatedFilters[j][this.numInputRows- k - 1 + m, this.numInputColumns- l - 1 + n, i];
+
+                                }
+                            }
+                            // Increment the value of the input gradient (value is incremented each loop through filterIndex)
+                            gradientInput[k, l, i] += elementwiseProduct;
+                            elementwiseProduct = 0.0;
+                        }
+                    }
+                }
+            }
+            return gradientInput;
         }
+
+        // Update filters and biases
+        public void update (int batchSize) {
+            for (int i=0; i < this.numFilters; i++) {
+                this.biases[i][0, 0, 0] -= (this.gradientBiases[i][0, 0, 0] * Program.eta / batchSize);
+                this.gradientBiases[i][0, 0, 0] = 0.0;
+            
+                for (int j = 0; j < this.numFilterRows; j ++) {
+                    for (int k=0; k < this.numFilterColumns; k++) {
+                        for (int l=0; l < this.numFilterChannels; l++) {
+                            this.filters[i][j, k, l] -= (this.gradientFilters[i][j, k, l] * Program.eta / batchSize);
+                            this.gradientFilters[i][j, k, l] = 0.0;
+                        }
+                    }
+                }
+            }
+        }
+        
     }
 }

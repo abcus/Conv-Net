@@ -66,6 +66,40 @@ namespace Conv_Net {
             return output;
         }
 
+        static public Double[,,] zeroPad(int padSize, Double[,,] input) {
+            int numInputRows = input.GetLength(0);
+            int numInputColumns = input.GetLength(1);
+            int numInputChannels = input.GetLength(2);
+
+            Double[,,] output = new Double[numInputRows + 2 * padSize, numInputColumns + 2 * padSize, numInputChannels];
+
+            for (int i = 0; i < numInputRows; i++) {
+                for (int j = 0; j < numInputColumns; j++) {
+                    for (int k = 0; k < numInputChannels; k++) {
+                        output[i + padSize, j + padSize, k] = input[i, j, k];
+                    }
+                }
+            }
+            return output;
+        }
+
+        static public Double[,,] rotate180(Double[,,] input) {
+            int numInputRows = input.GetLength(0);
+            int numInputColumns = input.GetLength(1);
+            int numInputChannels = input.GetLength(2);
+
+            Double[,,] output = new Double[numInputRows, numInputColumns, numInputChannels];
+
+            for (int i = 0; i < numInputRows; i++) {
+                for (int j = 0; j < numInputColumns; j++) {
+                    for (int k = 0; k < numInputChannels; k++) {
+                        output[i, j, k] = input[numInputRows - 1 - i, numInputColumns - 1 - j, k];
+                    }
+                }
+            }
+            return output;
+        }
+
 
         public static void loadMNIST(int numTrain, int numTest, int inputSizeX, int inputSizeY, int inputSizeZ, int labelSize) {
             Double[][,,] tempTrainImageArray = new Double[numTrain][,,];
@@ -180,7 +214,7 @@ namespace Conv_Net {
             }
         }
 
-        static void printWeightsBiases(FullyConnectedLayer Inner1, FullyConnectedLayer Inner2, FullyConnectedLayer Inner3) {
+        static public void printWeightsBiases(FullyConnectedLayer Inner1, FullyConnectedLayer Inner2, FullyConnectedLayer Inner3) {
 
             Console.WriteLine("Layer 1 weights");
             for (int i = 0; i < Inner1.weights.Count(); i++) {
@@ -219,7 +253,7 @@ namespace Conv_Net {
             }
         }
 
-        static void printImages(Double[,,] image) {
+        static public void printImages(Double[,,] image) {
             int size_x = image.GetLength(0);
             int size_y = image.GetLength(1);
             int size_z = image.GetLength(2);
@@ -242,7 +276,7 @@ namespace Conv_Net {
             Console.WriteLine(s);
         }
 
-        static void printLabels(Double[,,] label) {
+        static public void printLabels(Double[,,] label) {
             int size_z = label.GetLength(2);
             string s = "";
 

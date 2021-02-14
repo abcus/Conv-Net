@@ -31,7 +31,41 @@ namespace Conv_Net {
             Utils.loadMNIST(60000, 10000, 28, 28, 1, 10);
 
             ConvolutionLayer convTest = new ConvolutionLayer(1, 5, 3, 3);
-            Utils.printArray(convTest.forward(trainImageArray[0]));
+            FlattenLayer flattenTest = new FlattenLayer();
+            FullyConnectedLayer FCTest = new FullyConnectedLayer(3380, 10, true);
+            SoftmaxLossLayer softmaxTest = new SoftmaxLossLayer();
+
+            Utils.printImages(testImageArray[0]);
+            Utils.printLabels(testLabelArray[0]);
+
+            for (int i=0; i < 10; i++) {
+                Double[,,] output = testImageArray[0];
+                Double[,,] loss;
+
+                output = convTest.forward(output);
+                output = flattenTest.forward(output);
+                output = FCTest.forward(output);
+                output = softmaxTest.forward(output);
+                Utils.printArray(output);
+                
+                loss = softmaxTest.categoricalCrossEntropyLoss(testLabelArray[0]);
+
+                Utils.printArray(loss);
+
+                Double[,,] grad;
+
+                grad = softmaxTest.backward();
+                grad = FCTest.backward(grad);
+                grad = flattenTest.backward(grad);
+                grad = convTest.backward(grad);
+
+                FCTest.update(1);
+                convTest.update(1);
+            }
+            
+
+            
+
 
             /*test();
             for (int epoch = 0; epoch < 10; epoch++) {

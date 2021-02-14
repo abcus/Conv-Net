@@ -20,14 +20,25 @@ namespace Conv_Net {
         public static Stopwatch stopwatch = new Stopwatch();
 
         public static Net NN = new Net();
-        public static Double eta = 0.001;
+        public static Double eta = 0.01;
+        public static int batchSize = 16;
 
         static void Main() {
             /*Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());*/
 
-            Utils.loadMNIST(60000, 10000, 28, 28, 1, 10);
+            ConvolutionLayer convTest = new ConvolutionLayer(16, 32, 3, 3);
+            for (int i=0; i < 32; i++) {
+                Console.WriteLine("Filter " + i);
+                Utils.printArray(convTest.gradientFilters[i]);
+            }
+            
+            
+            
+            
+            
+            /*Utils.loadMNIST(60000, 10000, 28, 28, 1, 10);
 
             test();
             for (int epoch = 0; epoch < 10; epoch++) {
@@ -35,14 +46,12 @@ namespace Conv_Net {
                 Console.WriteLine("++++++++++++++++++++++++++++++++");
                 Console.WriteLine("Epoch: " + epoch);
                 Utils.shuffleTrainingSet();
-                train(1);
+                train(batchSize);
                 test();
                 stopwatch.Stop();
                 Console.WriteLine("Time elapsed: " + stopwatch.Elapsed);
                 stopwatch.Reset();
-            }
-
-
+            }*/
         }
 
         static void test() {

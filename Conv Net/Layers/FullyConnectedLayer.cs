@@ -32,7 +32,7 @@ namespace Conv_Net {
                 tempBiases[0, 0, 0] = 0.0;
                 this.biases[i] = tempBiases;
 
-                // Weight initialization (set to random value from normal distribution * sqrt(2/previous layer size)
+                // Weight initialization (set to random value from normal distribution * sqrt(2/previous layer size))
                 Double[,,] tempWeights = new Double[1, 1, previousLayerSize];
                 for (int j = 0; j < previousLayerSize; j++) {
                     tempWeights[0, 0, j] = Program.normalDist.Sample() * Math.Sqrt(2 / (Double)previousLayerSize);

@@ -8,29 +8,69 @@ using Conv_Net;
 namespace Conv_Net {
     class ConvolutionLayer {
 
+        private int numInputChannels;
+
         private int numFilters;
-        private int filterSize;
+        private int numFilterRows;
+        private int numFilterColumns;
+        private int numFilterChannels;
         private int stride;
-        private Double[][,,] filter;
-        private Double[][,,] biases;
+
+        private int numBiases;
+
+        public Double[][,,] filters;
+        public Double[][,,] biases;
+        public Double[][,,] gradientFilters;
+        public Double[][,,] gradientBiases;
+        public Double[,,] input;
 
 
-        public ConvolutionLayer(int inputZ, int numFilters, int filterSize, int stride = 1) {
+
+        public ConvolutionLayer(int numInputChannels, int numFilters, int numFilterRows, int numFilterColumns, int stride = 1) {
+
+            this.numInputChannels = numInputChannels;
 
             this.numFilters = numFilters;
-            this.filterSize = filterSize;
+            this.numFilterRows = numFilterRows;
+            this.numFilterColumns = numFilterColumns;
+            this.numFilterChannels = numInputChannels;
             this.stride = stride;
-            filter = new Double[numFilters][,,];
-            biases = new Double[numFilters][,,];
 
-            for (int i=0; i < numFilters; i++) {
-                filter[i] = new Double[filterSize, filterSize, inputZ];
-                biases[i] = new Double[1, 1, 1];
+            this.numBiases = numFilters;
+
+            this.filters = new Double[this.numFilters][,,];
+            this.biases = new Double[this.numBiases][,,];
+            this.gradientFilters = new Double[this.numFilters][,,];
+            this.gradientBiases = new Double[this.numBiases][,,];
+
+            for (int i = 0; i < this.numFilters; i++) {
+                
+                // Bias initialization (set to 0)
+                Double[,,] tempBias = new Double[1, 1, 1];
+                tempBias[0, 0, 0] = 0.0;
+                this.biases[i] = tempBias;
+
+                // Filter initialization (set to random value from normal distribution * sqrt(2/ numFilters * numFilterRows * numFilterColumns))
+                Double[,,] tempFilter = new Double[this.numFilterRows, this.numFilterColumns, this.numFilterChannels];
+                for (int j = 0; j < this.numFilterRows; j++) {
+                    for (int k = 0; k < this.numFilterColumns; k++) {
+                        for (int l = 0; l < this.numFilterChannels; l++) {
+                            tempFilter[j, k, l] = Program.normalDist.Sample() * Math.Sqrt(2 / ((Double)this.numFilters * this.numFilterRows * this.numFilterColumns));
+                        }
+                    }
+                }
+                this.filters[i] = tempFilter;
+
+                // Initialize gradient of biases and filters with respect to loss (have to store these for gradient descent)
+                Double[,,] tempBiasGradient = new Double[1, 1, 1];
+                this.gradientBiases[i] = tempBiasGradient;
+
+                Double[,,] tempFilterGradient = new Double[this.numFilterRows, this.numFilterColumns, this.numFilterChannels];
+                this.gradientFilters[i] = tempFilterGradient;
             }
-            // Initialize filter weights
         }
 
-        public Double[,,] forward(Double[,,] input) {
+        /*public Double[,,] forward(Double[,,] input) {
             // Dimensions of the input array
             int inputX = input.GetLength(0);
             int inputY = input.GetLength(1);
@@ -62,7 +102,7 @@ namespace Conv_Net {
                 }
             }
             return output;
-        }
+        }*/
 
         /*
        // Returns gradient of cost with respect to input (dC/da = dC/dz * dz/da)

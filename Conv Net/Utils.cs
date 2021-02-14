@@ -261,43 +261,41 @@ namespace Conv_Net {
         }
 
         static public void printArray(Double[,,] input) {
-            int x = input.GetLength(0);
-            int y = input.GetLength(1);
-            int z = input.GetLength(2);
+            int rows = input.GetLength(0);
+            int columns = input.GetLength(1);
+            int channels = input.GetLength(2);
 
-            Console.WriteLine("");
-            Console.WriteLine("x: " + x);
-            Console.WriteLine("y: " + y);
-            Console.WriteLine("z: " + z);
-            Console.WriteLine("");
+            Console.WriteLine("Rows: " + rows);
+            Console.WriteLine("Columns: " + columns);
+            Console.WriteLine("Channels: " + channels);
 
             Console.Write("(");
-            for (int i = 0; i < x; i++) {
+            for (int i = 0; i < rows; i++) {
                 Console.Write("[");
-                for (int j = 0; j < y; j++) {
+                for (int j = 0; j < columns; j++) {
                     Console.Write("{");
-                    for (int k = 0; k < z; k++) {
+                    for (int k = 0; k < channels; k++) {
                         Console.Write(input[i, j, k]);
-                        if (k < z - 1) {
+                        if (k < channels - 1) {
                             Console.Write(", ");
                         } else {
                             Console.Write("}");
                         }
                     }
-                    if (j < y - 1) {
+                    if (j < columns - 1) {
                         Console.Write(", ");
                     } else {
                         Console.Write("");
                     }
                 }
-
                 Console.Write("]");
-                if (i < x - 1) {
+                if (i < rows - 1) {
                     Console.WriteLine(",");
                 }
                 Console.Write("");
             }
-            Console.Write(")");
+            Console.WriteLine(")");
+            Console.WriteLine("-----------------------------------------");
         }
     }
 }

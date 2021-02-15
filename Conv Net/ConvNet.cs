@@ -21,18 +21,18 @@ namespace Conv_Net {
             Input = new InputLayer(28, 28, 1);
 
             // Conv layer 1
-            Conv1 = new ConvolutionLayer(1, 4, 5, 5, false);
+            Conv1 = new ConvolutionLayer(1, 8, 5, 5, false); // 24 x 24 x 8 (200 F + 8 B)
             Relu1 = new ReluLayer();
-            Pool1 = new MaxPoolingLayer(2, 2, 2); // 12 x 12 x 4
+            Pool1 = new MaxPoolingLayer(2, 2, 2); // 12 x 12 x 8
 
             // Conv layer 2
-            Conv2 = new ConvolutionLayer(4, 4, 5, 5, true);
+            Conv2 = new ConvolutionLayer(8, 8, 5, 5, true); // 8 x 8 x 8 (1600 F + 8 B)
             Relu2 = new ReluLayer();
-            Pool2 = new MaxPoolingLayer(2, 2, 2);  // 4 x 4 x 4
+            Pool2 = new MaxPoolingLayer(2, 2, 2);  // 4 x 4 x 8
 
             // Fully connected layer 2
-            Flatten3 = new FlattenLayer();
-            FC3 = new FullyConnectedLayer(4 * 4 * 4, 10, true);
+            Flatten3 = new FlattenLayer(); // 1 x 1 x 128
+            FC3 = new FullyConnectedLayer(4 * 4 * 8, 10, true); // 1 x 1 x 10 (1280 W + 1 B)
             Softmax = new SoftmaxLossLayer();
         }
 
@@ -55,7 +55,7 @@ namespace Conv_Net {
             output = FC3.forward(output);
             output = Softmax.forward(output);
 
-            loss = Softmax.categoricalCrossEntropyLoss(target);
+            loss = Softmax.loss(target);
             return Tuple.Create(output, loss);
         }
 

@@ -48,7 +48,7 @@ namespace Conv_Net {
         }
 
         // Categorical cross entropy loss
-        public Double[,,] categoricalCrossEntropyLoss(Double[,,] target) {
+        public Double[,,] loss(Double[,,] target) {
 
             this.target = target;
             int layerSize = this.softmaxOutput.GetLength(2);

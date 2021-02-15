@@ -33,15 +33,18 @@ namespace Conv_Net {
 
             testCNN();
             for (int epoch = 0; epoch < 10; epoch ++) {
-                stopwatch.Start();
-                Console.WriteLine("@@@@@@@@@@@@@@@@@@@@@@@@@@");
+                Console.WriteLine("------------------------------------------");
                 Console.WriteLine("Epoch: " + epoch);
                 Utils.shuffleTrainingSet();
-                trainCNN(4);
-                testCNN();
+
+                stopwatch.Start();
+                trainCNN(batchSize);
                 stopwatch.Stop();
-                Console.WriteLine("Time elapsed: " + stopwatch.Elapsed);
+                Console.WriteLine("Time elapsed for training: " + stopwatch.Elapsed);
                 stopwatch.Reset();
+                
+                testCNN();
+                
             }
 
 
@@ -75,11 +78,11 @@ namespace Conv_Net {
             averageCrossEntropyLoss = totalCrossEntropyLoss / 10000;
 
             Console.WriteLine(correct + " correct out of 10,000. \t Accuracy " + (Double)correct / 10000 * 100 + "%");
-            Console.WriteLine("Average cross entropy loss: " + averageCrossEntropyLoss);
+            Console.WriteLine("Average cross entropy loss: " + averageCrossEntropyLoss + "\n\n");
         }
 
         static void trainCNN(int batchSize) {
-            for (int i = 0; i < 1000; i++) {
+            for (int i = 0; i < 60000; i++) {
                 Tuple<Double[,,], Double[,,]> t;
                 t = CNN.forward(trainImageArray[i], trainLabelArray[i]);
                 CNN.backward();

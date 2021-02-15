@@ -54,7 +54,7 @@ namespace Conv_Net {
             output = Softmax.forward(output);
 
             // Loss layer
-            loss = Softmax.categoricalCrossEntropyLoss(target);
+            loss = Softmax.loss(target);
             return Tuple.Create(output, loss);
         }
         

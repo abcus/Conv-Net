@@ -101,12 +101,12 @@ namespace Conv_Net {
         }
 
 
-        public static Tuple<Tensor, Tensor, Tensor, Tensor> loadMNIST(int num_train, int num_test, int num_input_rows, int num_input_columns, int num_input_channels, int num_label_channels) {
-            Tensor tempTrainImageArray = new Tensor(4, num_train, num_input_rows, num_input_columns, num_input_channels);        
-            Tensor tempTrainLabelArray = new Tensor(2, num_train, 1, 1, num_label_channels);
+        public static Tuple<Tensor, Tensor, Tensor, Tensor> load_MNIST(int num_train, int num_test, int num_input_rows, int num_input_columns, int num_input_channels, int num_label_channels) {
+            Tensor training_images = new Tensor(4, num_train, num_input_rows, num_input_columns, num_input_channels);        
+            Tensor training_labels = new Tensor(2, num_train, 1, 1, num_label_channels);
 
-            Tensor tempTestImageArray = new Tensor(4, num_test, num_input_rows, num_input_columns, num_input_channels);
-            Tensor tempTestLabelArray = new Tensor(2, num_test, 1, 1, num_label_channels);
+            Tensor testing_images = new Tensor(4, num_test, num_input_rows, num_input_columns, num_input_channels);
+            Tensor testing_labels = new Tensor(2, num_test, 1, 1, num_label_channels);
 
             try {
                 // Load training data
@@ -132,13 +132,13 @@ namespace Conv_Net {
                             for (int l = 0; l < num_input_channels; l++) {
                                 Double pixel = brTrainImages.ReadByte();
                                 pixel = (-1 + (pixel / 127.5));
-                                tempTrainImageArray.set(i, j, k, l, pixel);
+                                training_images.set(i, j, k, l, pixel);
                             }
                         }
                     }
                     // Load label
                     int label = brTrainLabels.ReadByte();
-                    tempTrainLabelArray.set(i, 0, 0, label, 1.0);
+                    training_labels.set(i, 0, 0, label, 1.0);
                 }
                 trainImagesStream.Close();
                 brTrainImages.Close();
@@ -169,13 +169,13 @@ namespace Conv_Net {
                             for (int l = 0; l < num_input_channels; l++) {
                                 Double pixel = brTestImages.ReadByte();
                                 pixel = (-1 + (pixel / 127.5));
-                                tempTestImageArray.set(i, j, k, l, pixel);
+                                testing_images.set(i, j, k, l, pixel);
                             }
                         }
                     }
                     // Load label
                     int label = brTestLabels.ReadByte();
-                    tempTestLabelArray.set(i, 0, 0, label, 1.0);
+                    testing_labels.set(i, 0, 0, label, 1.0);
                 }
                 testImagesStream.Close();
                 brTestImages.Close();
@@ -183,18 +183,39 @@ namespace Conv_Net {
                 testLabelsStream.Close();
                 brTestLabels.Close();
 
-                return Tuple.Create(tempTrainImageArray, tempTrainLabelArray, tempTestImageArray, tempTestLabelArray);
+                return Tuple.Create(training_images, training_labels, testing_images, testing_labels);
             } catch {
 
             }
             return null;
         }
 
-        public static void shuffleTrainingSet() {
-            for (int i = 60000 -1; i > 0; i--) {
-                int j = Program.rand.Next(0, i);
-                (Program.trainImageArray[i], Program.trainImageArray[j]) = (Program.trainImageArray[j], Program.trainImageArray[i]);
-                (Program.trainLabelArray[i], Program.trainLabelArray[j]) = (Program.trainLabelArray[j], Program.trainLabelArray[i]);
+        
+        public static void shuffle_Tensor(Tensor training_images, Tensor training_labels) {
+            int num_samples = training_images.num_samples;
+            int num_image_rows = training_images.num_rows;
+            int num_image_columns = training_images.num_columns;
+            int num_image_channels = training_images.num_channels;
+            Double[] image_data = training_images.data;
+
+            int num_label_channels = training_labels.num_channels;
+            Double[] label_data = training_labels.data;
+
+            for (int i = num_samples - 1; i > 0; i--) {
+                int excluded_sample = Program.rand.Next(0, i);
+                
+                for (int j = 0; j < num_image_rows; j++) {
+                    for (int k = 0; k < num_image_columns; k++) {
+                        for (int l = 0; l < num_image_channels; l++) {
+                            (image_data[i * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l], image_data[excluded_sample * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l]) =
+                            (image_data[excluded_sample * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l], image_data[i * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l]);
+                        }
+                    }
+                }
+                for (int j=0; j < num_label_channels; j++) {
+                    (label_data[i * num_label_channels + j], label_data[excluded_sample * num_label_channels + j]) =
+                    (label_data[excluded_sample * num_label_channels + j], label_data[i * num_label_channels + j]);
+                }
             }
         }
 

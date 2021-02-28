@@ -15,6 +15,11 @@ namespace Conv_Net {
         public static Double[][,,] testImageArray;
         public static Double[][,,] testLabelArray;
 
+        public static Tensor training_images;
+        public static Tensor training_labels;
+        public static Tensor testing_images;
+        public static Tensor testing_labels;
+
         public static Random rand = new Random(0);
         public static MathNet.Numerics.Distributions.Normal normalDist = new MathNet.Numerics.Distributions.Normal(0, 1, rand);
         public static Stopwatch stopwatch = new Stopwatch();
@@ -29,18 +34,28 @@ namespace Conv_Net {
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());*/
 
-            Tuple<Tensor, Tensor, Tensor, Tensor> data = Utils.loadMNIST(60000, 10000, 28, 28, 1, 10);
-            trainImageArray = data.Item1.convert_to_array();
-            trainLabelArray = data.Item2.convert_to_array();
-            testImageArray = data.Item3.convert_to_array();
-            testLabelArray = data.Item4.convert_to_array();
+            Tuple<Tensor, Tensor, Tensor, Tensor> data = Utils.load_MNIST(60000, 10000, 28, 28, 1, 10);
+            training_images = data.Item1;
+            training_labels = data.Item2;
+            testing_images = data.Item3;
+            testing_labels = data.Item4;
+            
+            testImageArray = testing_images.convert_to_array();
+            testLabelArray = testing_labels.convert_to_array();
 
+            Console.WriteLine(training_images);
+            Console.WriteLine(training_labels);
+            Console.WriteLine(testing_images);
+            Console.WriteLine(testing_labels);
 
             testCNN();
             for (int epoch = 0; epoch < 10; epoch++) {
                 Console.WriteLine("------------------------------------------");
                 Console.WriteLine("Epoch: " + epoch);
-                Utils.shuffleTrainingSet();
+                
+                Utils.shuffle_Tensor(training_images, training_labels);
+                trainImageArray = training_images.convert_to_array();
+                trainLabelArray = training_labels.convert_to_array();
 
                 stopwatch.Start();
                 trainCNN(batchSize);
@@ -89,7 +104,7 @@ namespace Conv_Net {
         static void trainCNN(int batchSize) {
             for (int i = 0; i < 600; i++) {
                 Tuple<Double[,,], Double[,,]> t;
-                t = CNN.forward(trainImageArray[i], trainLabelArray[i]);
+                t = CNN.forward(trainImageArray [i], trainLabelArray[i]);
                 CNN.backward();
                 if (i % batchSize == 0 || i == 59999) {
                     CNN.update(batchSize);

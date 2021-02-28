@@ -8,12 +8,12 @@ namespace Conv_Net {
     class Tensor {
 
         // Ranks are: batch_size x rows x columns x channels
-        private int rank;
-        private int num_samples;
-        private int num_rows;
-        private int num_columns;
-        private int num_channels;
-        private Double[] data;
+        public int rank;
+        public int num_samples;
+        public int num_rows;
+        public int num_columns;
+        public int num_channels;
+        public Double[] data;
 
         public Tensor (int rank, int num_samples, int num_rows, int num_columns, int num_channels) {
             this.rank = rank;
@@ -30,6 +30,12 @@ namespace Conv_Net {
 
         public void set (int sample, int row, int column, int channel, Double value) {
             data[sample * num_rows * num_columns * num_channels + row * num_columns * num_channels + column * num_channels + channel] = value;
+        }
+
+        public override string ToString() {
+            StringBuilder s = new StringBuilder();
+            s.Append("rank: " + this.rank + "\nsamples: " + this.num_samples + "\nrows: " + this.num_rows + "\ncolumns: " + this.num_columns + "\nchannels: " + this.num_channels + "\n");
+            return s.ToString();            
         }
 
         public Double[][,,] convert_to_array () {

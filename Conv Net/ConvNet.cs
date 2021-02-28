@@ -59,6 +59,10 @@ namespace Conv_Net {
             return Tuple.Create(output, loss);
         }
 
+   
+
+
+
         public void backward () {
             Double[,,] grad;
 

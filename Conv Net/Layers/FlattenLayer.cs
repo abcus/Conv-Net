@@ -33,6 +33,12 @@ namespace Conv_Net {
             return output;
         }
 
+        public Tensor forward_tensor(Tensor input) {
+            Tensor output = new Tensor(2, input.num_samples, input.num_rows * input.num_columns * input.num_channels, 1, 1);
+            output.data = input.data;
+            return output;
+        }
+
 
         public Double[,,] backward(Double[,,] gradientOutput) {
             Double[,,] gradientInput = new Double[this.numInputRows, this.numInputColumns, this.numInputChannels];

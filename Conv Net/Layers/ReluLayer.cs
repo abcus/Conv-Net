@@ -8,6 +8,8 @@ namespace Conv_Net {
     class ReluLayer {
 
         Double[,,] input;
+
+        Tensor input_tensor;
         public ReluLayer() {
 
         }
@@ -26,6 +28,15 @@ namespace Conv_Net {
                         output[i, j, k] = input[i, j, k] >= 0 ? input[i, j, k] : 0;
                     }
                 }
+            }
+            return output;
+        }
+        public Tensor forward_tensor(Tensor input) {
+            this.input_tensor = input;
+
+            Tensor output = new Tensor(input.rank, input.num_samples, input.num_rows, input.num_columns, input.num_channels);
+            for (int i=0; i < output.num_samples * output.num_rows * output.num_columns * output.num_channels; i++) {
+                output.data[i] = input.data[i] >= 0 ? input.data[i] : 0;
             }
             return output;
         }

@@ -16,6 +16,10 @@ namespace Conv_Net {
         public Double[][,,] gradientBiases;
         public Double[,,] input;
 
+        public Tensor biases_tensor;
+        public Tensor weights_tensor;
+        public Tensor input_tensor;
+
         public FullyConnectedLayer(int previousLayerSize, int layerSize, bool needsGradient) {
             this.previousLayerSize = previousLayerSize;
             this.layerSize = layerSize;
@@ -45,6 +49,14 @@ namespace Conv_Net {
 
                 Double[,,] tempBiasGradient = new Double[1, 1, 1];
                 this.gradientBiases[i] = tempBiasGradient;
+            
+            }
+            this.biases_tensor = new Tensor(1, this.layerSize, 1, 1, 1);
+            this.weights_tensor = new Tensor(2, this.layerSize, this.previousLayerSize, 1, 1);
+            for (int i = 0; i < this.layerSize; i++) {
+                for (int j=0; j < this.previousLayerSize; j++) {
+                    this.weights_tensor.data[i * this.previousLayerSize + j] = this.weights[i][0, 0, j];
+                }
             }
         }
 
@@ -58,6 +70,26 @@ namespace Conv_Net {
             }
             return output;
         }
+        
+
+
+        public Tensor forward_tensor(Tensor input) {
+            this.input_tensor = input;
+            Tensor output = new Tensor(2, input.num_samples, 1, 1, this.layerSize);
+
+            for (int i=0; i < input.num_samples; i++) {
+                for (int j=0; j < this.layerSize; j++) {
+
+                    Double sum = 0.0;
+                    for (int k=0; k < this.previousLayerSize; k++) {
+                        sum += input.data[i * previousLayerSize + k] * this.weights_tensor.data[j * previousLayerSize + k];
+                    }
+                    output.data[i * this.layerSize + j] = (sum + this.biases_tensor.data[j]);
+                }
+            }
+            return output;
+        }
+
 
         public Double[,,] backward(Double[,,] gradientOutput) {
 

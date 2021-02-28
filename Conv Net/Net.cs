@@ -57,7 +57,39 @@ namespace Conv_Net {
             loss = Softmax.loss(target);
             return Tuple.Create(output, loss);
         }
-        
+
+        public Tuple<Tensor, Tensor> forwardTensor(Tensor input, Tensor target) {
+            Tensor output;
+            Tensor loss;
+
+            // Input and flatten layer
+            output = Flatten.forward_tensor(input);
+            Console.WriteLine(output);
+
+            // Hidden layer 1
+            output = FC1.forward_tensor(output);
+            Console.WriteLine(output);
+            output = Relu1.forward_tensor(output);
+            Console.WriteLine(output);
+
+            // Hidden layer 2
+            output = FC2.forward_tensor(output);
+            Console.WriteLine(output);
+            output = Relu2.forward_tensor(output);
+            Console.WriteLine(output);
+
+            // Output layer
+            output = FC3.forward_tensor(output);
+            Console.WriteLine(output);
+            output = Softmax.forward_tensor(output);
+            Console.WriteLine(output);
+
+            // Loss layer
+            loss = Softmax.loss_tensor(target);
+            return Tuple.Create(output, loss);
+        }
+
+
         public void backward () {
             
             Double[,,] grad;

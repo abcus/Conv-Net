@@ -11,6 +11,10 @@ namespace Conv_Net {
         private Double[,,] softmaxOutput;
         private Double[,,] target;
 
+        public Tensor input_tensor;
+        public Tensor output_tensor;
+        public Tensor target_tensor;
+
         public SoftmaxLossLayer() {
         
         }
@@ -47,6 +51,36 @@ namespace Conv_Net {
             return softmaxOutput;
         }
 
+        public Tensor forward_tensor(Tensor input) {
+            this.input_tensor = input;
+
+            Tensor output = new Tensor(input.rank, input.num_samples, input.num_rows, input.num_columns, input.num_channels);
+
+            for (int i=0; i < output.num_samples; i++) {
+                Double max = Double.MinValue;
+                for (int j=0; j < output.num_channels; j++) {
+                    if (input.data[i * output.num_channels + j] > max) {
+                        max = input.data[i * output.num_channels + j];
+                    }
+                }
+                
+                for (int j=0; j < output.num_channels; j++) {
+                    input.data[i * output.num_channels + j] -= max;
+                }
+
+                Double denominator = 0.0;
+                for (int j=0; j < output.num_channels; j++) {
+                    denominator += Math.Exp(input.data[i * output.num_channels + j]);
+                }
+
+                for (int j = 0; j < output.num_channels; j++) {
+                    output.data[i * output.num_channels + j] = Math.Exp(input.data[i * output.num_channels + j]) / denominator;
+                }
+            }
+            this.output_tensor = output;
+            return output;
+        }
+
         // Categorical cross entropy loss
         public Double[,,] loss(Double[,,] target) {
 
@@ -58,6 +92,20 @@ namespace Conv_Net {
                 loss[0, 0, 0] += (target[0, 0, i] * Math.Log(this.softmaxOutput[0, 0, i]));
             }
             loss[0, 0, 0] *= -1;
+            return loss;
+        }
+
+
+
+        public Tensor loss_tensor(Tensor target) {
+            this.target_tensor = target;
+            Tensor loss = new Tensor(this.output_tensor.rank, this.output_tensor.num_samples, 1, 1, 1);
+
+            for (int i=0; i < loss.num_samples; i++) {
+                for (int j=0; j < this.output_tensor.num_channels; j++) {
+                    loss.data[i] -= (this.target_tensor.data[i * this.output_tensor.num_channels + j] * Math.Log(this.output_tensor.data[i * this.output_tensor.num_channels + j]));
+                }
+            }
             return loss;
         }
 

@@ -101,12 +101,12 @@ namespace Conv_Net {
         }
 
 
-        public static void loadMNIST(int numTrain, int numTest, int inputSizeX, int inputSizeY, int inputSizeZ, int labelSize) {
-            Double[][,,] tempTrainImageArray = new Double[numTrain][,,];
-            Double[][,,] tempTrainLabelArray = new Double[numTrain][,,];
+        public static Tuple<Tensor, Tensor, Tensor, Tensor> loadMNIST(int num_train, int num_test, int num_input_rows, int num_input_columns, int num_input_channels, int num_label_channels) {
+            Tensor tempTrainImageArray = new Tensor(4, num_train, num_input_rows, num_input_columns, num_input_channels);        
+            Tensor tempTrainLabelArray = new Tensor(2, num_train, 1, 1, num_label_channels);
 
-            Double[][,,] tempTestImageArray = new Double[numTest][,,];
-            Double[][,,] tempTestLabelArray = new Double[numTest][,,];
+            Tensor tempTestImageArray = new Tensor(4, num_test, num_input_rows, num_input_columns, num_input_channels);
+            Tensor tempTestLabelArray = new Tensor(2, num_test, 1, 1, num_label_channels);
 
             try {
                 // Load training data
@@ -126,26 +126,19 @@ namespace Conv_Net {
                 int numLabels = brTrainLabels.ReadInt32();
 
                 // Load image, labels, and targets into array
-                for (int image_num = 0; image_num < numTrain; image_num++) {
-
-                    Double[,,] temp_image = new Double[inputSizeX, inputSizeY, inputSizeZ];
-
-                    // Load image
-                    for (int image_pos_x = 0; image_pos_x < inputSizeX; image_pos_x++) {
-                        for (int image_pos_y = 0; image_pos_y < inputSizeY; image_pos_y++) {
-                            for (int image_pos_z = 0; image_pos_z < inputSizeZ; image_pos_z++) {
-                                Double b = brTrainImages.ReadByte();
-                                b = (-1 + (b / 127.5));
-                                temp_image[image_pos_x, image_pos_y, image_pos_z] = b;
-                                tempTrainImageArray[image_num] = temp_image;
+                for (int i = 0; i < num_train; i++) {
+                    for (int j = 0; j < num_input_rows; j++) {
+                        for (int k = 0; k < num_input_columns; k++) {
+                            for (int l = 0; l < num_input_channels; l++) {
+                                Double pixel = brTrainImages.ReadByte();
+                                pixel = (-1 + (pixel / 127.5));
+                                tempTrainImageArray.set(i, j, k, l, pixel);
                             }
                         }
                     }
                     // Load label
                     int label = brTrainLabels.ReadByte();
-                    Double[,,] temp_label = new Double[1, 1, labelSize];
-                    temp_label[0, 0, label] = 1.0;
-                    tempTrainLabelArray[image_num] = temp_label;
+                    tempTrainLabelArray.set(i, 0, 0, label, 1.0);
                 }
                 trainImagesStream.Close();
                 brTrainImages.Close();
@@ -170,26 +163,19 @@ namespace Conv_Net {
                 numLabels = brTestLabels.ReadInt32();
 
                 // Load image, labels, and targets into array
-                for (int image_num = 0; image_num < numTest; image_num++) {
-
-                    Double[,,] temp_image = new Double[inputSizeX, inputSizeY, inputSizeZ];
-
-                    // Load image
-                    for (int image_pos_x = 0; image_pos_x < inputSizeX; image_pos_x++) {
-                        for (int image_pos_y = 0; image_pos_y < inputSizeY; image_pos_y++) {
-                            for (int image_pos_z = 0; image_pos_z < inputSizeZ; image_pos_z++) {
-                                Double b = brTestImages.ReadByte();
-                                b = (-1 + (b / 127.5));
-                                temp_image[image_pos_x, image_pos_y, image_pos_z] = b;
-                                tempTestImageArray[image_num] = temp_image;
+                for (int i = 0; i < num_test; i++) {
+                    for (int j = 0; j < num_input_rows; j++) {
+                        for (int k = 0; k < num_input_columns; k++) {
+                            for (int l = 0; l < num_input_channels; l++) {
+                                Double pixel = brTestImages.ReadByte();
+                                pixel = (-1 + (pixel / 127.5));
+                                tempTestImageArray.set(i, j, k, l, pixel);
                             }
                         }
                     }
                     // Load label
                     int label = brTestLabels.ReadByte();
-                    Double[,,] temp_label = new Double[1, 1, labelSize];
-                    temp_label[0, 0, label] = 1.0;
-                    tempTestLabelArray[image_num] = temp_label;
+                    tempTestLabelArray.set(i, 0, 0, label, 1.0);
                 }
                 testImagesStream.Close();
                 brTestImages.Close();
@@ -197,13 +183,11 @@ namespace Conv_Net {
                 testLabelsStream.Close();
                 brTestLabels.Close();
 
-                Program.trainImageArray = tempTrainImageArray;
-                Program.trainLabelArray = tempTrainLabelArray;
-                Program.testImageArray = tempTestImageArray;
-                Program.testLabelArray = tempTestLabelArray;
+                return Tuple.Create(tempTrainImageArray, tempTrainLabelArray, tempTestImageArray, tempTestLabelArray);
             } catch {
 
             }
+            return null;
         }
 
         public static void shuffleTrainingSet() {

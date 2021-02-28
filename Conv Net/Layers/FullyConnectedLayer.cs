@@ -75,18 +75,18 @@ namespace Conv_Net {
 
         public Tensor forward_tensor(Tensor input) {
             this.input_tensor = input;
-            Tensor output = new Tensor(2, input.num_samples, 1, 1, this.layerSize);
+            Tensor output = new Tensor(2, input.num_samples, this.layerSize, 1, 1);
 
-            for (int i=0; i < input.num_samples; i++) {
-                for (int j=0; j < this.layerSize; j++) {
+            Parallel.For(0, input.num_samples, i => {
+                for (int j = 0; j < this.layerSize; j++) {
 
                     Double sum = 0.0;
-                    for (int k=0; k < this.previousLayerSize; k++) {
+                    for (int k = 0; k < this.previousLayerSize; k++) {
                         sum += input.data[i * previousLayerSize + k] * this.weights_tensor.data[j * previousLayerSize + k];
                     }
                     output.data[i * this.layerSize + j] = (sum + this.biases_tensor.data[j]);
                 }
-            }
+            });
             return output;
         }
 

@@ -41,7 +41,9 @@ namespace Conv_Net {
             training_labels = data.Item2;
             testing_images = data.Item3;
             testing_labels = data.Item4;
-            
+
+            trainImageArray = training_images.convert_to_array();
+            trainLabelArray = training_labels.convert_to_array();
             testImageArray = testing_images.convert_to_array();
             testLabelArray = testing_labels.convert_to_array();
 
@@ -69,12 +71,12 @@ namespace Conv_Net {
             //for (int epoch = 0; epoch < 10; epoch++) {
             //    Console.WriteLine("++++++++++++++++++++++++++++++++");
             //    Console.WriteLine("Epoch: " + epoch);
-                
+
             //    Utils.shuffleTrainingSet();
 
             //    stopwatch.Start();
             //    trainNN(batchSize);
-            //    testNN();
+            //    testNN(testing_sample_size);
             //    stopwatch.Stop();
             //    Console.WriteLine("Time elapsed: " + stopwatch.Elapsed);
             //    stopwatch.Reset();
@@ -114,7 +116,7 @@ namespace Conv_Net {
         //    }
         //}
 
-        static void testNN(int partition_size) {
+        static void testNN(int testing_sample_size) {
             int correct = 0;
             Double totalCrossEntropyLoss = 0.0;
             Double averageCrossEntropyLoss = 0.0;
@@ -124,9 +126,10 @@ namespace Conv_Net {
             Double total_cross_entropy_loss_tensor = 0.0;
 
             Tuple<Tensor, Tensor> q;
+
+            stopwatch.Start();
             q = NN.forwardTensor(testing_images, testing_labels);
-            
-            for (int i=0; i < 10000; i++) {
+            for (int i=0; i < testing_sample_size; i++) {
                 total_cross_entropy_loss_tensor += q.Item2.data[i];
 
                 int index_max_value_output = -1;
@@ -135,13 +138,13 @@ namespace Conv_Net {
                 int index_max_value_label = -1;
                 Double max_label = Double.MinValue;
 
-                for (int j=0; j < q.Item1.num_channels; j++) {
-                    if (q.Item1.data[i * q.Item1.num_channels + j] > max_output) {
-                        max_output = q.Item1.data[i * q.Item1.num_channels + j];
+                for (int j=0; j < q.Item1.num_rows; j++) {
+                    if (q.Item1.data[i * q.Item1.num_rows + j] > max_output) {
+                        max_output = q.Item1.data[i * q.Item1.num_rows+ j];
                         index_max_value_output = j;
                     }
-                    if (testing_labels.data[i * q.Item1.num_channels + j] > max_label) {
-                        max_label = testing_labels.data[i * q.Item1.num_channels + j];
+                    if (testing_labels.data[i * q.Item1.num_rows + j] > max_label) {
+                        max_label = testing_labels.data[i * q.Item1.num_rows+ j];
                         index_max_value_label = j;
                     }
                 }
@@ -149,11 +152,14 @@ namespace Conv_Net {
                     correct_tensor++;
                 }
             }
-            Console.WriteLine(correct_tensor + " correct out of 10,000. \t Accuracy " + (Double)correct_tensor / 10000 * 100 + "%");
-            Console.WriteLine("Average cross entropy loss: " + total_cross_entropy_loss_tensor / 10000);
+            Console.WriteLine(correct_tensor + " correct out of " + testing_sample_size + ". \t Accuracy " + (Double)correct_tensor / testing_sample_size * 100 + "%");
+            Console.WriteLine("Average cross entropy loss: " + total_cross_entropy_loss_tensor / testing_sample_size);
+            stopwatch.Stop();
+            Console.WriteLine(stopwatch.ElapsedMilliseconds);
+            stopwatch.Reset();
 
-
-            for (int i = 0; i < 10000; i++) {
+            stopwatch.Start();
+            for (int i = 0; i < testing_sample_size; i++) {
                 Tuple<Double[,,], Double[,,]> t;
                 t = NN.forward(testImageArray[i], testLabelArray[i]);
                 if (Utils.indexMaxValue(t.Item1) == Utils.indexMaxValue(testLabelArray[i])) {
@@ -161,10 +167,14 @@ namespace Conv_Net {
                 }
                 totalCrossEntropyLoss += t.Item2[0, 0, 0];
             }
-            averageCrossEntropyLoss = totalCrossEntropyLoss / 10000;
+            averageCrossEntropyLoss = totalCrossEntropyLoss / testing_sample_size;
 
-            Console.WriteLine(correct + " correct out of 10,000. \t Accuracy " + (Double)correct / 10000 * 100 + "%");
+            Console.WriteLine(correct + " correct out of " + testing_sample_size + ". \t Accuracy " + (Double)correct / testing_sample_size * 100 + "%");
             Console.WriteLine("Average cross entropy loss: " + averageCrossEntropyLoss);
+            stopwatch.Stop();
+            Console.WriteLine(stopwatch.ElapsedMilliseconds);
+            stopwatch.Reset();
+
         }
 
         static void trainNN(int batchSize) {

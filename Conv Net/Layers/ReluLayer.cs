@@ -35,9 +35,9 @@ namespace Conv_Net {
             this.input_tensor = input;
 
             Tensor output = new Tensor(input.rank, input.num_samples, input.num_rows, input.num_columns, input.num_channels);
-            for (int i=0; i < output.num_samples * output.num_rows * output.num_columns * output.num_channels; i++) {
+            Parallel.For(0, output.num_samples * output.num_rows * output.num_columns * output.num_channels, i => {
                 output.data[i] = input.data[i] >= 0 ? input.data[i] : 0;
-            }
+            });
             return output;
         }
 

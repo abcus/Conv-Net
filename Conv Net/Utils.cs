@@ -190,7 +190,17 @@ namespace Conv_Net {
             return null;
         }
 
-        
+        public static void shuffleTrainingSet() {
+            for (int i = 60000 - 1; i > 0; i--) {
+                int excluded_sample = Program.rand.Next(0, i);
+                
+                
+                (Program.trainImageArray[i], Program.trainImageArray[excluded_sample]) = (Program.trainImageArray[excluded_sample], Program.trainImageArray[i]);
+                (Program.trainLabelArray[i], Program.trainLabelArray[excluded_sample]) = (Program.trainLabelArray[excluded_sample], Program.trainLabelArray[i]);
+            }
+        }
+
+
         public static void shuffle_Tensor(Tensor training_images, Tensor training_labels) {
             int num_samples = training_images.num_samples;
             int num_image_rows = training_images.num_rows;

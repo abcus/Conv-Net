@@ -56,27 +56,27 @@ namespace Conv_Net {
 
             Tensor output = new Tensor(input.rank, input.num_samples, input.num_rows, input.num_columns, input.num_channels);
 
-            for (int i=0; i < output.num_samples; i++) {
+            Parallel.For(0, output.num_samples, i => {
                 Double max = Double.MinValue;
-                for (int j=0; j < output.num_channels; j++) {
-                    if (input.data[i * output.num_channels + j] > max) {
-                        max = input.data[i * output.num_channels + j];
+                for (int j = 0; j < output.num_rows; j++) {
+                    if (input.data[i * output.num_rows + j] > max) {
+                        max = input.data[i * output.num_rows + j];
                     }
                 }
-                
-                for (int j=0; j < output.num_channels; j++) {
-                    input.data[i * output.num_channels + j] -= max;
+
+                for (int j = 0; j < output.num_rows; j++) {
+                    input.data[i * output.num_rows + j] -= max;
                 }
 
                 Double denominator = 0.0;
-                for (int j=0; j < output.num_channels; j++) {
-                    denominator += Math.Exp(input.data[i * output.num_channels + j]);
+                for (int j = 0; j < output.num_rows; j++) {
+                    denominator += Math.Exp(input.data[i * output.num_rows + j]);
                 }
 
-                for (int j = 0; j < output.num_channels; j++) {
-                    output.data[i * output.num_channels + j] = Math.Exp(input.data[i * output.num_channels + j]) / denominator;
+                for (int j = 0; j < output.num_rows; j++) {
+                    output.data[i * output.num_rows + j] = Math.Exp(input.data[i * output.num_rows + j]) / denominator;
                 }
-            }
+            });
             this.output_tensor = output;
             return output;
         }
@@ -101,11 +101,11 @@ namespace Conv_Net {
             this.target_tensor = target;
             Tensor loss = new Tensor(this.output_tensor.rank, this.output_tensor.num_samples, 1, 1, 1);
 
-            for (int i=0; i < loss.num_samples; i++) {
-                for (int j=0; j < this.output_tensor.num_channels; j++) {
-                    loss.data[i] -= (this.target_tensor.data[i * this.output_tensor.num_channels + j] * Math.Log(this.output_tensor.data[i * this.output_tensor.num_channels + j]));
+            Parallel.For(0, loss.num_samples, i=> {
+                for (int j = 0; j < this.output_tensor.num_rows; j++) {
+                    loss.data[i] -= (this.target_tensor.data[i * this.output_tensor.num_rows + j] * Math.Log(this.output_tensor.data[i * this.output_tensor.num_rows + j]));
                 }
-            }
+            });
             return loss;
         }
 

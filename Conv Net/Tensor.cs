@@ -7,54 +7,52 @@ using System.Threading.Tasks;
 namespace Conv_Net {
     class Tensor {
 
-        // Ranks are: batch_size x rows x columns x channels
-        public int rank;
-        public int num_samples;
-        public int num_rows;
-        public int num_columns;
-        public int num_channels;
-        public Double[] data;
+        public int dimensions;
+        public int dim_1;
+        public int dim_2;
+        public int dim_3;
+        public int dim_4;
+        public Double[] values;
 
-        public Tensor (int rank, int num_samples, int num_rows, int num_columns, int num_channels) {
-            this.rank = rank;
-            this.num_samples = num_samples;
-            this.num_rows = num_rows;
-            this.num_columns = num_columns;
-            this.num_channels = num_channels;
-            data = new Double[this.num_samples * this.num_rows * this.num_columns * this.num_channels];
+        public Tensor (int dimensions, int dim_1, int dim_2, int dim_3, int dim_4) {
+            this.dimensions = dimensions;
+            this.dim_1 = dim_1;
+            this.dim_2 = dim_2;
+            this.dim_3 = dim_3;
+            this.dim_4 = dim_4;
+            values = new Double[this.dim_1 * this.dim_2 * this.dim_3 * this.dim_4];
         }
 
-        public Double get (int sample, int row, int column, int channel) {
-            return data[sample * num_rows * num_columns * num_channels + row * num_columns * num_channels + column * num_channels + channel];
+        public Double get (int i, int j, int k, int l) {
+            return values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l];
         }
 
-        public void set (int sample, int row, int column, int channel, Double value) {
-            data[sample * num_rows * num_columns * num_channels + row * num_columns * num_channels + column * num_channels + channel] = value;
+        public void set (int i, int j, int k, int l, Double value) {
+            values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l] = value;
         }
 
+        /// <summary>
+        /// Transposes a 2D tensor
+        /// </summary>
         public Tensor transpose_2D () {
-            Tensor output = new Tensor(this.rank, this.num_rows, this.num_samples, this.num_columns, this.num_columns);
-
-            Parallel.For(0, output.num_samples, i => {
-                for (int j = 0; j < output.num_rows; j++) {
-                    output.data[i * output.num_rows + j] = this.data[j * this.num_rows + i];
+            Tensor output = new Tensor(this.dimensions, this.dim_2, this.dim_1, this.dim_3, this.dim_4);
+            for (int i = 0; i < output.dim_1; i++) {
+                for (int j = 0; j < output.dim_2; j++) {
+                    output.values[i * output.dim_2 + j] = this.values[j * this.dim_2 + i];
                 }
-            });
+            }
             return output;
         }
 
-        public Tensor partition(int sample_i, int partition_size) {
-            Tensor t = new Tensor(this.rank, partition_size, this.num_rows, this.num_columns, this.num_channels);
-            for (int i = 0; i < partition_size; i++) {
-                for (int j=0; j < this.num_rows; j++) {
-                    for (int k=0; k < this.num_columns; k++) { 
-                        for (int l=0; l < this.num_channels; l++) {
-                            t.data[i * num_rows * num_columns * num_channels + j * num_columns * num_channels + k * num_channels + l] =
-                                this.data[(i + sample_i) * num_rows * num_columns * num_channels + j * num_columns * num_channels + k * num_channels + l];
-                        }
-                    }
-                }
-            }
+        /// <summary>
+        ///  Returns subset of original 4D tensor which starts at values[dim_1_i * this.dim_2 * this.dim_3 * this.dim_4] and has size [dim_1_size * this.dim_2 * this.dim_3 * this.dim_4]
+        /// </summary>
+        public Tensor subset(int dim_1_i, int dim_1_size) {
+            Tensor t = new Tensor(this.dimensions, dim_1_size, this.dim_2, this.dim_3, this.dim_4);
+
+            Parallel.For(0, dim_1_size * this.dim_2 * this.dim_3 * this.dim_4, i => {
+                t.values[i] = this.values[(dim_1_i * this.dim_2 * this.dim_3 * this.dim_4) + i];
+            });
             return t;
         }
 
@@ -62,65 +60,73 @@ namespace Conv_Net {
         public override string ToString() {
             StringBuilder sb = new StringBuilder();
 
-            for (int i = 0; i < this.num_samples; i++) {
-                sb.Append("(");
-                for (int j = 0; j < this.num_rows; j++) {
-                    sb.Append("[");
-                    for (int k = 0; k < this.num_columns; k++) {
-                        sb.Append("{");
-                        for (int l = 0; l < this.num_channels; l++) {
-                            sb.Append(this.data[i * num_rows * num_columns * num_channels + j * num_columns * num_channels + k * num_channels + l]);
-                            if (l < this.num_channels - 1) {
+            if (dimensions >= 4) sb.Append("(");
+            for (int i = 0; i < this.dim_4; i++) {
+                if (dimensions >= 3) sb.Append("[");
+                for (int j = 0; j < this.dim_3; j++) {
+                    if (dimensions >= 2) sb.Append("{");
+                    for (int k = 0; k < this.dim_2; k++) {
+                        sb.Append("<");
+                        for (int l = 0; l < this.dim_1; l++) {
+                            sb.Append(this.values[i * dim_2 * dim_3 * dim_4 + j * dim_3 * dim_4 + k * dim_4 + l]);
+                            if (l < this.dim_1- 1) {
                                 sb.Append(", ");
                             } else {
-                                sb.Append("}");
+                                 sb.Append(">");
                             }
                         }
-                        if (k < this.num_columns - 1) {
-                            sb.Append(", ");
+                        if (k < this.dim_2- 1) {
+                            sb.Append(",\n");
                         } else {
                             sb.Append("");
                         }
                     }
-                    sb.Append("]");
-                    if (j < this.num_rows - 1) {
+                    if (dimensions >= 2) sb.Append("}");
+                    if (j < this.dim_3 - 1) {
                         sb.Append(",\n");
                     }
                     sb.Append("");
                 }
-                sb.Append(")\n");
+                if (this.dimensions >= 3) sb.Append("]");
+                if (i < this.dim_4 - 1) {
+                    sb.Append(",\n");
+                }
             }
-            sb.Append("\nsamples: " + this.num_samples + "\nrows: " + this.num_rows + "\ncolumns: " + this.num_columns + "\nchannels: " + this.num_channels + "\n");
+            if (dimensions >= 4) sb.Append(")");
+            sb.Append("\n");
+
+            sb.Append("\ndimensions: " + this.dimensions + "\ndim 1 size: " + this.dim_1 + "\ndim 2 size: " + this.dim_2 + "\ndim 3 size: " + this.dim_3 + "\ndim 4 size: " + this.dim_4 + "\n");
             return sb.ToString();            
         }
 
         public bool Equals(Tensor t) {
             bool equals = true;
-            if (this.rank != t.rank || this.num_samples != t.num_samples || this.num_rows != t.num_rows || this.num_columns != t.num_columns || this.num_channels != t.num_channels) {
+            if (this.dimensions != t.dimensions 
+                || this.dim_1 != t.dim_1 
+                || this.dim_2 != t.dim_2 
+                || this.dim_3 != t.dim_3 
+                || this.dim_4 != t.dim_4) {
                 return false;
             }
-            for (int i = 0; i < this.num_samples; i++) {
-                for (int j = 0; j < this.num_rows; j++) {
-                    for (int k = 0; k < this.num_columns; k++) {
-                        for (int l = 0; l < this.num_channels; l++) {
-                            if (this.data[i * num_rows * num_columns * num_channels + j * num_columns * num_channels + k * num_channels + l] != t.data[i * num_rows * num_columns * num_channels + j * num_columns * num_channels + k * num_channels + l]) {
-                                return false;
-                            }
-                        }
-                    }
+            for (int i = 0; i < this.dim_1 * this.dim_2 * this.dim_3 * this.dim_4; i++) {
+                if (this.values[i] != t.values[i]) {
+                    return false;
                 }
             }
             return true;
         }
 
+        /// <summary>
+        /// Converts rank 4 tensor to multidimensional array [][,,]
+        /// </summary>
         public Double[][,,] convert_to_array () {
-            Double[][,,] array = new Double[this.num_samples][,,];
-            for (int i=0; i < num_samples; i++) {
-                Double[,,] temp = new Double[this.num_rows, this.num_columns, this.num_channels];
-                for (int j=0; j < this.num_rows; j++) {
-                    for (int k=0; k < this.num_columns; k++) {
-                        for (int l=0; l < this.num_channels; l++) {
-                            temp[j, k, l] = data[i * num_rows * num_columns * num_channels + j * num_columns * num_channels + k * num_channels + l];
+            Double[][,,] array = new Double[this.dim_1][,,];
+            for (int i=0; i < dim_1; i++) {
+                Double[,,] temp = new Double[this.dim_2, this.dim_3, this.dim_4];
+                for (int j=0; j < this.dim_2; j++) {
+                    for (int k=0; k < this.dim_3; k++) {
+                        for (int l=0; l < this.dim_4; l++) {
+                            temp[j, k, l] = values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l];
                         }
                     }
                 }

@@ -5,13 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class InputLayer {
+    class Input_Layer {
 
         private int numInputRows;
         private int numInputColumns;
         private int numInputChannels;
 
-        public InputLayer(int numInputRows, int numInputColumns, int numInputChannels) {
+        public Input_Layer(int numInputRows, int numInputColumns, int numInputChannels) {
             this.numInputRows = numInputRows;
             this.numInputColumns = numInputColumns;
             this.numInputChannels = numInputChannels;

@@ -202,14 +202,14 @@ namespace Conv_Net {
 
 
         public static void shuffle_Tensor(Tensor training_images, Tensor training_labels) {
-            int num_samples = training_images.num_samples;
-            int num_image_rows = training_images.num_rows;
-            int num_image_columns = training_images.num_columns;
-            int num_image_channels = training_images.num_channels;
-            Double[] image_data = training_images.data;
+            int num_samples = training_images.dim_1;
+            int num_image_rows = training_images.dim_2;
+            int num_image_columns = training_images.dim_3;
+            int num_image_channels = training_images.dim_4;
+            Double[] image_data = training_images.values;
 
-            int num_label_rows= training_labels.num_rows;
-            Double[] label_data = training_labels.data;
+            int num_label_rows= training_labels.dim_2;
+            Double[] label_data = training_labels.values;
 
             for (int i = num_samples - 1; i > 0; i--) {
                 int excluded_sample = Program.rand.Next(0, i);
@@ -217,19 +217,19 @@ namespace Conv_Net {
                 for (int j = 0; j < num_image_rows; j++) {
                     for (int k = 0; k < num_image_columns; k++) {
                         for (int l = 0; l < num_image_channels; l++) {
-                            (training_images.data[i * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l], training_images.data[excluded_sample * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l]) =
-                            (training_images.data[excluded_sample * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l], training_images.data[i * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l]);
+                            (training_images.values[i * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l], training_images.values[excluded_sample * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l]) =
+                            (training_images.values[excluded_sample * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l], training_images.values[i * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l]);
                         }
                     }
                 }
                 for (int j=0; j < num_label_rows; j++) {
-                    (training_labels.data[i * num_label_rows + j], training_labels.data[excluded_sample * num_label_rows + j]) =
-                    (training_labels.data[excluded_sample * num_label_rows + j], training_labels.data[i * num_label_rows + j]);
+                    (training_labels.values[i * num_label_rows + j], training_labels.values[excluded_sample * num_label_rows + j]) =
+                    (training_labels.values[excluded_sample * num_label_rows + j], training_labels.values[i * num_label_rows + j]);
                 }
             }
         }
 
-        static public void printWeightsBiases(FullyConnectedLayer Inner1, FullyConnectedLayer Inner2, FullyConnectedLayer Inner3) {
+        static public void printWeightsBiases(Fully_Connected_Layer Inner1, Fully_Connected_Layer Inner2, Fully_Connected_Layer Inner3) {
 
             Console.WriteLine("Layer 1 weights");
             for (int i = 0; i < Inner1.weights.Count(); i++) {

@@ -7,58 +7,32 @@ using System.Threading.Tasks;
 namespace Conv_Net {
     class Net {
 
-        public InputLayer Input;
-        public FlattenLayer Flatten;
-        public FullyConnectedLayer FC1, FC2, FC3;
-        public ReluLayer Relu1, Relu2;
-        public SoftmaxLossLayer Softmax;
+        public Input_Layer Input;
+        public Flatten_Layer Flatten;
+        public Fully_Connected_Layer FC1, FC2, FC3;
+        public Relu_Layer Relu1, Relu2;
+        public Softmax_Loss_Layer Softmax;
 
         public Net () {
 
             // Input layer
-            Input = new InputLayer(28, 28, 1);
-            Flatten = new FlattenLayer();
+            Input = new Input_Layer(28, 28, 1);
+            Flatten = new Flatten_Layer();
             
             // Hidden layer 1
-            FC1 = new FullyConnectedLayer(784, 5, false);
-            Relu1 = new ReluLayer();
+            FC1 = new Fully_Connected_Layer(784, 5, false);
+            Relu1 = new Relu_Layer();
             
             // Hidden layer 2
-            FC2 = new FullyConnectedLayer(5, 6, true);
-            Relu2 = new ReluLayer();
+            FC2 = new Fully_Connected_Layer(5, 6, true);
+            Relu2 = new Relu_Layer();
             
             // Hidden layer 3
-            FC3 = new FullyConnectedLayer(6, 10, true);
-            Softmax = new SoftmaxLossLayer();
+            FC3 = new Fully_Connected_Layer(6, 10, true);
+            Softmax = new Softmax_Loss_Layer();
         }
 
-        public Tuple<Double[,,], Double[,,]> forward (Double[,,] input, Double[,,] target) {
-
-            Double[,,] output;
-            Double[,,] loss;
-            
-            // Input and flatten layer
-            output = Input.forward(input);
-            output = Flatten.forward(output);
-
-            // Hidden layer 1
-            output = FC1.forward(output);
-            output = Relu1.forward(output);
-
-            // Hidden layer 2
-            output = FC2.forward(output);
-            output = Relu2.forward(output);
-
-            // Output layer
-            output = FC3.forward(output);
-            output = Softmax.forward(output);
-
-            // Loss layer
-            loss = Softmax.loss(target);
-            return Tuple.Create(output, loss);
-        }
-
-        public Tuple<Tensor, Tensor> forward_tensor(Tensor input, Tensor target) {
+        public Tuple<Tensor, Tensor> forward(Tensor input, Tensor target) {
             Tensor output;
             Tensor loss;
 
@@ -82,54 +56,27 @@ namespace Conv_Net {
             return Tuple.Create(output, loss);
         }
 
-
-        public void backward () {
-            
-            Double[,,] grad;
-
-            // Output layer
-            grad = Softmax.backward();
-            grad = FC3.backward(grad);
-
-            // Hidden layer 2
-            grad = Relu2.backward(grad);
-            grad = FC2.backward(grad);
-
-            // Hidden layer 1 
-            // FC1.backward returns null as gradient of loss with respect to FC1 inputs (which is the image) is not needed
-            grad = Relu1.backward(grad);
-            grad = FC1.backward(grad);
-        }
-
         public void backward_tensor () {
             Tensor grad;
 
+            // Output layer
             grad = Softmax.backward_tensor();
             grad = FC3.backward_tensor(grad);
-            // Console.WriteLine(FC3.gradient_biases_tensor);
-            // Console.WriteLine(FC3.gradient_weights_tensor);
 
+            // Hidden layer 2
             grad = Relu2.backward_tensor(grad);
             grad = FC2.backward_tensor(grad);
-            //Console.WriteLine(FC2.gradient_biases_tensor);
-            // Console.WriteLine(FC2.gradient_weights_tensor);
 
+            // Hidden layer 1 
+            // FC1.backward returns null as gradient of loss with respect to FC1 inputs (which is the image) is not needed
             grad = Relu1.backward_tensor(grad);
             grad = FC1.backward_tensor(grad);
-            //Console.WriteLine(FC1.gradient_biases_tensor);
-            //Console.WriteLine(FC1.gradient_weights_tensor);
         }
 
-        public void update (int batchSize) {
-            FC3.update(batchSize);
-            FC2.update(batchSize);
-            FC1.update(batchSize);
-        }
-
-        public void update_tensor (int batchSize) {
-            FC3.update_tensor(batchSize);
-            FC2.update_tensor(batchSize);
-            FC1.update_tensor(batchSize);
+        public void update (int batch_size) {
+            FC3.update_tensor(batch_size);
+            FC2.update_tensor(batch_size);
+            FC1.update_tensor(batch_size);
         }
     }
 }

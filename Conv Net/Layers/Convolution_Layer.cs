@@ -7,7 +7,7 @@ using Conv_Net;
 using System.Diagnostics;
 
 namespace Conv_Net {
-    class ConvolutionLayer {
+    class Convolution_Layer {
 
         private int numInputRows;
         private int numInputColumns;
@@ -40,7 +40,7 @@ namespace Conv_Net {
 
 
 
-        public ConvolutionLayer(int numInputChannels, int numFilters, int numFilterRows, int numFilterColumns, bool needsGradient, int stride = 1) {
+        public Convolution_Layer(int numInputChannels, int numFilters, int numFilterRows, int numFilterColumns, bool needsGradient, int stride = 1) {
 
             this.numInputChannels = numInputChannels;
 

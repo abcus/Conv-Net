@@ -5,14 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class FlattenLayer {
+    class Flatten_Layer {
 
         private int numInputRows;
         private int numInputColumns;
         private int numInputChannels;
         private int numOutputChannels;
 
-        public FlattenLayer() {
+        public Flatten_Layer() {
 
         }
 
@@ -34,8 +34,8 @@ namespace Conv_Net {
         }
 
         public Tensor forward_tensor(Tensor input) {
-            Tensor output = new Tensor(2, input.num_samples, input.num_rows * input.num_columns * input.num_channels, 1, 1);
-            output.data = input.data;
+            Tensor output = new Tensor(2, input.dim_1, input.dim_2 * input.dim_3 * input.dim_4, 1, 1);
+            output.values = input.values;
             return output;
         }
 

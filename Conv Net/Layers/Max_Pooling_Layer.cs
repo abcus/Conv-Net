@@ -5,14 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class MaxPoolingLayer {
+    class Max_Pooling_Layer {
 
         int numFilterRows;
         int numFilterColumns;
         int stride;
         Double[,,] input;
 
-        public MaxPoolingLayer (int numFilterRows = 2, int numFilterColumns = 2, int stride = 2) {
+        public Max_Pooling_Layer (int numFilterRows = 2, int numFilterColumns = 2, int stride = 2) {
             this.numFilterRows = numFilterRows;
             this.numFilterColumns = numFilterColumns;
             this.stride = stride;

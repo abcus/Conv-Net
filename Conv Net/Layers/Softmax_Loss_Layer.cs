@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class SoftmaxLossLayer {
+    class Softmax_Loss_Layer {
 
         private Double[,,] input;
         private Double[,,] softmaxOutput;
@@ -15,7 +15,7 @@ namespace Conv_Net {
         public Tensor output_tensor;
         public Tensor target_tensor;
 
-        public SoftmaxLossLayer() {
+        public Softmax_Loss_Layer() {
         
         }
         public Double[,,] forward(Double[,,] input) {
@@ -54,27 +54,27 @@ namespace Conv_Net {
         public Tensor forward_tensor(Tensor input) {
             this.input_tensor = input;
 
-            Tensor output = new Tensor(input.rank, input.num_samples, input.num_rows, input.num_columns, input.num_channels);
+            Tensor output = new Tensor(input.dimensions, input.dim_1, input.dim_2, input.dim_3, input.dim_4);
 
-            Parallel.For(0, output.num_samples, i => {
+            Parallel.For(0, output.dim_1, i => {
                 Double max = Double.MinValue;
-                for (int j = 0; j < output.num_rows; j++) {
-                    if (input.data[i * output.num_rows + j] > max) {
-                        max = input.data[i * output.num_rows + j];
+                for (int j = 0; j < output.dim_2; j++) {
+                    if (input.values[i * output.dim_2 + j] > max) {
+                        max = input.values[i * output.dim_2 + j];
                     }
                 }
 
-                for (int j = 0; j < output.num_rows; j++) {
-                    input.data[i * output.num_rows + j] -= max;
+                for (int j = 0; j < output.dim_2; j++) {
+                    input.values[i * output.dim_2 + j] -= max;
                 }
 
                 Double denominator = 0.0;
-                for (int j = 0; j < output.num_rows; j++) {
-                    denominator += Math.Exp(input.data[i * output.num_rows + j]);
+                for (int j = 0; j < output.dim_2; j++) {
+                    denominator += Math.Exp(input.values[i * output.dim_2 + j]);
                 }
 
-                for (int j = 0; j < output.num_rows; j++) {
-                    output.data[i * output.num_rows + j] = Math.Exp(input.data[i * output.num_rows + j]) / denominator;
+                for (int j = 0; j < output.dim_2; j++) {
+                    output.values[i * output.dim_2 + j] = Math.Exp(input.values[i * output.dim_2 + j]) / denominator;
                 }
             });
             this.output_tensor = output;
@@ -99,11 +99,11 @@ namespace Conv_Net {
 
         public Tensor loss_tensor(Tensor target) {
             this.target_tensor = target;
-            Tensor loss = new Tensor(this.output_tensor.rank, this.output_tensor.num_samples, 1, 1, 1);
+            Tensor loss = new Tensor(1, this.output_tensor.dim_1, 1, 1, 1);
 
-            Parallel.For(0, loss.num_samples, i=> {
-                for (int j = 0; j < this.output_tensor.num_rows; j++) {
-                    loss.data[i] -= (this.target_tensor.data[i * this.output_tensor.num_rows + j] * Math.Log(this.output_tensor.data[i * this.output_tensor.num_rows + j]));
+            Parallel.For(0, loss.dim_1, i=> {
+                for (int j = 0; j < this.output_tensor.dim_2; j++) {
+                    loss.values[i] -= (this.target_tensor.values[i * this.output_tensor.dim_2 + j] * Math.Log(this.output_tensor.values[i * this.output_tensor.dim_2 + j]));
                 }
             });
             return loss;
@@ -123,13 +123,13 @@ namespace Conv_Net {
         }
 
         public Tensor backward_tensor () {
-            Tensor gradientInput = new Tensor(input_tensor.rank, input_tensor.num_samples, input_tensor.num_rows, input_tensor.num_columns, input_tensor.num_channels);
-        
-            for (int i=0; i < input_tensor.num_samples; i++) {
-                for (int j=0; j < input_tensor.num_rows; j++) {
-                    gradientInput.data[i * input_tensor.num_rows + j] = this.output_tensor.data[i * input_tensor.num_rows + j] - this.target_tensor.data[i * input_tensor.num_rows + j];
+            Tensor gradientInput = new Tensor(input_tensor.dimensions, input_tensor.dim_1, input_tensor.dim_2, input_tensor.dim_3, input_tensor.dim_4);
+
+            Parallel.For(0, input_tensor.dim_1, i => {
+                for (int j = 0; j < input_tensor.dim_2; j++) {
+                    gradientInput.values[i * input_tensor.dim_2 + j] = this.output_tensor.values[i * input_tensor.dim_2 + j] - this.target_tensor.values[i * input_tensor.dim_2 + j];
                 }
-            }
+            });
             return gradientInput;
         }
     }

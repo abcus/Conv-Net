@@ -75,13 +75,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConvNet.cs" />
-    <Compile Include="Layers\ConvolutionLayer.cs" />
-    <Compile Include="Layers\FlattenLayer.cs" />
-    <Compile Include="Layers\FullyConnectedLayer.cs" />
-    <Compile Include="Layers\InputLayer.cs" />
-    <Compile Include="Layers\ReluLayer.cs" />
-    <Compile Include="Layers\SoftmaxLossLayer.cs" />
-    <Compile Include="Layers\MaxPoolingLayer.cs" />
+    <Compile Include="Layers\Convolution_Layer.cs" />
+    <Compile Include="Layers\Flatten_Layer.cs" />
+    <Compile Include="Layers\Fully_Connected_Layer.cs" />
+    <Compile Include="Layers\Input_Layer.cs" />
+    <Compile Include="Layers\Relu_Layer.cs" />
+    <Compile Include="Layers\Softmax_Loss_Layer.cs" />
+    <Compile Include="Layers\Max_Pooling_Layer.cs" />
     <Compile Include="Net.cs" />
     <Compile Include="Tensor.cs" />
     <Compile Include="Utils.cs" />

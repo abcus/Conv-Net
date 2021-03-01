@@ -24,8 +24,8 @@ namespace Conv_Net {
         public static MathNet.Numerics.Distributions.Normal normalDist = new MathNet.Numerics.Distributions.Normal(0, 1, rand);
         public static Stopwatch stopwatch = new Stopwatch();
 
-        public static Net NN = new Net();
-        //public static ConvNet CNN = new ConvNet();
+        //public static Net NN = new Net();
+        public static ConvNet CNN = new ConvNet();
         public static Double eta = 0.01;
         public static int batchSize = 16;
 
@@ -45,135 +45,134 @@ namespace Conv_Net {
             testing_labels = data.Item4;
 
             trainImageArray = training_images.convert_to_array();
-            trainLabelArray = training_labels.convert_to_array();
+            trainLabelArray = training_labels.convert_labels();
             testImageArray = testing_images.convert_to_array();
-            testLabelArray = testing_labels.convert_to_array();
+            testLabelArray = testing_labels.convert_labels();
 
-            //testCNN(testing_sample_size);
+            testCNN(testing_sample_size);
+            for (int epoch = 0; epoch < 10; epoch++) {
+                Console.WriteLine("------------------------------------------");
+                Console.WriteLine("Epoch: " + epoch);
+
+                Utils.shuffleTrainingSet();
+
+                stopwatch.Start();
+                trainCNN(batchSize);
+                stopwatch.Stop();
+                Console.WriteLine("Time elapsed for training: " + stopwatch.Elapsed);
+                stopwatch.Reset();
+
+                testCNN(testing_sample_size);
+
+            }
+
+
+            //test_NN(testing_sample_size);
             //for (int epoch = 0; epoch < 10; epoch++) {
-            //    Console.WriteLine("------------------------------------------");
+            //    Console.WriteLine("++++++++++++++++++++++++++++++++");
             //    Console.WriteLine("Epoch: " + epoch);
 
             //    Utils.shuffle_Tensor(training_images, training_labels);
-            //    trainImageArray = training_images.convert_to_array();
-            //    trainLabelArray = training_labels.convert_to_array();
 
             //    stopwatch.Start();
-            //    trainCNN(batchSize);
+            //    train_NN(training_sample_size, batchSize);
+            //    test_NN(testing_sample_size);
             //    stopwatch.Stop();
-            //    Console.WriteLine("Time elapsed for training: " + stopwatch.Elapsed);
+            //    Console.WriteLine("Time elapsed: " + stopwatch.Elapsed);
             //    stopwatch.Reset();
-
-            //    testCNN(testing_sample_size);
-
             //}
-
-
-            test_NN(testing_sample_size);
-            for (int epoch = 0; epoch < 10; epoch++) {
-                Console.WriteLine("++++++++++++++++++++++++++++++++");
-                Console.WriteLine("Epoch: " + epoch);
-
-                Utils.shuffle_Tensor(training_images, training_labels);
-
-                stopwatch.Start();
-                train_NN(training_sample_size, batchSize);
-                test_NN(testing_sample_size);
-                stopwatch.Stop();
-                Console.WriteLine("Time elapsed: " + stopwatch.Elapsed);
-                stopwatch.Reset();
-            }
         }
 
-        //static void testCNN(int partition_size) {
-        //    int correct = 0;
-        //    Double totalCrossEntropyLoss = 0.0;
-        //    Double averageCrossEntropyLoss = 0.0;
-
-        //    Tensor image = testing_images.partition(0, partition_size);
-        //    Tensor label = testing_labels.partition(0, partition_size);
-
-        //    for (int i = 0; i < 10000; i++) {
-        //        Tuple<Double[,,], Double[,,]> t;
-        //        t = CNN.forward(testImageArray[i], testLabelArray[i]);
-        //        if (Utils.indexMaxValue(t.Item1) == Utils.indexMaxValue(testLabelArray[i])) {
-        //            correct++;
-        //        }
-        //        totalCrossEntropyLoss += t.Item2[0, 0, 0];
-        //    }
-        //    averageCrossEntropyLoss = totalCrossEntropyLoss / 10000;
-
-        //    Console.WriteLine(correct + " correct out of 10,000. \t Accuracy " + (Double)correct / 10000 * 100 + "%");
-        //    Console.WriteLine("Average cross entropy loss: " + averageCrossEntropyLoss + "\n\n");
-        //}
-
-        //static void trainCNN(int batchSize) {
-        //    for (int i = 0; i < 600; i++) {
-        //        Tuple<Double[,,], Double[,,]> t;
-        //        t = CNN.forward(trainImageArray [i], trainLabelArray[i]);
-        //        CNN.backward();
-        //        if (i % batchSize == 0 || i == 59999) {
-        //            CNN.update(batchSize);
-        //        }
-        //    }
-        //}
-
-        static void test_NN(int testing_sample_size) {
-
+        static void testCNN(int testing_sample_size) {
             int correct = 0;
-            Double total_cross_entropy_loss = 0.0;
-            Tuple<Tensor, Tensor> t;
+            Double totalCrossEntropyLoss = 0.0;
+            Double averageCrossEntropyLoss = 0.0;
 
-            t = NN.forward(testing_images, testing_labels);
-            
-            for (int i=0; i < testing_sample_size; i++) {
-                total_cross_entropy_loss += t.Item2.values[i];
+            int[] max = new int[10];
 
-                int index_max_value_output = -1;
-                Double max_output = Double.MinValue;
+            for (int i = 0; i < testing_sample_size; i++) {
+                Tuple<Tensor, Tensor> t;
+                t = CNN.forward(testImageArray[i], testLabelArray[i]);
 
-                int index_max_value_label = -1;
-                Double max_label = Double.MinValue;
-
-                for (int j=0; j < t.Item1.dim_2; j++) {
-                    if (t.Item1.values[i * t.Item1.dim_2 + j] > max_output) {
-                        max_output = t.Item1.values[i * t.Item1.dim_2+ j];
-                        index_max_value_output = j;
-                    }
-                    if (testing_labels.values[i * t.Item1.dim_2 + j] > max_label) {
-                        max_label = testing_labels.values[i * t.Item1.dim_2+ j];
-                        index_max_value_label = j;
-                    }
-                }
-                if (index_max_value_output == index_max_value_label) {
+                if (Utils.indexMaxValue_tensor(t.Item2) == Utils.indexMaxValue(testLabelArray[i])) {
                     correct++;
                 }
+                totalCrossEntropyLoss += t.Item1.values[0];
             }
+            averageCrossEntropyLoss = totalCrossEntropyLoss / testing_sample_size;
+
             Console.WriteLine(correct + " correct out of " + testing_sample_size + ". \t Accuracy " + (Double)correct / testing_sample_size * 100 + "%");
-            Console.WriteLine("Average cross entropy loss: " + total_cross_entropy_loss / testing_sample_size);
+            Console.WriteLine("Average cross entropy loss: " + averageCrossEntropyLoss + "\n\n");
         }
 
-        static void train_NN (int training_sample_size, int batch_size) {
-            int num_batches = training_sample_size / batch_size;
-            int remainder = training_sample_size - num_batches * batch_size;
-            Tensor A;
-            Tensor B;
-            Tuple<Tensor, Tensor> R;
 
-            for (int i=0; i < num_batches; i++) {
-                A = training_images.subset(i * batch_size, batch_size);
-                B = training_labels.subset(i * batch_size, batch_size);
-                R = NN.forward(A, B);
-                NN.backward_tensor();
-                NN.update(batch_size);
-            }
-            if (remainder != 0) {
-                A = training_images.subset(num_batches * batch_size, remainder);
-                B = training_labels.subset(num_batches * batch_size, remainder);
-                R = NN.forward(A, B);
-                NN.backward_tensor();
-                NN.update(remainder);
+        static void trainCNN(int batchSize) {
+            for (int i = 0; i < 600; i++) {
+                Tuple<Tensor, Tensor> t;
+                t = CNN.forward(trainImageArray[i], trainLabelArray[i]);
+                CNN.backward();
+                if (i % batchSize == 0 || i == 59999) {
+                    CNN.update(batchSize);
+                }
             }
         }
+
+        //static void test_NN(int testing_sample_size) {
+
+        //    int correct = 0;
+        //    Double total_cross_entropy_loss = 0.0;
+        //    Tuple<Tensor, Tensor> t;
+
+        //    t = NN.forward(testing_images, testing_labels);
+
+        //    for (int i = 0; i < testing_sample_size; i++) {
+        //        total_cross_entropy_loss += t.Item2.values[i];
+
+        //        int index_max_value_output = -1;
+        //        Double max_output = Double.MinValue;
+
+        //        int index_max_value_label = -1;
+        //        Double max_label = Double.MinValue;
+
+        //        for (int j = 0; j < t.Item1.dim_2; j++) {
+        //            if (t.Item1.values[i * t.Item1.dim_2 + j] > max_output) {
+        //                max_output = t.Item1.values[i * t.Item1.dim_2 + j];
+        //                index_max_value_output = j;
+        //            }
+        //            if (testing_labels.values[i * t.Item1.dim_2 + j] > max_label) {
+        //                max_label = testing_labels.values[i * t.Item1.dim_2 + j];
+        //                index_max_value_label = j;
+        //            }
+        //        }
+        //        if (index_max_value_output == index_max_value_label) {
+        //            correct++;
+        //        }
+        //    }
+        //    Console.WriteLine(correct + " correct out of " + testing_sample_size + ". \t Accuracy " + (Double)correct / testing_sample_size * 100 + "%");
+        //    Console.WriteLine("Average cross entropy loss: " + total_cross_entropy_loss / testing_sample_size);
+        //}
+
+        //static void train_NN(int training_sample_size, int batch_size) {
+        //    int num_batches = training_sample_size / batch_size;
+        //    int remainder = training_sample_size - num_batches * batch_size;
+        //    Tensor A;
+        //    Tensor B;
+        //    Tuple<Tensor, Tensor> R;
+
+        //    for (int i = 0; i < num_batches; i++) {
+        //        A = training_images.subset(i * batch_size, batch_size);
+        //        B = training_labels.subset(i * batch_size, batch_size);
+        //        R = NN.forward(A, B);
+        //        NN.backward_tensor();
+        //        NN.update(batch_size);
+        //    }
+        //    if (remainder != 0) {
+        //        A = training_images.subset(num_batches * batch_size, remainder);
+        //        B = training_labels.subset(num_batches * batch_size, remainder);
+        //        R = NN.forward(A, B);
+        //        NN.backward_tensor();
+        //        NN.update(remainder);
+        //    }
+        //}
     }
 }

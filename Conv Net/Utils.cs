@@ -42,6 +42,18 @@ namespace Conv_Net {
             return index;
         }
 
+        static public int indexMaxValue_tensor(Tensor input) {
+            Double max = Double.MinValue;
+            int index = -1;
+            for (int i=0; i < input.dim_2; i++) {
+                if (input.values[i] > max) {
+                    max = input.values[i];
+                    index = i;
+                }
+            }
+            return index;
+        }
+
         static public Double maxValue(Double[,,] input) {
             Double max = Double.MinValue;
             for (int i = 0; i < input.GetLength(2); i++) {
@@ -108,6 +120,7 @@ namespace Conv_Net {
             Tensor testing_images = new Tensor(4, num_test, num_input_rows, num_input_columns, num_input_channels);
             Tensor testing_labels = new Tensor(2, num_test, num_label_rows, 1, 1);
 
+
             try {
                 // Load training data
                 FileStream trainImagesStream = new FileStream(@"train-images.idx3-ubyte", FileMode.Open);
@@ -138,7 +151,7 @@ namespace Conv_Net {
                     }
                     // Load label
                     int label = brTrainLabels.ReadByte();
-                    training_labels.set(i, 0, 0, label, 1.0);
+                    training_labels.set(i, label, 0, 0, 1.0);
                 }
                 trainImagesStream.Close();
                 brTrainImages.Close();
@@ -175,7 +188,7 @@ namespace Conv_Net {
                     }
                     // Load label
                     int label = brTestLabels.ReadByte();
-                    testing_labels.set(i, 0, 0, label, 1.0);
+                    testing_labels.set(i, label, 0, 0, 1.0);
                 }
                 testImagesStream.Close();
                 brTestImages.Close();
@@ -193,7 +206,6 @@ namespace Conv_Net {
         public static void shuffleTrainingSet() {
             for (int i = 60000 - 1; i > 0; i--) {
                 int excluded_sample = Program.rand.Next(0, i);
-                
                 
                 (Program.trainImageArray[i], Program.trainImageArray[excluded_sample]) = (Program.trainImageArray[excluded_sample], Program.trainImageArray[i]);
                 (Program.trainLabelArray[i], Program.trainLabelArray[excluded_sample]) = (Program.trainLabelArray[excluded_sample], Program.trainLabelArray[i]);
@@ -227,6 +239,30 @@ namespace Conv_Net {
                     (training_labels.values[excluded_sample * num_label_rows + j], training_labels.values[i * num_label_rows + j]);
                 }
             }
+        }
+
+        static public Tensor label_to_tensor(Double[,,] label) {
+            Tensor temp = new Tensor(2, 1, label.GetLength(2), 1, 1);
+            for (int i=0; i < label.GetLength(2); i++) {
+                temp.values[i] = label[0, 0, i];
+            }
+            return temp;
+        }
+        static public Tensor image_to_tensor(Double[,,] image) {
+
+            int image_x = image.GetLength(0);
+            int image_y = image.GetLength(1);
+            int image_z = image.GetLength(2);
+
+            Tensor temp = new Tensor(4, 1, image_x, image_y, image_z);
+            for (int i=0; i < image_x; i++) {
+                for (int j=0; j < image_y; j++) {
+                    for (int k=0; k < image_z; k++) {
+                        temp.values[i * image_y * image_z + j * image_z + k] = image[i, j, k];
+                    }
+                }
+            }
+            return temp;
         }
 
         static public void printWeightsBiases(Fully_Connected_Layer Inner1, Fully_Connected_Layer Inner2, Fully_Connected_Layer Inner3) {

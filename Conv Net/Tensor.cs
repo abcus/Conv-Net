@@ -69,13 +69,13 @@ namespace Conv_Net {
                         sb.Append("<");
                         for (int l = 0; l < this.dim_1; l++) {
                             sb.Append(this.values[i * dim_2 * dim_3 * dim_4 + j * dim_3 * dim_4 + k * dim_4 + l]);
-                            if (l < this.dim_1- 1) {
+                            if (l < this.dim_1 - 1) {
                                 sb.Append(", ");
                             } else {
-                                 sb.Append(">");
+                                sb.Append(">");
                             }
                         }
-                        if (k < this.dim_2- 1) {
+                        if (k < this.dim_2 - 1) {
                             sb.Append(",\n");
                         } else {
                             sb.Append("");
@@ -133,6 +133,17 @@ namespace Conv_Net {
                 array[i] = temp;
             }
             return array;
+        }
+        public Double[][,,] convert_labels() {
+            Double[][,,] labels = new Double[this.dim_1][,,];
+            for (int i=0; i < dim_1; i++) {
+                Double[,,] temp = new Double[1, 1, this.dim_2];
+                for (int j=0; j < this.dim_2; j++) {
+                    temp[0, 0, j] = values[i * dim_2 + j];
+                }
+                labels[i] = temp;
+            }
+            return labels;
         }
     }
 }

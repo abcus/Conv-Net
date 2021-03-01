@@ -36,7 +36,7 @@ namespace Conv_Net {
             Softmax = new Softmax_Loss_Layer();
         }
 
-        public Tuple<Double[,,], Double[,,]> forward (Double[,,] input, Double[,,] target) {
+        public Tuple<Tensor, Tensor> forward (Double[,,] input, Double[,,] target) {
 
             Double[,,] output;
             Double[,,] loss;
@@ -56,7 +56,8 @@ namespace Conv_Net {
             output = Softmax.forward(output);
 
             loss = Softmax.loss(target);
-            return Tuple.Create(output, loss);
+
+            return Tuple.Create(Utils.label_to_tensor(loss), Utils.label_to_tensor(output));
         }
 
    

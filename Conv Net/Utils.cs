@@ -101,12 +101,12 @@ namespace Conv_Net {
         }
 
 
-        public static Tuple<Tensor, Tensor, Tensor, Tensor> load_MNIST(int num_train, int num_test, int num_input_rows, int num_input_columns, int num_input_channels, int num_label_channels) {
+        public static Tuple<Tensor, Tensor, Tensor, Tensor> load_MNIST(int num_train, int num_test, int num_input_rows, int num_input_columns, int num_input_channels, int num_label_rows) {
             Tensor training_images = new Tensor(4, num_train, num_input_rows, num_input_columns, num_input_channels);        
-            Tensor training_labels = new Tensor(2, num_train, 1, 1, num_label_channels);
+            Tensor training_labels = new Tensor(2, num_train, num_label_rows, 1, 1);
 
             Tensor testing_images = new Tensor(4, num_test, num_input_rows, num_input_columns, num_input_channels);
-            Tensor testing_labels = new Tensor(2, num_test, 1, 1, num_label_channels);
+            Tensor testing_labels = new Tensor(2, num_test, num_label_rows, 1, 1);
 
             try {
                 // Load training data
@@ -208,7 +208,7 @@ namespace Conv_Net {
             int num_image_channels = training_images.num_channels;
             Double[] image_data = training_images.data;
 
-            int num_label_channels = training_labels.num_channels;
+            int num_label_rows= training_labels.num_rows;
             Double[] label_data = training_labels.data;
 
             for (int i = num_samples - 1; i > 0; i--) {
@@ -217,14 +217,14 @@ namespace Conv_Net {
                 for (int j = 0; j < num_image_rows; j++) {
                     for (int k = 0; k < num_image_columns; k++) {
                         for (int l = 0; l < num_image_channels; l++) {
-                            (image_data[i * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l], image_data[excluded_sample * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l]) =
-                            (image_data[excluded_sample * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l], image_data[i * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l]);
+                            (training_images.data[i * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l], training_images.data[excluded_sample * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l]) =
+                            (training_images.data[excluded_sample * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l], training_images.data[i * num_image_rows * num_image_columns * num_image_channels + j * num_image_columns * num_image_channels + k * num_image_channels + l]);
                         }
                     }
                 }
-                for (int j=0; j < num_label_channels; j++) {
-                    (label_data[i * num_label_channels + j], label_data[excluded_sample * num_label_channels + j]) =
-                    (label_data[excluded_sample * num_label_channels + j], label_data[i * num_label_channels + j]);
+                for (int j=0; j < num_label_rows; j++) {
+                    (training_labels.data[i * num_label_rows + j], training_labels.data[excluded_sample * num_label_rows + j]) =
+                    (training_labels.data[excluded_sample * num_label_rows + j], training_labels.data[i * num_label_rows + j]);
                 }
             }
         }

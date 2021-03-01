@@ -32,6 +32,17 @@ namespace Conv_Net {
             data[sample * num_rows * num_columns * num_channels + row * num_columns * num_channels + column * num_channels + channel] = value;
         }
 
+        public Tensor transpose_2D () {
+            Tensor output = new Tensor(this.rank, this.num_rows, this.num_samples, this.num_columns, this.num_columns);
+
+            Parallel.For(0, output.num_samples, i => {
+                for (int j = 0; j < output.num_rows; j++) {
+                    output.data[i * output.num_rows + j] = this.data[j * this.num_rows + i];
+                }
+            });
+            return output;
+        }
+
         public Tensor partition(int sample_i, int partition_size) {
             Tensor t = new Tensor(this.rank, partition_size, this.num_rows, this.num_columns, this.num_channels);
             for (int i = 0; i < partition_size; i++) {
@@ -49,40 +60,38 @@ namespace Conv_Net {
 
 
         public override string ToString() {
-            StringBuilder s = new StringBuilder();
-            s.Append("\nsamples: " + this.num_samples + "\nrows: " + this.num_rows + "\ncolumns: " + this.num_columns + "\nchannels: " + this.num_channels + "\n");
+            StringBuilder sb = new StringBuilder();
 
-
-            //for (int i=0; i < this.num_samples; i ++) {
-            //    s.Append("(");
-            //    for (int j = 0; j < this.num_rows; j++) {
-            //        s.Append("[");
-            //        for (int k = 0; k < this.num_columns; k++) {
-            //            s.Append("{");
-            //            for (int l = 0; l < this.num_channels; l++) {
-            //                s.Append(this.data[i * num_rows * num_columns * num_channels + j * num_columns * num_channels + k * num_channels + l]);
-            //                if (l < this.num_channels - 1) {
-            //                    s.Append(", ");
-            //                } else {
-            //                    s.Append("}");
-            //                }
-            //            }
-            //            if (k < this.num_columns - 1) {
-            //                s.Append(", ");
-            //            } else {
-            //                s.Append("");
-            //            }
-            //        }
-            //        s.Append("]");
-            //        if (j < this.num_rows - 1) {
-            //            s.Append(",\n");
-            //        }
-            //        s.Append("");
-            //    }
-            //    s.Append(")\n");
-            //}
-
-            return s.ToString();            
+            for (int i = 0; i < this.num_samples; i++) {
+                sb.Append("(");
+                for (int j = 0; j < this.num_rows; j++) {
+                    sb.Append("[");
+                    for (int k = 0; k < this.num_columns; k++) {
+                        sb.Append("{");
+                        for (int l = 0; l < this.num_channels; l++) {
+                            sb.Append(this.data[i * num_rows * num_columns * num_channels + j * num_columns * num_channels + k * num_channels + l]);
+                            if (l < this.num_channels - 1) {
+                                sb.Append(", ");
+                            } else {
+                                sb.Append("}");
+                            }
+                        }
+                        if (k < this.num_columns - 1) {
+                            sb.Append(", ");
+                        } else {
+                            sb.Append("");
+                        }
+                    }
+                    sb.Append("]");
+                    if (j < this.num_rows - 1) {
+                        sb.Append(",\n");
+                    }
+                    sb.Append("");
+                }
+                sb.Append(")\n");
+            }
+            sb.Append("\nsamples: " + this.num_samples + "\nrows: " + this.num_rows + "\ncolumns: " + this.num_columns + "\nchannels: " + this.num_channels + "\n");
+            return sb.ToString();            
         }
 
         public bool Equals(Tensor t) {

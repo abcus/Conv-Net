@@ -19,6 +19,8 @@ namespace Conv_Net {
         public Tensor biases_tensor;
         public Tensor weights_tensor;
         public Tensor input_tensor;
+        public Tensor gradient_weights_tensor;
+        public Tensor gradient_biases_tensor;
 
         public FullyConnectedLayer(int previousLayerSize, int layerSize, bool needsGradient) {
             this.previousLayerSize = previousLayerSize;
@@ -75,6 +77,10 @@ namespace Conv_Net {
 
         public Tensor forward_tensor(Tensor input) {
             this.input_tensor = input;
+            int sample_size = input.num_samples;
+            this.gradient_biases_tensor = new Tensor(2, sample_size, layerSize, 1, 1);
+            this.gradient_weights_tensor = new Tensor(3, sample_size, layerSize, previousLayerSize, 1);
+
             Tensor output = new Tensor(2, input.num_samples, this.layerSize, 1, 1);
 
             Parallel.For(0, input.num_samples, i => {
@@ -118,17 +124,76 @@ namespace Conv_Net {
             }
         }
 
+        public Tensor backward_tensor (Tensor gradientOutput) {
+            
+            Tensor gradientInput = new Tensor(input_tensor.rank, input_tensor.num_samples, input_tensor.num_rows, input_tensor.num_columns, input_tensor.num_channels);
+
+            for (int i=0; i < input_tensor.num_samples; i++) {
+                for (int j=0; j < layerSize; j++) {
+                    this.gradient_biases_tensor.data[i * layerSize + j] += gradientOutput.data[i * layerSize + j];
+                    for (int k=0; k < previousLayerSize; k++) {
+                        this.gradient_weights_tensor.data[i * layerSize * previousLayerSize + j * previousLayerSize + k] += (gradientOutput.data[i * layerSize + j] * this.input_tensor.data[i * previousLayerSize + k]);
+                    }
+                }
+            }
+
+            if (this.needsGradient == true) {
+                Tensor transposed_weights_tensor = weights_tensor.transpose_2D();
+
+                for (int i=0; i < input_tensor.num_samples; i++) {
+                    for (int j=0; j < previousLayerSize; j++) {
+                        Double sum = 0.0;
+                        for (int k=0; k < layerSize; k++) {
+                            sum += (transposed_weights_tensor.data[j * layerSize + k] * gradientOutput.data[i * layerSize + k]);
+                        }
+                        gradientInput.data[i * previousLayerSize + j] = sum;
+                        sum = 0;
+                    }
+                }
+                return gradientInput;
+            } else {
+                return null;
+            }
+        }
+
+
         // Update weights and biases
         public void update (int batchSize) {
-            for (int i = 0; i < layerSize; i ++) {
-                this.biases[i][0,0,0] -= (this.gradientBiases[i][0,0,0] * Program.eta / batchSize);
+
+            for (int i = 0; i < layerSize; i++) {
+                this.biases[i][0, 0, 0] -= (this.gradientBiases[i][0, 0, 0] * Program.eta / batchSize);
+                this.biases_tensor.data[i] -= (this.gradientBiases[i][0, 0, 0] * Program.eta / batchSize);
                 this.gradientBiases[i][0, 0, 0] = 0.0;
 
-                for (int j=0; j < previousLayerSize; j++) {
+                for (int j = 0; j < previousLayerSize; j++) {
                     this.weights[i][0, 0, j] -= (this.gradientWeights[i][0, 0, j] * Program.eta / batchSize);
+                    this.weights_tensor.data[i * this.previousLayerSize + j] -= (this.gradientWeights[i][0, 0, j] * Program.eta / batchSize);
                     this.gradientWeights[i][0, 0, j] = 0.0;
                 }
             }
+        }
+
+        public void update_tensor (int batchSize) {
+            for (int i = 0; i < layerSize; i++) {
+                Double bias_gradient_sum = 0.0;
+                for (int k = 0; k < batchSize; k++) {
+                    bias_gradient_sum += gradient_biases_tensor.data[k * layerSize + i];
+                    gradient_biases_tensor.data[k * layerSize + i] = 0.0;
+                }
+                this.biases_tensor.data[i] -= bias_gradient_sum * Program.eta / batchSize;
+                bias_gradient_sum = 0.0;
+
+                for (int j = 0; j < previousLayerSize; j++) {
+                    Double weight_gradient_sum = 0.0;
+                    for (int k = 0; k < batchSize; k++) {
+                        weight_gradient_sum += gradient_weights_tensor.data[k * layerSize * previousLayerSize + i * previousLayerSize + j];
+                        gradient_weights_tensor.data[k * layerSize * previousLayerSize + i * previousLayerSize + j] = 0.0;
+                    }
+                    this.weights_tensor.data[i * previousLayerSize + j] -= weight_gradient_sum * Program.eta / batchSize;
+                    weight_gradient_sum = 0.0;
+                }
+            }
+
         }
     }
 }

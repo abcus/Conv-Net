@@ -58,7 +58,7 @@ namespace Conv_Net {
             return Tuple.Create(output, loss);
         }
 
-        public Tuple<Tensor, Tensor> forwardTensor(Tensor input, Tensor target) {
+        public Tuple<Tensor, Tensor> forward_tensor(Tensor input, Tensor target) {
             Tensor output;
             Tensor loss;
 
@@ -101,10 +101,35 @@ namespace Conv_Net {
             grad = FC1.backward(grad);
         }
 
+        public void backward_tensor () {
+            Tensor grad;
+
+            grad = Softmax.backward_tensor();
+            grad = FC3.backward_tensor(grad);
+            // Console.WriteLine(FC3.gradient_biases_tensor);
+            // Console.WriteLine(FC3.gradient_weights_tensor);
+
+            grad = Relu2.backward_tensor(grad);
+            grad = FC2.backward_tensor(grad);
+            //Console.WriteLine(FC2.gradient_biases_tensor);
+            // Console.WriteLine(FC2.gradient_weights_tensor);
+
+            grad = Relu1.backward_tensor(grad);
+            grad = FC1.backward_tensor(grad);
+            //Console.WriteLine(FC1.gradient_biases_tensor);
+            //Console.WriteLine(FC1.gradient_weights_tensor);
+        }
+
         public void update (int batchSize) {
             FC3.update(batchSize);
             FC2.update(batchSize);
             FC1.update(batchSize);
+        }
+
+        public void update_tensor (int batchSize) {
+            FC3.update_tensor(batchSize);
+            FC2.update_tensor(batchSize);
+            FC1.update_tensor(batchSize);
         }
     }
 }

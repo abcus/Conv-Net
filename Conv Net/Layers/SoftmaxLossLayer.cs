@@ -121,5 +121,16 @@ namespace Conv_Net {
             }
             return gradientInput;
         }
+
+        public Tensor backward_tensor () {
+            Tensor gradientInput = new Tensor(input_tensor.rank, input_tensor.num_samples, input_tensor.num_rows, input_tensor.num_columns, input_tensor.num_channels);
+        
+            for (int i=0; i < input_tensor.num_samples; i++) {
+                for (int j=0; j < input_tensor.num_rows; j++) {
+                    gradientInput.data[i * input_tensor.num_rows + j] = this.output_tensor.data[i * input_tensor.num_rows + j] - this.target_tensor.data[i * input_tensor.num_rows + j];
+                }
+            }
+            return gradientInput;
+        }
     }
 }

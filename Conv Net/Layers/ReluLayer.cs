@@ -62,5 +62,13 @@ namespace Conv_Net {
             }
             return gradientInput;
         }
+
+        public Tensor backward_tensor (Tensor gradientOutput) {
+            Tensor gradientInput = new Tensor(this.input_tensor.rank, this.input_tensor.num_samples, this.input_tensor.num_rows, this.input_tensor.num_columns, this.input_tensor.num_channels);
+            for (int i=0; i < gradientInput.num_samples * gradientInput.num_rows * gradientInput.num_columns * gradientInput.num_channels; i++) {
+                gradientInput.data[i] = gradientOutput.data[i] * (this.input_tensor.data[i] >= 0 ? 1 : 0);
+            }
+            return gradientInput;
+        }
     }
 }

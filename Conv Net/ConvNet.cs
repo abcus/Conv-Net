@@ -84,25 +84,15 @@ namespace Conv_Net {
 
             grad = Softmax.backward();
             grad = FC3.backward(grad);
-            //foreach (Double[,,] b in FC3.gradientBiases) Utils.printArray(b);
-            //foreach (Double[,,] w in FC3.gradientWeights) Utils.printArray(w);
-
             grad = Flatten3.backward(grad);
-            //Utils.printArray(grad);
 
             grad = Pool2.backward(grad);
-            //Utils.printArray(grad);
-
             grad = Relu2.backward(grad);
-            // Utils.printArray(grad);
-
             grad = Conv2.backward(grad);
 
-            Utils.printArray(grad);
-
-            //grad = Pool1.backward(grad);
-            //grad = Relu1.backward(grad);
-            //grad = Conv1.backward(grad);
+            grad = Pool1.backward(grad);
+            grad = Relu1.backward(grad);
+            grad = Conv1.backward(grad);
         }
          
         public void backward_tensor() {
@@ -110,20 +100,15 @@ namespace Conv_Net {
 
             grad = Softmax.backward_tensor();
             grad = FC3.backward_tensor(grad);
-            //Console.WriteLine(FC3.gradient_biases_tensor);
-            //Console.WriteLine(FC3.gradient_weights_tensor);
-
             grad = Flatten3.backward(grad);
-            //Console.WriteLine(grad);
 
             grad = Pool2.backward_tensor(grad);
-            //Console.WriteLine(grad);
-
             grad = Relu2.backward_tensor(grad);
-            // Console.WriteLine(grad);
-
             grad = Conv2.backward_tensor(grad);
-            Console.WriteLine(grad);
+
+            grad = Pool1.backward_tensor(grad);
+            grad = Relu1.backward_tensor(grad);
+            grad = Conv1.backward_tensor(grad);
         }
 
         public void update (int batchSize) {

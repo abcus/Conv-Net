@@ -38,7 +38,8 @@ namespace Conv_Net {
         public Double[][,,] gradientBiases;
         public Double[,,] input;
 
-
+        public Tensor input_tensor;
+        public int num_output_samples_tensor;
 
         public Convolution_Layer(int numInputChannels, int numFilters, int numFilterRows, int numFilterColumns, bool needsGradient, int stride = 1) {
 
@@ -123,6 +124,51 @@ namespace Conv_Net {
                         // Set the value of output
                         output[j / stride, k / stride, i] = elementwiseProduct;
                         elementwiseProduct = 0.0;
+                    }
+                }
+            }
+            return output;
+        }
+        public Tensor forward_tensor (Tensor input) {
+            this.input_tensor = input;
+            this.num_output_samples_tensor = input.dim_1;
+            this.numInputRows = input.dim_2;
+            this.numInputColumns = input.dim_3;
+            Debug.Assert(this.numInputChannels == input.dim_4);
+
+            this.numOutputRows = (this.numInputRows - this.numFilterRows) / this.stride + 1;
+            this.numOutputColumns = (this.numInputColumns - this.numFilterRows) / this.stride + 1;
+            this.numOutputChannels = this.numFilters;
+            Tensor output = new Tensor(4, this.num_output_samples_tensor, this.numOutputRows, this.numOutputColumns, this.numOutputChannels);
+
+            // Select the input image
+            for (int sample = 0; sample < this.num_output_samples_tensor; sample++) {
+                Double elementwiseProduct = 0.0;
+
+                // Select the filter
+                for (int i = 0; i < this.numFilters; i++) {
+
+                    // Select the row on the input where the top left corner of the filter is positioned 
+                    for (int j = 0; j <= this.numInputRows - this.numFilterRows; j += this.stride) {
+
+                        // Select the column on the input where the top left corner of the filter is positioned 
+                        for (int k = 0; k <= this.numInputColumns - this.numFilterColumns; k += this.stride) {
+
+                            // Loop through each element of the filter and multiply by the corresponding element of the input, add the products
+                            for (int l = 0; l < this.numFilterRows; l++) {
+                                for (int m = 0; m < this.numFilterColumns; m++) {
+                                    for (int n = 0; n < this.numFilterChannels; n++) {
+                                        elementwiseProduct += filters[i][l, m, n] * input_tensor.values[sample * (input.dim_2 * input.dim_3 * input.dim_4) + (j + l) * (input.dim_3 * input.dim_4) + (k + m) * (input.dim_4) + n];
+                                    }
+                                }
+                            }
+                            // Add the bias to elementwise product
+                            elementwiseProduct += this.biases[i][0, 0, 0];
+
+                            // Set the value of output
+                            output.values[sample * (output.dim_2 * output.dim_3 * output.dim_4) + (j / stride) * (output.dim_3 * output.dim_4) + (k / stride) * (output.dim_4) + i] = elementwiseProduct;
+                            elementwiseProduct = 0.0;
+                        }
                     }
                 }
             }

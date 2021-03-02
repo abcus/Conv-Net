@@ -60,7 +60,15 @@ namespace Conv_Net {
             return Tuple.Create(Utils.label_to_tensor(loss), Utils.label_to_tensor(output));
         }
 
-   
+        public Tuple<Tensor, Tensor> forward_tensor (Tensor input, Tensor target) {
+            Tensor output;
+            Tensor loss;
+
+            output = Conv1.forward_tensor(input);
+            Console.WriteLine("Conv 1 output" + output);
+
+            return null;
+        }
 
 
 

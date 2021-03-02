@@ -50,22 +50,26 @@ namespace Conv_Net {
             testImageArray = testing_images.convert_to_array();
             testLabelArray = testing_labels.convert_labels();
 
-            testCNN(testing_sample_size);
-            for (int epoch = 0; epoch < 10; epoch++) {
-                Console.WriteLine("------------------------------------------");
-                Console.WriteLine("Epoch: " + epoch);
 
-                Utils.shuffleTrainingSet();
+            //testCNN(9);
+            //testCNN_tensor(1);
 
-                stopwatch.Start();
-                trainCNN(CNN_training_sample_size, batchSize);
-                stopwatch.Stop();
-                Console.WriteLine("Time elapsed for training: " + stopwatch.Elapsed);
-                stopwatch.Reset();
+            //testCNN(testing_sample_size);
+            //for (int epoch = 0; epoch < 10; epoch++) {
+            //    Console.WriteLine("------------------------------------------");
+            //    Console.WriteLine("Epoch: " + epoch);
 
-                testCNN(testing_sample_size);
+            //    Utils.shuffleTrainingSet();
 
-            }
+            //    stopwatch.Start();
+            //    trainCNN(CNN_training_sample_size, batchSize);
+            //    stopwatch.Stop();
+            //    Console.WriteLine("Time elapsed for training: " + stopwatch.Elapsed);
+            //    stopwatch.Reset();
+
+            //    testCNN(testing_sample_size);
+
+            //}
 
 
             //test_NN(testing_sample_size);
@@ -89,8 +93,6 @@ namespace Conv_Net {
             Double totalCrossEntropyLoss = 0.0;
             Double averageCrossEntropyLoss = 0.0;
 
-            int[] max = new int[10];
-
             for (int i = 0; i < testing_sample_size; i++) {
                 Tuple<Tensor, Tensor> t;
                 t = CNN.forward(testImageArray[i], testLabelArray[i]);
@@ -106,6 +108,19 @@ namespace Conv_Net {
             Console.WriteLine("Average cross entropy loss: " + averageCrossEntropyLoss + "\n\n");
         }
 
+        static void testCNN_tensor(int testing_sample_size) {
+            int correct = 0;
+            Double totalCrossEntropyLoss = 0.0;
+            Double averageCrossEntropyLoss = 0.0;
+
+            Tensor A = testing_images.subset(0, testing_sample_size);
+            Tensor B = testing_labels.subset(0, testing_sample_size);
+
+            //console.writeline("image input" + a);
+            //console.writeline("label input" + b);
+
+            Tuple<Tensor, Tensor> R = CNN.forward_tensor(A, B);
+        }
 
         static void trainCNN(int training_sample_size, int batch_size) {
             int num_batches = training_sample_size / batch_size;

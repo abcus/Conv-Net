@@ -83,6 +83,8 @@ namespace Conv_Net {
             Double[,,] grad;
 
             grad = Softmax.backward();
+            Utils.printArray(grad);
+
             grad = FC3.backward(grad);
             grad = Flatten3.backward(grad);
 
@@ -95,10 +97,21 @@ namespace Conv_Net {
             grad = Conv1.backward(grad);
         }
          
+        public void backward_tensor() {
+            Tensor grad;
+
+            grad = Softmax.backward_tensor();
+            Console.WriteLine(grad);
+        }
+
         public void update (int batchSize) {
             FC3.update(batchSize);
             Conv2.update(batchSize);
             Conv1.update(batchSize);
+        }
+
+        public void update_tensor (int batch_size) {
+
         }
             
             

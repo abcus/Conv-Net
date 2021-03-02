@@ -50,8 +50,15 @@ namespace Conv_Net {
             testImageArray = testing_images.convert_to_array();
             testLabelArray = testing_labels.convert_labels();
 
-            test_CNN(10000);
-            test_CNN_tensor(10000);
+            for (int i=0; i < 2; i++) {
+                Tuple<Tensor, Tensor> T = CNN.forward(trainImageArray[i], trainLabelArray[i]);
+                CNN.backward();
+            }
+
+            Console.WriteLine("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+
+            Tuple<Tensor, Tensor> Q = CNN.forward_tensor(training_images.subset(0, 2), training_labels.subset(0, 2));
+            CNN.backward_tensor();
 
             //testCNN(testing_sample_size);
             //for (int epoch = 0; epoch < 10; epoch++) {
@@ -141,7 +148,7 @@ namespace Conv_Net {
             Console.WriteLine("Average cross entropy loss: " + total_cross_entropy_loss / testing_sample_size);
         }
 
-        static void trainCNN(int training_sample_size, int batch_size) {
+        static void train_CNN(int training_sample_size, int batch_size) {
             int num_batches = training_sample_size / batch_size;
             int remainder = training_sample_size - num_batches * batch_size;
             Tuple<Tensor, Tensor> t;
@@ -160,6 +167,28 @@ namespace Conv_Net {
                     CNN.backward();
                 }
                 CNN.update(remainder);
+            }
+        }
+        static void train_CNN_tensor(int training_sample_size, int batch_size) {
+            int num_batches = training_sample_size / batch_size;
+            int remainder = training_sample_size - num_batches * batch_size;
+            Tensor A;
+            Tensor B;
+            Tuple<Tensor, Tensor> R;
+
+            for (int i=0; i < num_batches; i++) {
+                A = training_images.subset(i * batch_size, batch_size);
+                B = training_labels.subset(i * batch_size, batch_size);
+                R = CNN.forward_tensor(A, B);
+                CNN.backward_tensor();
+                CNN.update_tensor(batch_size);
+            }
+            if (remainder != 0) {
+                A = training_images.subset(num_batches * batch_size, remainder);
+                B = training_labels.subset(num_batches * batch_size, remainder);
+                R = CNN.forward_tensor(A, B);
+                CNN.backward_tensor();
+                CNN.update_tensor(remainder);
             }
         }
 

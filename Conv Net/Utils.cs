@@ -360,7 +360,7 @@ namespace Conv_Net {
                 for (int j = 0; j < columns; j++) {
                     Console.Write("<");
                     for (int k = 0; k < channels; k++) {
-                        Console.Write(input[i, j, k].ToString("0.0000"));
+                        Console.Write(input[i, j, k].ToString("0.00000"));
                         if (k < channels - 1) {
                             Console.Write(", ");
                         } else {

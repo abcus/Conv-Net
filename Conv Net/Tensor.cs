@@ -62,14 +62,14 @@ namespace Conv_Net {
 
             if (dimensions == 0) {
                 
-                sb.AppendFormat("{0:0.0000}", this.values[0]);
+                sb.AppendFormat("{0:0.00000}", this.values[0]);
                 sb.Append("\n");
                 sb.Append("dimensions: " + this.dimensions + "\n");
 
             } else if (dimensions == 1) {
                 sb.Append("<");
                 for (int i = 0; i < this.dim_1; i++) {
-                    sb.AppendFormat("{0:0.0000}", this.values[i]);
+                    sb.AppendFormat("{0:0.00000}", this.values[i]);
                     if (i < this.dim_1 - 1) sb.Append(", ");
                 }
                 sb.Append(">");
@@ -81,7 +81,7 @@ namespace Conv_Net {
                 for (int i = 0; i < this.dim_1; i++) {
                     sb.Append("<");
                     for (int j=0; j < this.dim_2; j++) {
-                        sb.AppendFormat("{0:0.0000}", this.values[i * dim_2 + j]);
+                        sb.AppendFormat("{0:0.00000}", this.values[i * dim_2 + j]);
                         if (j < this.dim_2 - 1) sb.Append(", ");
                     }
                     sb.Append(">");
@@ -98,7 +98,7 @@ namespace Conv_Net {
                     for (int j=0; j < this.dim_2; j++) {
                         sb.Append("<");
                         for (int k=0; k < this.dim_3; k++) {
-                            sb.AppendFormat("{0:0.0000}", this.values[i * this.dim_2 * this.dim_3 + j * this.dim_3 + k]);
+                            sb.AppendFormat("{0:0.00000}", this.values[i * this.dim_2 * this.dim_3 + j * this.dim_3 + k]);
                             if (k < this.dim_3 - 1) sb.Append(", ");
                         }
                         sb.Append(">");
@@ -120,7 +120,7 @@ namespace Conv_Net {
                         for (int k=0; k < this.dim_3; k++) {
                             sb.Append("<");
                             for (int l=0; l < this.dim_4; l++) {
-                                sb.AppendFormat("{0:0.0000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
+                                sb.AppendFormat("{0:0.00000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
                                 if (l < this.dim_4 - 1) sb.Append(", ");
                             }
                             sb.Append(">");

@@ -94,11 +94,15 @@ namespace Conv_Net {
             //Utils.printArray(grad);
 
             grad = Relu2.backward(grad);
+            // Utils.printArray(grad);
+
             grad = Conv2.backward(grad);
 
-            grad = Pool1.backward(grad);
-            grad = Relu1.backward(grad);
-            grad = Conv1.backward(grad);
+            Utils.printArray(grad);
+
+            //grad = Pool1.backward(grad);
+            //grad = Relu1.backward(grad);
+            //grad = Conv1.backward(grad);
         }
          
         public void backward_tensor() {
@@ -114,6 +118,12 @@ namespace Conv_Net {
 
             grad = Pool2.backward_tensor(grad);
             //Console.WriteLine(grad);
+
+            grad = Relu2.backward_tensor(grad);
+            // Console.WriteLine(grad);
+
+            grad = Conv2.backward_tensor(grad);
+            Console.WriteLine(grad);
         }
 
         public void update (int batchSize) {

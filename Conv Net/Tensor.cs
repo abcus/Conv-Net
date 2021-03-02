@@ -57,6 +57,38 @@ namespace Conv_Net {
         }
 
 
+        public Tensor rotate_180() {
+            Tensor output = new Tensor(this.dimensions, this.dim_1, this.dim_2, this.dim_3, this.dim_4);
+
+            for (int filter = 0; filter < this.dim_1; filter++) {
+                for (int i = 0; i < this.dim_2; i++) {
+                    for (int j = 0; j < this.dim_3; j++) {
+                        for (int k = 0; k < this.dim_4; k++) {
+                            output.values[filter * (this.dim_2 * this.dim_3 * this.dim_4) + i * (this.dim_3 * this.dim_4) + j * (this.dim_4) + k] 
+                                = this.values[filter * (this.dim_2 * this.dim_3 * this.dim_4) + (this.dim_2- 1 - i) * (this.dim_3 * this.dim_4) + (this.dim_3 - 1 - j) * (this.dim_4) + k];
+                        }
+                    }
+                }
+            }
+            return output;
+        }
+
+        public Tensor zero_pad(int pad_size) {
+            Tensor output = new Tensor(this.dimensions, this.dim_1, this.dim_2 + 2 * pad_size, this.dim_3 + 2 * pad_size, this.dim_4);
+            for (int filter = 0; filter < this.dim_1; filter++) {
+                for (int i = 0; i < this.dim_2; i++) {
+                    for (int j = 0; j < this.dim_3; j++) {
+                        for (int k = 0; k < this.dim_4; k++) {
+                            output.values[filter * (output.dim_2 * output.dim_3 * output.dim_4) + (i + pad_size) * (output.dim_3 * output.dim_4) + (j + pad_size) * (output.dim_4) + k] 
+                                = this.values[filter * (this.dim_2 * this.dim_3 * this.dim_4) + i * (this.dim_3 * this.dim_4) + j * (this.dim_4) + k];
+                        }
+                    }
+                }
+            }
+            return output;
+        }
+
+
         public override string ToString() {
             StringBuilder sb = new StringBuilder();
 

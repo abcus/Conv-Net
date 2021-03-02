@@ -50,7 +50,7 @@ namespace Conv_Net {
             testImageArray = testing_images.convert_to_array();
             testLabelArray = testing_labels.convert_labels();
 
-            for (int i=0; i < 2; i++) {
+            for (int i = 0; i < 2; i++) {
                 Tuple<Tensor, Tensor> T = CNN.forward(trainImageArray[i], trainLabelArray[i]);
                 CNN.backward();
             }

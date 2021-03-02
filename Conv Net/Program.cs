@@ -31,6 +31,7 @@ namespace Conv_Net {
 
         public static int testing_sample_size = 10000;
         public static int training_sample_size = 60000;
+        public static int CNN_training_sample_size = 600;
 
         static void Main() {
 
@@ -57,7 +58,7 @@ namespace Conv_Net {
                 Utils.shuffleTrainingSet();
 
                 stopwatch.Start();
-                trainCNN(batchSize);
+                trainCNN(CNN_training_sample_size, batchSize);
                 stopwatch.Stop();
                 Console.WriteLine("Time elapsed for training: " + stopwatch.Elapsed);
                 stopwatch.Reset();
@@ -106,14 +107,25 @@ namespace Conv_Net {
         }
 
 
-        static void trainCNN(int batchSize) {
-            for (int i = 0; i < 600; i++) {
-                Tuple<Tensor, Tensor> t;
-                t = CNN.forward(trainImageArray[i], trainLabelArray[i]);
-                CNN.backward();
-                if (i % batchSize == 0 || i == 59999) {
-                    CNN.update(batchSize);
+        static void trainCNN(int training_sample_size, int batch_size) {
+            int num_batches = training_sample_size / batch_size;
+            int remainder = training_sample_size - num_batches * batch_size;
+            Tuple<Tensor, Tensor> t;
+
+
+            for (int i=0; i < num_batches; i++) {
+                for (int j=0; j < batch_size; j++) {
+                    t = CNN.forward(trainImageArray[i * batch_size + j], trainLabelArray[i * batch_size + j]);
+                    CNN.backward();
                 }
+                CNN.update(batch_size);
+            }
+            if (remainder != 0) {
+                for (int j=0; j < remainder; j++) {
+                    t = CNN.forward(trainImageArray[num_batches * batch_size + j], trainLabelArray[num_batches * batch_size + j]);
+                    CNN.backward();
+                }
+                CNN.update(remainder);
             }
         }
 

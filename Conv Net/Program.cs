@@ -50,32 +50,55 @@ namespace Conv_Net {
             testImageArray = testing_images.convert_to_array();
             testLabelArray = testing_labels.convert_labels();
 
-            for (int i = 0; i < 2; i++) {
-                Tuple<Tensor, Tensor> T = CNN.forward(trainImageArray[i], trainLabelArray[i]);
-                CNN.backward();
-            }
-
-            Console.WriteLine("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-
-            Tuple<Tensor, Tensor> Q = CNN.forward_tensor(training_images.subset(0, 2), training_labels.subset(0, 2));
-            CNN.backward_tensor();
-
-            //testCNN(testing_sample_size);
-            //for (int epoch = 0; epoch < 10; epoch++) {
-            //    Console.WriteLine("------------------------------------------");
-            //    Console.WriteLine("Epoch: " + epoch);
-
-            //    Utils.shuffleTrainingSet();
-
-            //    stopwatch.Start();
-            //    trainCNN(CNN_training_sample_size, batchSize);
-            //    stopwatch.Stop();
-            //    Console.WriteLine("Time elapsed for training: " + stopwatch.Elapsed);
-            //    stopwatch.Reset();
-
-            //    testCNN(testing_sample_size);
-
+            //for (int i = 0; i < 2; i++) {
+            //    Tuple<Tensor, Tensor> T = CNN.forward(trainImageArray[i], trainLabelArray[i]);
+            //    CNN.backward();
             //}
+            //CNN.update(2);
+            //foreach (Double[,,] a in CNN.FC3.biases) {
+            //    Utils.printArray(a);
+            //}
+            //foreach (Double[,,] a in CNN.FC3.weights) {
+            //    Utils.printArray(a);
+            //}
+            //foreach (Double[,,] a in CNN.Conv2.biases) {
+            //    Utils.printArray(a);
+            //}
+            //foreach (Double[,,] a in CNN.Conv2.filters) {
+            //    Utils.printArray(a);
+            //}
+            //foreach (Double[,,] a in CNN.Conv1.biases) {
+            //    Utils.printArray(a);
+            //}
+            //foreach (Double[,,] a in CNN.Conv1.filters) {
+            //    Utils.printArray(a);
+            //}
+
+
+
+
+            //Console.WriteLine("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+            //Tuple<Tensor, Tensor> Q = CNN.forward_tensor(training_images.subset(0, 2), training_labels.subset(0, 2));
+            //CNN.backward_tensor();
+            //CNN.update_tensor(2);
+
+
+            test_CNN_tensor(testing_sample_size);
+            for (int epoch = 0; epoch < 10; epoch++) {
+                Console.WriteLine("------------------------------------------");
+                Console.WriteLine("Epoch: " + epoch);
+
+                Utils.shuffle_Tensor(training_images, training_labels);
+
+                stopwatch.Start();
+                train_CNN_tensor(CNN_training_sample_size, batchSize);
+                stopwatch.Stop();
+                Console.WriteLine("Time elapsed for training: " + stopwatch.Elapsed);
+                stopwatch.Reset();
+
+                test_CNN_tensor(testing_sample_size);
+
+            }
 
 
             //test_NN(testing_sample_size);

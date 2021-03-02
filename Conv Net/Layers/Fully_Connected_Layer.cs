@@ -167,12 +167,12 @@ namespace Conv_Net {
 
             for (int i = 0; i < layer_size; i++) {
                 this.biases[i][0, 0, 0] -= (this.gradientBiases[i][0, 0, 0] * Program.eta / batchSize);
-                this.biases_tensor.values[i] -= (this.gradientBiases[i][0, 0, 0] * Program.eta / batchSize);
+                //this.biases_tensor.values[i] -= (this.gradientBiases[i][0, 0, 0] * Program.eta / batchSize);
                 this.gradientBiases[i][0, 0, 0] = 0.0;
 
                 for (int j = 0; j < previous_layer_size; j++) {
                     this.weights[i][0, 0, j] -= (this.gradientWeights[i][0, 0, j] * Program.eta / batchSize);
-                    this.weights_tensor.values[i * this.previous_layer_size + j] -= (this.gradientWeights[i][0, 0, j] * Program.eta / batchSize);
+                    //this.weights_tensor.values[i * this.previous_layer_size + j] -= (this.gradientWeights[i][0, 0, j] * Program.eta / batchSize);
                     this.gradientWeights[i][0, 0, j] = 0.0;
                 }
             }
@@ -182,7 +182,7 @@ namespace Conv_Net {
              for (int i = 0; i < layer_size; i++) {
                 
                 // bias gradient array contains sum of gradients from all examples in batch (so divide by batch size to calculate the average)
-                this.biases_tensor.values[i] -= (gradient_biases_tensor.values[i] * Program.eta / batch_size);
+                this.biases_tensor.values[i] -= (this.gradient_biases_tensor.values[i] * Program.eta / batch_size);
                 gradient_biases_tensor.values[i] = 0.0;
 
                 for (int j=0; j < previous_layer_size; j++) {

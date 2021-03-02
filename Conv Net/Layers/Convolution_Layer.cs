@@ -394,7 +394,19 @@ namespace Conv_Net {
             }
         }
         public void update_tensor (int batch_size) {
+            for (int i = 0; i < this.numFilters; i++) {
+                this.bias_tensor.values[i] -= (this.gradient_bias_tensor.values[i] * Program.eta / batch_size);
+                this.gradient_bias_tensor.values[i] = 0.0;
 
+                for (int j = 0; j < this.numFilterRows; j++) {
+                    for (int k = 0; k < this.numFilterColumns; k++) {
+                        for (int l = 0; l < this.numFilterChannels; l++) {
+                            this.filter_tensor.values[i * (filter_tensor.dim_2 * filter_tensor.dim_3 * filter_tensor.dim_4) + j * (filter_tensor.dim_3 * filter_tensor.dim_4) + k * (filter_tensor.dim_4) + l] -= (this.gradient_filter_tensor.values[i * (gradient_filter_tensor.dim_2 * gradient_filter_tensor.dim_3 * gradient_filter_tensor.dim_4) + j * (gradient_filter_tensor.dim_3 * gradient_filter_tensor.dim_4) + k * (gradient_filter_tensor.dim_4) + l] * Program.eta / batch_size);
+                            this.gradient_filter_tensor.values[i * (gradient_filter_tensor.dim_2 * gradient_filter_tensor.dim_3 * gradient_filter_tensor.dim_4) + j * (gradient_filter_tensor.dim_3 * gradient_filter_tensor.dim_4) + k * (gradient_filter_tensor.dim_4) + l] = 0.0;
+                        }
+                    }
+                }
+            }
         }
         
     }

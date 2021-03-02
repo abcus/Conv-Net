@@ -118,7 +118,9 @@ namespace Conv_Net {
         }
 
         public void update_tensor (int batch_size) {
-
+            FC3.update_tensor(batch_size);
+            Conv2.update_tensor(batch_size);
+            Conv1.update_tensor(batch_size);
         }
             
             

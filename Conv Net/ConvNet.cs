@@ -48,7 +48,6 @@ namespace Conv_Net {
             output = Conv2.forward(output);
             output = Relu2.forward(output);
             output = Pool2.forward(output);
-            Utils.printArray(output);
 
             output = Flatten3.forward(output);
             output = FC3.forward(output);
@@ -71,12 +70,14 @@ namespace Conv_Net {
             output = Relu2.forward_tensor(output);
             output = Pool2.forward_tensor(output);
 
-            Console.WriteLine(output);
+            output = Flatten3.forward_tensor(output);
+            output = FC3.forward_tensor(output);
+            output = Softmax.forward_tensor(output);
 
-            return null;
+            loss = Softmax.loss_tensor(target);
+
+            return Tuple.Create(loss, output);
         }
-
-
 
         public void backward () {
             Double[,,] grad;

@@ -50,8 +50,8 @@ namespace Conv_Net {
             testImageArray = testing_images.convert_to_array();
             testLabelArray = testing_labels.convert_labels();
 
-            testCNN(3);
-            //testCNN_tensor(3);
+            test_CNN(10000);
+            test_CNN_tensor(10000);
 
             //testCNN(testing_sample_size);
             //for (int epoch = 0; epoch < 10; epoch++) {
@@ -87,7 +87,7 @@ namespace Conv_Net {
             //}
         }
 
-        static void testCNN(int testing_sample_size) {
+        static void test_CNN(int testing_sample_size) {
             int correct = 0;
             Double totalCrossEntropyLoss = 0.0;
             Double averageCrossEntropyLoss = 0.0;
@@ -107,18 +107,38 @@ namespace Conv_Net {
             Console.WriteLine("Average cross entropy loss: " + averageCrossEntropyLoss + "\n\n");
         }
 
-        static void testCNN_tensor(int testing_sample_size) {
+        static void test_CNN_tensor(int testing_sample_size) {
             int correct = 0;
-            Double totalCrossEntropyLoss = 0.0;
-            Double averageCrossEntropyLoss = 0.0;
+            Double total_cross_entropy_loss = 0.0;
+            Tuple<Tensor, Tensor> t;
+            
+            t = CNN.forward_tensor(testing_images, testing_labels);
 
-            Tensor A = testing_images.subset(0, testing_sample_size);
-            Tensor B = testing_labels.subset(0, testing_sample_size);
+            for (int i=0; i < testing_sample_size; i++) {
+                total_cross_entropy_loss += t.Item1.values[i];
 
-            //console.writeline("image input" + a);
-            //console.writeline("label input" + b);
+                int index_max_value_output = -1;
+                Double max_output = Double.MinValue;
 
-            Tuple<Tensor, Tensor> R = CNN.forward_tensor(A, B);
+                int index_max_value_label = -1;
+                Double max_label = Double.MinValue;
+
+                for (int j=0; j < t.Item2.dim_2; j++) {
+                    if (t.Item2.values[i * t.Item2.dim_2 + j] > max_output) {
+                        max_output = t.Item2.values[i * t.Item2.dim_2 + j];
+                        index_max_value_output = j;
+                    }
+                    if (testing_labels.values[i * t.Item2.dim_2 + j] > index_max_value_label) {
+                        max_label = testing_labels.values[i * t.Item2.dim_2 + j];
+                        index_max_value_label = j;
+                    }
+                }
+                if (index_max_value_output == index_max_value_label) {
+                    correct++;
+                }
+            }
+            Console.WriteLine(correct + " correct out of " + testing_sample_size + ". \t Accuracy " + (Double)correct / testing_sample_size * 100 + "%");
+            Console.WriteLine("Average cross entropy loss: " + total_cross_entropy_loss / testing_sample_size);
         }
 
         static void trainCNN(int training_sample_size, int batch_size) {

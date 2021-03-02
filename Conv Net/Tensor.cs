@@ -188,35 +188,5 @@ namespace Conv_Net {
             }
             return true;
         }
-
-        /// <summary>
-        /// Converts rank 4 tensor to multidimensional array [][,,]
-        /// </summary>
-        public Double[][,,] convert_to_array () {
-            Double[][,,] array = new Double[this.dim_1][,,];
-            for (int i=0; i < dim_1; i++) {
-                Double[,,] temp = new Double[this.dim_2, this.dim_3, this.dim_4];
-                for (int j=0; j < this.dim_2; j++) {
-                    for (int k=0; k < this.dim_3; k++) {
-                        for (int l=0; l < this.dim_4; l++) {
-                            temp[j, k, l] = values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l];
-                        }
-                    }
-                }
-                array[i] = temp;
-            }
-            return array;
-        }
-        public Double[][,,] convert_labels() {
-            Double[][,,] labels = new Double[this.dim_1][,,];
-            for (int i=0; i < dim_1; i++) {
-                Double[,,] temp = new Double[1, 1, this.dim_2];
-                for (int j=0; j < this.dim_2; j++) {
-                    temp[0, 0, j] = values[i * dim_2 + j];
-                }
-                labels[i] = temp;
-            }
-            return labels;
-        }
     }
 }

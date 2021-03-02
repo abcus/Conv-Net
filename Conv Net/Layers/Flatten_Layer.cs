@@ -18,24 +18,7 @@ namespace Conv_Net {
 
         }
 
-        public Double[,,] forward(Double[,,] input) {
-            this.numInputRows = input.GetLength(0);
-            this.numInputColumns = input.GetLength(1);
-            this.numInputChannels = input.GetLength(2);
-            this.numOutputChannels = this.numInputRows * this.numInputColumns * this.numInputChannels;
-            Double[,,] output = new Double[1, 1, numOutputChannels];
-
-            for (int i = 0; i < numInputRows; i++) {
-                for (int j = 0; j < numInputColumns; j++) {
-                    for (int k = 0; k < numInputChannels; k++) {
-                        output[0, 0, i * numInputColumns * numInputChannels + j * numInputChannels + k] = input[i, j, k];
-                    }
-                }
-            }
-            return output;
-        }
-
-        public Tensor forward_tensor(Tensor input) {
+        public Tensor forward(Tensor input) {
             this.numInputSamples = input.dim_1;
             this.numInputRows = input.dim_2;
             this.numInputColumns = input.dim_3;
@@ -46,23 +29,9 @@ namespace Conv_Net {
             return output;
         }
 
-
-        public Double[,,] backward(Double[,,] gradientOutput) {
-            Double[,,] gradientInput = new Double[this.numInputRows, this.numInputColumns, this.numInputChannels];
-
-            for (int i = 0; i < numInputRows; i++) {
-                for (int j = 0; j < numInputColumns; j++) {
-                    for (int k = 0; k < numInputChannels; k++) {
-                        gradientInput[i, j, k] = gradientOutput[0, 0, i * this.numInputColumns * this.numInputChannels + j * this.numInputChannels + k];
-                    }
-                }
-            }
-            return gradientInput;
-        }
-
-        public Tensor backward(Tensor gradientOutput) {
+        public Tensor backward(Tensor gradient_output) {
             Tensor gradient_input = new Tensor(4, this.numInputSamples, this.numInputRows, this.numInputColumns, this.numInputChannels);
-            gradient_input.values = gradientOutput.values;
+            gradient_input.values = gradient_output.values;
             return gradient_input;
         }
     }

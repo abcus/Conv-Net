@@ -61,25 +61,9 @@ namespace Conv_Net {
                 }
             }
         }
-
-        public Double[,,] forward(Double[,,] input) {
-            this.input = input;
-            Double[,,] output = new Double[1, 1, layer_size];
-
-            // Output is dot product of input and corresponding weights + bias
-            for (int i = 0; i < layer_size; i++) {
-                output[0, 0, i] = Utils.dotProduct(input, weights[i]) + biases[i][0, 0, 0];
-            }
-            return output;
-        }
-        
-
-
-        public Tensor forward_tensor(Tensor input) {
+        public Tensor forward(Tensor input) {
             this.input_tensor = input;
             int sample_size = input.dim_1;
-
-
 
             this.gradient_biases_tensor = new Tensor(1, layer_size, 1, 1, 1);
             this.gradient_weights_tensor = new Tensor(2, layer_size, previous_layer_size, 1, 1);
@@ -87,6 +71,8 @@ namespace Conv_Net {
             Tensor output = new Tensor(2, input.dim_1, this.layer_size, 1, 1);
 
             Parallel.For(0, input.dim_1, i => {
+
+                // Output is dot product of input and corresponding weights + bias
                 for (int j = 0; j < this.layer_size; j++) {
 
                     Double sum = 0.0;
@@ -100,34 +86,7 @@ namespace Conv_Net {
         }
 
 
-        public Double[,,] backward(Double[,,] gradientOutput) {
-
-            Double[,,] gradientInput = new Double[1, 1, previous_layer_size];
-
-            for (int i=0; i < layer_size; i++) {
-
-                // dL/dB = dL/dO * dO/dB, stores it for gradient descent
-                this.gradientBiases[i][0, 0, 0] += gradientOutput[0, 0, i] * 1;
-
-                for (int j = 0; j < previous_layer_size; j++) {
-
-                    // dL/dW = dL/dO * dO/dW, stores it for gradient descent
-                    this.gradientWeights[i][0, 0, j] += gradientOutput[0, 0, i] * input[0, 0, j];
-                }
-            }
-
-            // If gradient needed (i.e. not first layer) then return dL/dI = dL/dO * dO/dI; otherwise return null
-            if (this.needsGradient == true) {
-                for (int i = 0; i < previous_layer_size; i++) {
-                    gradientInput[0, 0, i] = Utils.dotProduct(gradientOutput, Utils.transpose(this.weights)[i]);
-                }
-                return gradientInput;
-            } else {
-                return null;
-            }
-        }
-
-        public Tensor backward_tensor (Tensor gradientOutput) {
+        public Tensor backward (Tensor gradientOutput) {
             Tensor gradientInput = new Tensor(input_tensor.dimensions, input_tensor.dim_1, input_tensor.dim_2, input_tensor.dim_3, input_tensor.dim_4);
 
             // For each training example in the batch, gradient arrays are incremented (when updating, average gradients are calculated by dividing by batch size)
@@ -135,14 +94,19 @@ namespace Conv_Net {
             // Outer for loop not parallelized as locking arrays is slower
             for (int i=0; i < input_tensor.dim_1; i++) {
                 for (int j = 0; j < layer_size; j++) {
-                    this.gradient_biases_tensor.values[j] += gradientOutput.values[i * layer_size + j];
+
+                    // dL/dB = dL/dO * dO/dB, stores it for gradient descent
+                    this.gradient_biases_tensor.values[j] += gradientOutput.values[i * layer_size + j]; // * 1
                     
                     for (int k = 0; k < previous_layer_size; k++) {
+
+                        // dL/dW = dL/dO * dO/dW, stores it for gradient descent
                         this.gradient_weights_tensor.values[j * previous_layer_size + k] += gradientOutput.values[i * layer_size + j] * this.input_tensor.values[i * previous_layer_size + k];
                     }
                 }
             }
 
+            // If gradient needed (i.e. not first layer) then return dL/dI = dL/dO * dO/dI; otherwise return null
             if (this.needsGradient == true) {
                 Tensor transposed_weights_tensor = weights_tensor.transpose_2D();
                 Parallel.For(0, input_tensor.dim_1, i => {
@@ -161,33 +125,21 @@ namespace Conv_Net {
             }
         }
 
-
-        // Update weights and biases
-        public void update (int batchSize) {
-
-            for (int i = 0; i < layer_size; i++) {
-                this.biases[i][0, 0, 0] -= (this.gradientBiases[i][0, 0, 0] * Program.eta / batchSize);
-                //this.biases_tensor.values[i] -= (this.gradientBiases[i][0, 0, 0] * Program.eta / batchSize);
-                this.gradientBiases[i][0, 0, 0] = 0.0;
-
-                for (int j = 0; j < previous_layer_size; j++) {
-                    this.weights[i][0, 0, j] -= (this.gradientWeights[i][0, 0, j] * Program.eta / batchSize);
-                    //this.weights_tensor.values[i * this.previous_layer_size + j] -= (this.gradientWeights[i][0, 0, j] * Program.eta / batchSize);
-                    this.gradientWeights[i][0, 0, j] = 0.0;
-                }
-            }
-        }
-
+        /// <summary>
+        /// Updates the biases and weights of the fully connected layer
+        /// </summary>
+        /// <param name="batch_size"></param>
         public void update_tensor (int batch_size) {
-             for (int i = 0; i < layer_size; i++) {
+             
+            for (int i = 0; i < layer_size; i++) {
                 
-                // bias gradient array contains sum of gradients from all examples in batch (so divide by batch size to calculate the average)
+                // bias gradient array contains sum of gradients from all examples in batch (divide by batch size to calculate the average gradient)
                 this.biases_tensor.values[i] -= (this.gradient_biases_tensor.values[i] * Program.eta / batch_size);
                 gradient_biases_tensor.values[i] = 0.0;
 
                 for (int j=0; j < previous_layer_size; j++) {
 
-                    // weights gradient array contains sum of gradients from all examples in batch (so divide by batch size to calculate the average)
+                    // weights gradient array contains sum of gradients from all examples in batch (divide by batch size to calculate the average gradient)
                     this.weights_tensor.values[i * previous_layer_size + j] -= (gradient_weights_tensor.values[i * previous_layer_size + j] * Program.eta / batch_size);
                     gradient_weights_tensor.values[i * previous_layer_size + j] = 0.0;
                 }

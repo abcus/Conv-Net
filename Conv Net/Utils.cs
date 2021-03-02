@@ -203,15 +203,6 @@ namespace Conv_Net {
             return null;
         }
 
-        public static void shuffleTrainingSet() {
-            for (int i = 60000 - 1; i > 0; i--) {
-                int excluded_sample = Program.rand.Next(0, i);
-                
-                (Program.trainImageArray[i], Program.trainImageArray[excluded_sample]) = (Program.trainImageArray[excluded_sample], Program.trainImageArray[i]);
-                (Program.trainLabelArray[i], Program.trainLabelArray[excluded_sample]) = (Program.trainLabelArray[excluded_sample], Program.trainLabelArray[i]);
-            }
-        }
-
 
         public static void shuffle_Tensor(Tensor training_images, Tensor training_labels) {
             int num_samples = training_images.dim_1;
@@ -241,29 +232,6 @@ namespace Conv_Net {
             }
         }
 
-        static public Tensor label_to_tensor(Double[,,] label) {
-            Tensor temp = new Tensor(2, 1, label.GetLength(2), 1, 1);
-            for (int i=0; i < label.GetLength(2); i++) {
-                temp.values[i] = label[0, 0, i];
-            }
-            return temp;
-        }
-        static public Tensor image_to_tensor(Double[,,] image) {
-
-            int image_x = image.GetLength(0);
-            int image_y = image.GetLength(1);
-            int image_z = image.GetLength(2);
-
-            Tensor temp = new Tensor(4, 1, image_x, image_y, image_z);
-            for (int i=0; i < image_x; i++) {
-                for (int j=0; j < image_y; j++) {
-                    for (int k=0; k < image_z; k++) {
-                        temp.values[i * image_y * image_z + j * image_z + k] = image[i, j, k];
-                    }
-                }
-            }
-            return temp;
-        }
 
         static public void printWeightsBiases(Fully_Connected_Layer Inner1, Fully_Connected_Layer Inner2, Fully_Connected_Layer Inner3) {
 

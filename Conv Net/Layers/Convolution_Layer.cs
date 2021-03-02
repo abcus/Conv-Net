@@ -157,7 +157,7 @@ namespace Conv_Net {
             Tensor output = new Tensor(4, this.num_output_samples_tensor, this.numOutputRows, this.numOutputColumns, this.numOutputChannels);
 
             // Select the input image
-            for (int i = 0; i < this.num_output_samples_tensor; i++) {
+            Parallel.For(0, this.num_output_samples_tensor, i => {
                 Double elementwiseProduct = 0.0;
 
                 // Select the filter
@@ -173,7 +173,7 @@ namespace Conv_Net {
                             for (int m = 0; m < this.numFilterRows; m++) {
                                 for (int n = 0; n < this.numFilterColumns; n++) {
                                     for (int o = 0; o < this.numFilterChannels; o++) {
-                                        elementwiseProduct += this.filter_tensor.values[j * (this.numFilterRows * this.numFilterColumns * this.numFilterChannels) + m * (this.numFilterColumns * this.numFilterChannels) + n * (this.numFilterChannels) + o]  * input_tensor.values[i * (input.dim_2 * input.dim_3 * input.dim_4) + (k + m) * (input.dim_3 * input.dim_4) + (l + n) * (input.dim_4) + o];
+                                        elementwiseProduct += this.filter_tensor.values[j * (this.numFilterRows * this.numFilterColumns * this.numFilterChannels) + m * (this.numFilterColumns * this.numFilterChannels) + n * (this.numFilterChannels) + o] * input_tensor.values[i * (input.dim_2 * input.dim_3 * input.dim_4) + (k + m) * (input.dim_3 * input.dim_4) + (l + n) * (input.dim_4) + o];
                                     }
                                 }
                             }
@@ -186,7 +186,7 @@ namespace Conv_Net {
                         }
                     }
                 }
-            }
+            });
             return output;
         }
 
@@ -361,7 +361,6 @@ namespace Conv_Net {
                                         for (int n = 0; n < this.numGradientOutputColumns; n++) {
                                             elementwise_product += gradient_output.values[sample * (gradient_output.dim_2 * gradient_output.dim_3 * gradient_output.dim_4) + m * (gradient_output.dim_3 * gradient_output.dim_4) + n * (gradient_output.dim_4) + j] 
                                                 * zero_padded_rotated_filters.values[j * (zero_padded_rotated_filters.dim_2 * zero_padded_rotated_filters.dim_3 * zero_padded_rotated_filters.dim_4) + (this.num_input_rows - k - 1 + m) * (zero_padded_rotated_filters.dim_3 * zero_padded_rotated_filters.dim_4) + (this.num_input_columns - l - 1 + n) * (zero_padded_rotated_filters.dim_4) + i];
-
                                         }
                                     }
                                     gradient_input.values[sample * (gradient_input.dim_2 * gradient_input.dim_3 * gradient_input.dim_4) + k * (gradient_input.dim_3 * gradient_input.dim_4) + l * (gradient_input.dim_4) + i] += elementwise_product;

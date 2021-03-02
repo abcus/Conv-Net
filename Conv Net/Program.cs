@@ -20,7 +20,7 @@ namespace Conv_Net {
         public static MathNet.Numerics.Distributions.Normal normalDist = new MathNet.Numerics.Distributions.Normal(0, 1, rand);
         public static Stopwatch stopwatch = new Stopwatch();
 
-        //public static Net NN = new Net();
+        // public static Net NN = new Net();
         public static Conv_Net CNN = new Conv_Net();
         public static Double eta = 0.01;
         public static int batchSize = 16;

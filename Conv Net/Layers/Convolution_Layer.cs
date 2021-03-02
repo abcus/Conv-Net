@@ -38,6 +38,10 @@ namespace Conv_Net {
         public Double[][,,] gradientBiases;
         public Double[,,] input;
 
+        public Tensor filter_tensor;
+        public Tensor bias_tensor;
+        public Tensor gradient_filter_tensor;
+        public Tensor gradient_bias_tensor;
         public Tensor input_tensor;
         public int num_output_samples_tensor;
 
@@ -60,6 +64,13 @@ namespace Conv_Net {
             this.gradientFilters = new Double[this.numFilters][,,];
             this.gradientBiases = new Double[this.numBiases][,,];
 
+
+            this.bias_tensor = new Tensor(1, numFilters, 1, 1, 1);
+            this.filter_tensor = new Tensor(4, numFilters, numFilterRows, numFilterColumns, numFilterChannels);
+            this.gradient_bias_tensor = new Tensor(1, numFilters, 1, 1, 1);
+            this.gradient_filter_tensor = new Tensor(4, numFilters, numFilterRows, numFilterColumns, numFilterChannels);
+
+
             for (int i = 0; i < this.numFilters; i++) {
                 
                 // Bias initialization (set to 0)
@@ -73,6 +84,7 @@ namespace Conv_Net {
                     for (int k = 0; k < this.numFilterColumns; k++) {
                         for (int l = 0; l < this.numFilterChannels; l++) {
                             tempFilter[j, k, l] = Program.normalDist.Sample() * Math.Sqrt(2 / ((Double)this.numFilters * this.numFilterRows * this.numFilterColumns));
+                            this.filter_tensor.values[i * this.numFilterRows * this.numFilterColumns * this.numFilterChannels + j * this.numFilterColumns * this.numFilterChannels + k * this.numFilterChannels + l] = tempFilter[j, k, l];
                         }
                     }
                 }
@@ -158,12 +170,12 @@ namespace Conv_Net {
                             for (int l = 0; l < this.numFilterRows; l++) {
                                 for (int m = 0; m < this.numFilterColumns; m++) {
                                     for (int n = 0; n < this.numFilterChannels; n++) {
-                                        elementwiseProduct += filters[i][l, m, n] * input_tensor.values[sample * (input.dim_2 * input.dim_3 * input.dim_4) + (j + l) * (input.dim_3 * input.dim_4) + (k + m) * (input.dim_4) + n];
+                                        elementwiseProduct += this.filter_tensor.values[i * (this.numFilterRows * this.numFilterColumns * this.numFilterChannels) + l * (this.numFilterColumns * this.numFilterChannels) + m * (this.numFilterChannels) + n]  * input_tensor.values[sample * (input.dim_2 * input.dim_3 * input.dim_4) + (j + l) * (input.dim_3 * input.dim_4) + (k + m) * (input.dim_4) + n];
                                     }
                                 }
                             }
-                            // Add the bias to elementwise product
-                            elementwiseProduct += this.biases[i][0, 0, 0];
+                            // Add the bias to elementwise product (***** check accuracy when bias != 0)
+                            elementwiseProduct += this.bias_tensor.values[i];
 
                             // Set the value of output
                             output.values[sample * (output.dim_2 * output.dim_3 * output.dim_4) + (j / stride) * (output.dim_3 * output.dim_4) + (k / stride) * (output.dim_4) + i] = elementwiseProduct;

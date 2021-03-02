@@ -42,15 +42,14 @@ namespace Conv_Net {
 
             output = Input.forward(input);
             output = Conv1.forward(output);
-            Utils.printArray(output);
-
             output = Relu1.forward(output);
             output = Pool1.forward(output);
 
             output = Conv2.forward(output);
             output = Relu2.forward(output);
             output = Pool2.forward(output);
-            
+            Utils.printArray(output);
+
             output = Flatten3.forward(output);
             output = FC3.forward(output);
             output = Softmax.forward(output);
@@ -65,6 +64,13 @@ namespace Conv_Net {
             Tensor loss;
 
             output = Conv1.forward_tensor(input);
+            output = Relu1.forward_tensor(output);
+            output = Pool1.forward_tensor(output);
+
+            output = Conv2.forward_tensor(output);
+            output = Relu2.forward_tensor(output);
+            output = Pool2.forward_tensor(output);
+
             Console.WriteLine(output);
 
             return null;

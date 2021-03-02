@@ -7,10 +7,12 @@ using System.Threading.Tasks;
 namespace Conv_Net {
     class Flatten_Layer {
 
+        private int numInputSamples;
         private int numInputRows;
         private int numInputColumns;
         private int numInputChannels;
         private int numOutputChannels;
+        
 
         public Flatten_Layer() {
 
@@ -34,6 +36,11 @@ namespace Conv_Net {
         }
 
         public Tensor forward_tensor(Tensor input) {
+            this.numInputSamples = input.dim_1;
+            this.numInputRows = input.dim_2;
+            this.numInputColumns = input.dim_3;
+            this.numInputChannels = input.dim_4;
+                
             Tensor output = new Tensor(2, input.dim_1, input.dim_2 * input.dim_3 * input.dim_4, 1, 1);
             output.values = input.values;
             return output;
@@ -51,6 +58,12 @@ namespace Conv_Net {
                 }
             }
             return gradientInput;
+        }
+
+        public Tensor backward(Tensor gradientOutput) {
+            Tensor gradient_input = new Tensor(4, this.numInputSamples, this.numInputRows, this.numInputColumns, this.numInputChannels);
+            gradient_input.values = gradientOutput.values;
+            return gradient_input;
         }
     }
 }

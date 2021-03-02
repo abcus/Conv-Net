@@ -37,13 +37,13 @@ namespace Conv_Net {
         }
 
         public Tuple<Tensor, Tensor> forward (Double[,,] input, Double[,,] target) {
-
             Double[,,] output;
             Double[,,] loss;
 
             output = Input.forward(input);
-
             output = Conv1.forward(output);
+            Utils.printArray(output);
+
             output = Relu1.forward(output);
             output = Pool1.forward(output);
 
@@ -65,7 +65,7 @@ namespace Conv_Net {
             Tensor loss;
 
             output = Conv1.forward_tensor(input);
-            Console.WriteLine("Conv 1 output" + output);
+            Console.WriteLine(output);
 
             return null;
         }

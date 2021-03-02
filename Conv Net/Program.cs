@@ -50,9 +50,8 @@ namespace Conv_Net {
             testImageArray = testing_images.convert_to_array();
             testLabelArray = testing_labels.convert_labels();
 
-
-            //testCNN(9);
-            //testCNN_tensor(1);
+            //testCNN(3);
+            //testCNN_tensor(3);
 
             //testCNN(testing_sample_size);
             //for (int epoch = 0; epoch < 10; epoch++) {

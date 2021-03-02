@@ -354,17 +354,17 @@ namespace Conv_Net {
             Console.WriteLine("Columns: " + columns);
             Console.WriteLine("Channels: " + channels);
 
-            Console.Write("(");
+            Console.Write("[");
             for (int i = 0; i < rows; i++) {
-                Console.Write("[");
+                Console.Write("{");
                 for (int j = 0; j < columns; j++) {
-                    Console.Write("{");
+                    Console.Write("<");
                     for (int k = 0; k < channels; k++) {
-                        Console.Write(input[i, j, k]);
+                        Console.Write(input[i, j, k].ToString("0.0000"));
                         if (k < channels - 1) {
                             Console.Write(", ");
                         } else {
-                            Console.Write("}");
+                            Console.Write(">");
                         }
                     }
                     if (j < columns - 1) {
@@ -373,13 +373,13 @@ namespace Conv_Net {
                         Console.Write("");
                     }
                 }
-                Console.Write("]");
+                Console.Write("}");
                 if (i < rows - 1) {
                     Console.WriteLine(",");
                 }
                 Console.Write("");
             }
-            Console.WriteLine(")");
+            Console.WriteLine("]");
             Console.WriteLine("-----------------------------------------");
         }
     }

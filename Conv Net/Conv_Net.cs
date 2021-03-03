@@ -53,11 +53,11 @@ namespace Conv_Net {
 
             output = Conv_1.forward_tensor(input);
             output = Relu_1.forward(output);
-            output = Pool_1.forward_tensor(output);
+            output = Pool_1.forward(output);
 
             output = Conv_2.forward_tensor(output);
             output = Relu_2.forward(output);
-            output = Pool_2.forward_tensor(output);
+            output = Pool_2.forward(output);
 
             output = Flatten_3.forward(output);
             output = FC_3.forward(output);
@@ -79,17 +79,17 @@ namespace Conv_Net {
             grad = FC_3.backward(grad);
             grad = Flatten_3.backward(grad);
 
-            grad = Pool_2.backward_tensor(grad);
+            grad = Pool_2.backward(grad);
             grad = Relu_2.backward(grad);
             grad = Conv_2.backward_tensor(grad);
 
-            grad = Pool_1.backward_tensor(grad);
+            grad = Pool_1.backward(grad);
             grad = Relu_1.backward(grad);
             grad = Conv_1.backward_tensor(grad);
         }
 
         public void update (int batch_size) {
-            FC_3.update_tensor(batch_size);
+            FC_3.update(batch_size);
             Conv_2.update_tensor(batch_size);
             Conv_1.update_tensor(batch_size);
         }

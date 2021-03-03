@@ -23,7 +23,7 @@ namespace Conv_Net {
             this.stride = stride;
         }
         
-        public Tensor forward_tensor(Tensor input) {
+        public Tensor forward(Tensor input) {
             this.input_tensor = input;
             this.input_samples = input.dim_1;
             this.input_rows = input.dim_2;
@@ -35,12 +35,14 @@ namespace Conv_Net {
             int output_channels = this.input_channels;
 
             Tensor output = new Tensor(4, this.input_samples, output_rows, output_columns, output_channels);
-            Double max = Double.MinValue;
-            
-            for (int i = 0; i < this.input_samples; i++) {
+
+            Parallel.For(0, this.input_samples, i => {
+                
                 for (int j = 0; j < output_rows; j++) {
                     for (int k = 0; k < output_columns; k++) {
                         for (int l = 0; l < output_channels; l++) {
+
+                            Double max = Double.MinValue;
                             for (int m = 0; m < this.filter_rows; m++) {
                                 for (int n = 0; n < this.filter_columns; n++) {
                                     if (input_tensor.values[i * (this.input_tensor.dim_2 * this.input_tensor.dim_3 * this.input_tensor.dim_4) + (j * stride + m) * (this.input_tensor.dim_3 * this.input_tensor.dim_4) + (k * stride + n) * (this.input_tensor.dim_4) + l] > max) {
@@ -53,22 +55,23 @@ namespace Conv_Net {
                         }
                     }
                 }
-            }
+            });
             return output;
         }
 
-        public Tensor backward_tensor(Tensor gradient_output) {
-            Double max = Double.MinValue;
-            int maxRow = -1;
-            int maxColumn = -1;
+        public Tensor backward(Tensor gradient_output) {
 
             // dL/dI
             Tensor gradient_input = new Tensor(4, this.input_samples, this.input_rows, this.input_columns, this.input_channels);
 
-            for (int i = 0; i < this.input_samples; i ++ ) {
+            Parallel.For(0, this.input_samples, i => {
                 for (int j = 0; j <= this.input_rows - this.filter_rows; j += this.stride) {
                     for (int k = 0; k <= this.input_columns - this.filter_columns; k += this.stride) {
                         for (int l = 0; l < this.input_channels; l++) {
+
+                            Double max = Double.MinValue;
+                            int maxRow = -1;
+                            int maxColumn = -1;
                             for (int m = 0; m < this.filter_rows; m++) {
                                 for (int n = 0; n < this.filter_columns; n++) {
                                     if (this.input_tensor.values[i * (this.input_tensor.dim_2 * this.input_tensor.dim_3 * this.input_tensor.dim_4) + (j + m) * (this.input_tensor.dim_3 * this.input_tensor.dim_4) + (k + n) * (this.input_tensor.dim_4) + l] > max) {
@@ -86,7 +89,7 @@ namespace Conv_Net {
                         }
                     }
                 }
-            }
+            });
             return gradient_input;
         }
     }

@@ -41,6 +41,8 @@ namespace Conv_Net {
             testing_images = data.Item3;
             testing_labels = data.Item4;
 
+
+
             test_CNN(testing_sample_size);
             for (int epoch = 0; epoch < 10; epoch++) {
                 Console.WriteLine("______________________________________________________________________\nEPOCH: " + epoch);

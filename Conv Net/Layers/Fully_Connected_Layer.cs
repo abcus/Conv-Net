@@ -129,7 +129,7 @@ namespace Conv_Net {
         /// Updates the biases and weights of the fully connected layer
         /// </summary>
         /// <param name="batch_size"></param>
-        public void update_tensor (int batch_size) {
+        public void update (int batch_size) {
              
             for (int i = 0; i < layer_size; i++) {
                 

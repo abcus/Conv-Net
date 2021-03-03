@@ -31,6 +31,11 @@ namespace Conv_Net {
             values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l] = value;
         }
 
+        public int index(int i, int j, int k, int l) {
+            return (i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l);
+        }
+
+
         /// <summary>
         /// Transposes a 2D tensor
         /// </summary>

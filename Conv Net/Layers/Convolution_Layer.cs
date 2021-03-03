@@ -174,7 +174,7 @@ namespace Conv_Net {
                             for (int m = 0; m < this.numFilterRows; m++) {
                                 for (int n = 0; n < this.numFilterColumns; n++) {
                                     for (int o = 0; o < this.numFilterChannels; o++) {
-                                        elementwiseProduct += this.filter_tensor.values[j * (this.numFilterRows * this.numFilterColumns * this.numFilterChannels) + m * (this.numFilterColumns * this.numFilterChannels) + n * (this.numFilterChannels) + o] * input_tensor.values[i * (input.dim_2 * input.dim_3 * input.dim_4) + (k + m) * (input.dim_3 * input.dim_4) + (l + n) * (input.dim_4) + o];
+                                        elementwiseProduct += this.filter_tensor.values[this.filter_tensor.index(j, m, n, o)] * input_tensor.values[this.input_tensor.index(i, (k + m), (l + n), o)];
                                     }
                                 }
                             }
@@ -182,7 +182,7 @@ namespace Conv_Net {
                             elementwiseProduct += this.bias_tensor.values[j];
 
                             // Set the value of output
-                            output.values[i * (output.dim_2 * output.dim_3 * output.dim_4) + (k / stride) * (output.dim_3 * output.dim_4) + (l / stride) * (output.dim_4) + j] = elementwiseProduct;
+                            output.values[output.index(i, (k / stride), (l / stride), j)] = elementwiseProduct;
                             elementwiseProduct = 0.0;
                         }
                     }
@@ -305,12 +305,11 @@ namespace Conv_Net {
             this.numGradientOutputChannels = gradient_output.dim_4;
 
             Tensor gradient_input = new Tensor(4, this.num_input_samples, this.num_input_rows, this.num_input_columns, this.numInputChannels);
-            Tensor zero_padded_rotated_filters;
+            Tensor padded_rotated_filters;
             Tensor rotated_filters;
-            Double elementwise_product = 0.0;
 
             rotated_filters = this.filter_tensor.rotate_180();
-            zero_padded_rotated_filters = rotated_filters.zero_pad(this.numGradientOutputRows - 1);
+            padded_rotated_filters = rotated_filters.zero_pad(this.numGradientOutputRows - 1);
 
 
             // Calculate Gradients
@@ -322,7 +321,7 @@ namespace Conv_Net {
                     Double sum = 0.0;
                     for (int k = 0; k < this.numGradientOutputRows; k++) {
                         for (int l = 0; l < this.numGradientOutputColumns; l++) {
-                            sum += gradient_output.values[sample * (gradient_output.dim_2 * gradient_output.dim_3 * gradient_output.dim_4) + k * (gradient_output.dim_3 * gradient_output.dim_4) + l * (gradient_output.dim_4) + j];
+                            sum += gradient_output.values[gradient_output.index(sample, k, l, j)];
                         }
                     }
                     this.gradient_bias_tensor.values[j] += sum;
@@ -330,19 +329,19 @@ namespace Conv_Net {
                 }
 
                 // Filter
-                elementwise_product = 0.0;
+
 
                 for (int i = 0; i < this.numFilters; i++) {
                     for (int j = 0; j < this.numFilterChannels; j++) {
                         for (int l = 0; l < this.numFilterRows; l++) {
                             for (int m = 0; m < this.numFilterColumns; m++) {
+                                Double elementwise_product = 0.0;
                                 for (int n = 0; n < this.numGradientOutputRows; n++) {
                                     for (int o = 0; o < this.numGradientOutputColumns; o++) {
-                                        elementwise_product += gradient_output.values[sample * (gradient_output.dim_2 * gradient_output.dim_3 * gradient_output.dim_4) + n * (gradient_output.dim_3 * gradient_output.dim_4) + o * (gradient_output.dim_4) + i] 
-                                            * this.input_tensor.values[sample * (input_tensor.dim_2 * input_tensor.dim_3 * input_tensor.dim_4) + (l + n) * (input_tensor.dim_3 * input_tensor.dim_4) + (m + o) * (input_tensor.dim_4) + j];
+                                        elementwise_product += gradient_output.values[gradient_output.index(sample, n, o, i)] * this.input_tensor.values[this.input_tensor.index(sample, (l + n), (m + o), j)];
                                     }
                                 }
-                                this.gradient_filter_tensor.values[i * (gradient_filter_tensor.dim_2 * gradient_filter_tensor.dim_3 * gradient_filter_tensor.dim_4) + l * (gradient_filter_tensor.dim_3 * gradient_filter_tensor.dim_4) + m * (gradient_filter_tensor.dim_4) + j] += elementwise_product;
+                                this.gradient_filter_tensor.values[this.gradient_filter_tensor.index(i, l, m, j)] += elementwise_product;
                                 elementwise_product = 0.0;
                             }
                         }
@@ -352,25 +351,25 @@ namespace Conv_Net {
 
                 // Input
             if (this.needsGradient == true) {
-                for (int sample = 0; sample < input_tensor.dim_1; sample ++) {
-                    elementwise_product = 0.0;
+
+                Parallel.For(0, input_tensor.dim_1, sample => {
                     for (int i = 0; i < this.numInputChannels; i++) {
                         for (int j = 0; j < this.numFilters; j++) {
                             for (int k = 0; k < this.num_input_rows; k++) {
                                 for (int l = 0; l < this.num_input_columns; l++) {
+                                    Double elementwise_product = 0.0;
                                     for (int m = 0; m < this.numGradientOutputRows; m++) {
                                         for (int n = 0; n < this.numGradientOutputColumns; n++) {
-                                            elementwise_product += gradient_output.values[sample * (gradient_output.dim_2 * gradient_output.dim_3 * gradient_output.dim_4) + m * (gradient_output.dim_3 * gradient_output.dim_4) + n * (gradient_output.dim_4) + j] 
-                                                * zero_padded_rotated_filters.values[j * (zero_padded_rotated_filters.dim_2 * zero_padded_rotated_filters.dim_3 * zero_padded_rotated_filters.dim_4) + (this.num_input_rows - k - 1 + m) * (zero_padded_rotated_filters.dim_3 * zero_padded_rotated_filters.dim_4) + (this.num_input_columns - l - 1 + n) * (zero_padded_rotated_filters.dim_4) + i];
+                                            elementwise_product += gradient_output.values[gradient_output.index(sample, m, n, j)] * padded_rotated_filters.values[padded_rotated_filters.index(j, (this.num_input_rows - k - 1 + m), (this.num_input_columns - l - 1 + n), i)];
                                         }
                                     }
-                                    gradient_input.values[sample * (gradient_input.dim_2 * gradient_input.dim_3 * gradient_input.dim_4) + k * (gradient_input.dim_3 * gradient_input.dim_4) + l * (gradient_input.dim_4) + i] += elementwise_product;
+                                    gradient_input.values[gradient_input.index(sample, k, l, i)] += elementwise_product;
                                     elementwise_product = 0.0;
                                 }
                             }
                         }
                     }
-                }
+                }); 
                 return gradient_input;
             } else {
                 return null;

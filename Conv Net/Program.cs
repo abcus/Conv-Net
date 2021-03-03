@@ -42,18 +42,11 @@ namespace Conv_Net {
             testing_labels = data.Item4;
 
             test_CNN(testing_sample_size);
-            for (int epoch = 0; epoch < 20; epoch++) {
-                Console.WriteLine("------------------------------------------");
-                Console.WriteLine("Epoch: " + epoch);
+            for (int epoch = 0; epoch < 10; epoch++) {
+                Console.WriteLine("______________________________________________________________________\nEPOCH: " + epoch);
 
                 Utils.shuffle_Tensor(training_images, training_labels);
-
-                stopwatch.Start();
                 train_CNN(CNN_training_sample_size, batchSize);
-                stopwatch.Stop();
-                Console.WriteLine("Time elapsed for training: " + stopwatch.Elapsed);
-                stopwatch.Reset();
-
                 test_CNN(testing_sample_size);
             }
 
@@ -75,6 +68,8 @@ namespace Conv_Net {
 
 
         static void test_CNN(int testing_sample_size) {
+            stopwatch.Start();
+           
             int correct = 0;
             Double total_cross_entropy_loss = 0.0;
             Tuple<Tensor, Tensor> t;
@@ -104,11 +99,17 @@ namespace Conv_Net {
                     correct++;
                 }
             }
-            Console.WriteLine(correct + " correct out of " + testing_sample_size + ". \t Accuracy " + (Double)correct / testing_sample_size * 100 + "%");
-            Console.WriteLine("Average cross entropy loss: " + total_cross_entropy_loss / testing_sample_size);
+            stopwatch.Stop();
+            Console.WriteLine("Time elapsed for testing:\t" + stopwatch.Elapsed);
+            Console.WriteLine("Accuracy:\t\t\t" + (Double)correct / testing_sample_size * 100 + "% (" + correct + " correct out of " + testing_sample_size + ")");
+            Console.WriteLine("Average cross entropy loss:\t" + total_cross_entropy_loss / testing_sample_size);
+            stopwatch.Reset();
         }
 
         static void train_CNN(int training_sample_size, int batch_size) {
+            
+            stopwatch.Start();
+
             int num_batches = training_sample_size / batch_size;
             int remainder = training_sample_size - num_batches * batch_size;
             Tensor A;
@@ -129,6 +130,9 @@ namespace Conv_Net {
                 CNN.backward();
                 CNN.update(remainder);
             }
+            stopwatch.Stop();
+            Console.WriteLine("Time elapsed for training:\t" + stopwatch.Elapsed + "\n");
+            stopwatch.Reset();
         }
 
         //static void test_NN(int testing_sample_size) {

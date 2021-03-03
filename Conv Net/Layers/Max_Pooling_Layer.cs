@@ -7,48 +7,49 @@ using System.Threading.Tasks;
 namespace Conv_Net {
     class Max_Pooling_Layer {
 
-        int numFilterRows;
-        int numFilterColumns;
+        Tensor input_tensor;
+        int input_samples;
+        int input_rows;
+        int input_columns;
+        int input_channels;
+
+        int filter_rows;
+        int filter_columns;
         int stride;
 
-
-        Tensor input_tensor;
-
-        public Max_Pooling_Layer (int numFilterRows = 2, int numFilterColumns = 2, int stride = 2) {
-            this.numFilterRows = numFilterRows;
-            this.numFilterColumns = numFilterColumns;
+        public Max_Pooling_Layer (int filter_rows = 2, int filter_columns = 2, int stride = 2) {
+            this.filter_rows = filter_rows;
+            this.filter_columns = filter_columns;
             this.stride = stride;
         }
         
-
         public Tensor forward_tensor(Tensor input) {
             this.input_tensor = input;
-            int numInputSamples = input.dim_1;
-            int numInputRows = input.dim_2;
-            int numInputColumns = input.dim_3;
-            int numInputChannels = input.dim_4;
+            this.input_samples = input.dim_1;
+            this.input_rows = input.dim_2;
+            this.input_columns = input.dim_3;
+            this.input_channels = input.dim_4;
 
-            int numOutputRows = ((numInputRows - this.numFilterRows) / this.stride) + 1;
-            int numOutputColumns = ((numInputColumns - this.numFilterColumns) / this.stride + 1);
-            int numOutputChannels = numInputChannels;
+            int output_rows = ((this.input_rows - this.filter_rows) / this.stride) + 1;
+            int output_columns = ((this.input_columns - this.filter_columns) / this.stride + 1);
+            int output_channels = this.input_channels;
 
-            Tensor output = new Tensor(4, numInputSamples, numOutputRows, numOutputColumns, numOutputChannels);
+            Tensor output = new Tensor(4, this.input_samples, output_rows, output_columns, output_channels);
             Double max = Double.MinValue;
-            for (int sample=0; sample < numInputSamples; sample++) {
-                for (int i = 0; i < numOutputRows; i++) {
-                    for (int j = 0; j < numOutputColumns; j++) {
-                        for (int k = 0; k < numOutputChannels; k++) {
-
-                            for (int l = 0; l < numFilterRows; l++) {
-                                for (int m = 0; m < numFilterColumns; m++) {
-                                    if (input_tensor.values[sample * (input.dim_2 * input.dim_3 * input.dim_4) + (i * stride + l) * (input.dim_3 * input.dim_4) + (j * stride + m) * (input.dim_4) + k] > max) {
-                                        max = input_tensor.values[sample * (input.dim_2 * input.dim_3 * input.dim_4) + (i * stride + l) * (input.dim_3 * input.dim_4) + (j * stride + m) * (input.dim_4) + k];
+            
+            for (int i = 0; i < this.input_samples; i++) {
+                for (int j = 0; j < output_rows; j++) {
+                    for (int k = 0; k < output_columns; k++) {
+                        for (int l = 0; l < output_channels; l++) {
+                            for (int m = 0; m < this.filter_rows; m++) {
+                                for (int n = 0; n < this.filter_columns; n++) {
+                                    if (input_tensor.values[i * (this.input_tensor.dim_2 * this.input_tensor.dim_3 * this.input_tensor.dim_4) + (j * stride + m) * (this.input_tensor.dim_3 * this.input_tensor.dim_4) + (k * stride + n) * (this.input_tensor.dim_4) + l] > max) {
+                                        max = input_tensor.values[i * (this.input_tensor.dim_2 * this.input_tensor.dim_3 * this.input_tensor.dim_4) + (j * stride + m) * (this.input_tensor.dim_3 * this.input_tensor.dim_4) + (k * stride + n) * (this.input_tensor.dim_4) + l];
                                     }
                                 }
                             }
-                            output.values[sample * (output.dim_2 * output.dim_3 * output.dim_4) + i * (output.dim_3 * output.dim_4) + j * (output.dim_4) + k] = max;
+                            output.values[i * (output.dim_2 * output.dim_3 * output.dim_4) + j * (output.dim_3 * output.dim_4) + k * (output.dim_4) + l] = max;
                             max = Double.MinValue;
-
                         }
                     }
                 }
@@ -57,32 +58,27 @@ namespace Conv_Net {
         }
 
         public Tensor backward_tensor(Tensor gradient_output) {
-            int input_sample = this.input_tensor.dim_1;
-            int input_row = this.input_tensor.dim_2;
-            int input_column = this.input_tensor.dim_3;
-            int input_channel = this.input_tensor.dim_4;
             Double max = Double.MinValue;
             int maxRow = -1;
             int maxColumn = -1;
 
             // dL/dI
-            Tensor gradient_input = new Tensor(4, input_sample, input_row, input_column, input_channel);
+            Tensor gradient_input = new Tensor(4, this.input_samples, this.input_rows, this.input_columns, this.input_channels);
 
-            for (int sample = 0; sample < input_sample; sample ++ ) {
-                for (int i = 0; i <= input_row - this.numFilterRows; i += this.stride) {
-                    for (int j = 0; j <= input_column - this.numFilterColumns; j += this.stride) {
-                        for (int k = 0; k < input_channel; k++) {
-
-                            for (int l = 0; l < numFilterRows; l++) {
-                                for (int m = 0; m < numFilterColumns; m++) {
-                                    if (input_tensor.values[sample * (input_tensor.dim_2 * input_tensor.dim_3 * input_tensor.dim_4) + (i + l) * (input_tensor.dim_3 * input_tensor.dim_4) + (j + m) * (input_tensor.dim_4) + k] > max) {
-                                        max = input_tensor.values[sample * (input_tensor.dim_2 * input_tensor.dim_3 * input_tensor.dim_4) + (i + l) * (input_tensor.dim_3 * input_tensor.dim_4) + (j + m) * (input_tensor.dim_4) + k];
-                                        maxRow = i + l;
-                                        maxColumn = j + m;
+            for (int i = 0; i < this.input_samples; i ++ ) {
+                for (int j = 0; j <= this.input_rows - this.filter_rows; j += this.stride) {
+                    for (int k = 0; k <= this.input_columns - this.filter_columns; k += this.stride) {
+                        for (int l = 0; l < this.input_channels; l++) {
+                            for (int m = 0; m < this.filter_rows; m++) {
+                                for (int n = 0; n < this.filter_columns; n++) {
+                                    if (this.input_tensor.values[i * (this.input_tensor.dim_2 * this.input_tensor.dim_3 * this.input_tensor.dim_4) + (j + m) * (this.input_tensor.dim_3 * this.input_tensor.dim_4) + (k + n) * (this.input_tensor.dim_4) + l] > max) {
+                                        max = input_tensor.values[i * (this.input_tensor.dim_2 * this.input_tensor.dim_3 * this.input_tensor.dim_4) + (j + m) * (this.input_tensor.dim_3 * this.input_tensor.dim_4) + (k + n) * (this.input_tensor.dim_4) + l];
+                                        maxRow = j + m;
+                                        maxColumn = k + n;
                                     }
                                 }
                             }
-                            gradient_input.values[sample * (gradient_input.dim_2 * gradient_input.dim_3 * gradient_input.dim_4) + maxRow * (gradient_input.dim_3 * gradient_input.dim_4) + maxColumn * (gradient_input.dim_4) + k] = gradient_output.values[sample * (gradient_output.dim_2 * gradient_output.dim_3 * gradient_output.dim_4) + (i / this.stride) * (gradient_output.dim_3 * gradient_output.dim_4) + (j / this.stride) * (gradient_output.dim_4) + k];
+                            gradient_input.values[i * (gradient_input.dim_2 * gradient_input.dim_3 * gradient_input.dim_4) + maxRow * (gradient_input.dim_3 * gradient_input.dim_4) + maxColumn * (gradient_input.dim_4) + l] = gradient_output.values[i * (gradient_output.dim_2 * gradient_output.dim_3 * gradient_output.dim_4) + (j / this.stride) * (gradient_output.dim_3 * gradient_output.dim_4) + (k / this.stride) * (gradient_output.dim_4) + l];
 
                             max = Double.MinValue;
                             maxRow = -1;

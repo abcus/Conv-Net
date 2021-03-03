@@ -79,7 +79,7 @@ namespace Conv_Net {
             this.input_rows = input.dim_2;
             this.input_columns = input.dim_3;
 
-            this.output_samples = input.dim_1;
+            this.output_samples = this.input_samples;
             this.output_rows = (this.input_rows - this.filter_rows) / this.stride + 1;
             this.output_columns = (this.input_columns - this.filter_rows) / this.stride + 1;
             this.output_channels = this.num_filters;

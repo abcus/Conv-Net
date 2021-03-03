@@ -79,6 +79,7 @@ namespace Conv_Net {
                 Double[,,] tempBias = new Double[1, 1, 1];
                 tempBias[0, 0, 0] = 0.0;
                 this.biases[i] = tempBias;
+                bias_tensor.values[i] = 0.0;
 
                 // Filter initialization (set to random value from normal distribution * sqrt(2/ numFilters * numFilterRows * numFilterColumns))
                 Double[,,] tempFilter = new Double[this.numFilterRows, this.numFilterColumns, this.numFilterChannels];

@@ -52,18 +52,18 @@ namespace Conv_Net {
             Tensor loss;
 
             output = Conv_1.forward_tensor(input);
-            output = Relu_1.forward_tensor(output);
+            output = Relu_1.forward(output);
             output = Pool_1.forward_tensor(output);
 
             output = Conv_2.forward_tensor(output);
-            output = Relu_2.forward_tensor(output);
+            output = Relu_2.forward(output);
             output = Pool_2.forward_tensor(output);
 
             output = Flatten_3.forward(output);
             output = FC_3.forward(output);
-            output = Softmax.forward_tensor(output);
+            output = Softmax.forward(output);
 
-            loss = Softmax.loss_tensor(target);
+            loss = Softmax.loss(target);
 
             return Tuple.Create(loss, output);
         }
@@ -75,16 +75,16 @@ namespace Conv_Net {
         public void backward() {
             Tensor grad;
 
-            grad = Softmax.backward_tensor();
+            grad = Softmax.backward();
             grad = FC_3.backward(grad);
             grad = Flatten_3.backward(grad);
 
             grad = Pool_2.backward_tensor(grad);
-            grad = Relu_2.backward_tensor(grad);
+            grad = Relu_2.backward(grad);
             grad = Conv_2.backward_tensor(grad);
 
             grad = Pool_1.backward_tensor(grad);
-            grad = Relu_1.backward_tensor(grad);
+            grad = Relu_1.backward(grad);
             grad = Conv_1.backward_tensor(grad);
         }
 

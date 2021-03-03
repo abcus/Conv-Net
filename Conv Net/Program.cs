@@ -27,7 +27,7 @@ namespace Conv_Net {
 
         public static int testing_sample_size = 10000;
         public static int training_sample_size = 60000;
-        public static int CNN_training_sample_size = 60000;
+        public static int CNN_training_sample_size = 600;
 
         static void Main() {
 
@@ -55,9 +55,6 @@ namespace Conv_Net {
                 stopwatch.Reset();
 
                 test_CNN(testing_sample_size);
-                if (epoch > 0 && epoch % 5 == 0) {
-                    CNN.save_parameters(epoch);
-                }
             }
 
             //test_NN(testing_sample_size);

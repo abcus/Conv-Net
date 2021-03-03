@@ -41,18 +41,18 @@ namespace Conv_Net {
 
             // Hidden layer 1
             output = FC1.forward(output);
-            output = Relu1.forward_tensor(output);
+            output = Relu1.forward(output);
 
             // Hidden layer 2
             output = FC2.forward(output);
-            output = Relu2.forward_tensor(output);
+            output = Relu2.forward(output);
 
             // Output layer
             output = FC3.forward(output);
-            output = Softmax.forward_tensor(output);
+            output = Softmax.forward(output);
 
             // Loss layer
-            loss = Softmax.loss_tensor(target);
+            loss = Softmax.loss(target);
             return Tuple.Create(output, loss);
         }
 
@@ -60,16 +60,16 @@ namespace Conv_Net {
             Tensor grad;
 
             // Output layer
-            grad = Softmax.backward_tensor();
+            grad = Softmax.backward();
             grad = FC3.backward(grad);
 
             // Hidden layer 2
-            grad = Relu2.backward_tensor(grad);
+            grad = Relu2.backward(grad);
             grad = FC2.backward(grad);
 
             // Hidden layer 1 
             // FC1.backward returns null as gradient of loss with respect to FC1 inputs (which is the image) is not needed
-            grad = Relu1.backward_tensor(grad);
+            grad = Relu1.backward(grad);
             grad = FC1.backward(grad);
         }
 

@@ -51,11 +51,11 @@ namespace Conv_Net {
             Tensor output;
             Tensor loss;
 
-            output = Conv_1.forward_tensor(input);
+            output = Conv_1.forward(input);
             output = Relu_1.forward(output);
             output = Pool_1.forward(output);
 
-            output = Conv_2.forward_tensor(output);
+            output = Conv_2.forward(output);
             output = Relu_2.forward(output);
             output = Pool_2.forward(output);
 
@@ -81,38 +81,38 @@ namespace Conv_Net {
 
             grad = Pool_2.backward(grad);
             grad = Relu_2.backward(grad);
-            grad = Conv_2.backward_tensor(grad);
+            grad = Conv_2.backward(grad);
 
             grad = Pool_1.backward(grad);
             grad = Relu_1.backward(grad);
-            grad = Conv_1.backward_tensor(grad);
+            grad = Conv_1.backward(grad);
         }
 
         public void update (int batch_size) {
             FC_3.update(batch_size);
-            Conv_2.update_tensor(batch_size);
-            Conv_1.update_tensor(batch_size);
+            Conv_2.update(batch_size);
+            Conv_1.update(batch_size);
         }
 
         public void save_parameters(int epoch) {
             StreamWriter writer = new StreamWriter("parameters " + epoch + ".txt", false);
 
-            foreach(Double b in Conv_1.bias_tensor.values) {
+            foreach(Double b in Conv_1.biases.values) {
                 writer.WriteLine(b);
             }
-            foreach (Double b in Conv_1.filter_tensor.values) {
+            foreach (Double b in Conv_1.filters.values) {
                 writer.WriteLine(b);
             }
-            foreach (Double b in Conv_2.bias_tensor.values) {
+            foreach (Double b in Conv_2.biases.values) {
                 writer.WriteLine(b);
             }
-            foreach (Double b in Conv_2.filter_tensor.values) {
+            foreach (Double b in Conv_2.filters.values) {
                 writer.WriteLine(b);
             }
-            foreach (Double b in FC_3.biases_tensor.values) {
+            foreach (Double b in FC_3.biases.values) {
                 writer.WriteLine(b);
             }
-            foreach (Double b in FC_3.weights_tensor.values) {
+            foreach (Double b in FC_3.weights.values) {
                 writer.WriteLine(b);
             }
             writer.Close();
@@ -122,23 +122,23 @@ namespace Conv_Net {
         public void load_parameters() {
             System.IO.StreamReader reader = new System.IO.StreamReader(@"parameters 15.txt");
 
-            for (int i=0; i < Conv_1.bias_tensor.values.Length; i++) {
-                Conv_1.bias_tensor.values[i] = Convert.ToDouble(reader.ReadLine());
+            for (int i=0; i < Conv_1.biases.values.Length; i++) {
+                Conv_1.biases.values[i] = Convert.ToDouble(reader.ReadLine());
             }
-            for (int i = 0; i < Conv_1.filter_tensor.values.Length; i++) {
-                Conv_1.filter_tensor.values[i] = Convert.ToDouble(reader.ReadLine());
+            for (int i = 0; i < Conv_1.filters.values.Length; i++) {
+                Conv_1.filters.values[i] = Convert.ToDouble(reader.ReadLine());
             }
-            for (int i = 0; i < Conv_2.bias_tensor.values.Length; i++) {
-                Conv_2.bias_tensor.values[i] = Convert.ToDouble(reader.ReadLine());
+            for (int i = 0; i < Conv_2.biases.values.Length; i++) {
+                Conv_2.biases.values[i] = Convert.ToDouble(reader.ReadLine());
             }
-            for (int i = 0; i < Conv_2.filter_tensor.values.Length; i++) {
-                Conv_2.filter_tensor.values[i] = Convert.ToDouble(reader.ReadLine());
+            for (int i = 0; i < Conv_2.filters.values.Length; i++) {
+                Conv_2.filters.values[i] = Convert.ToDouble(reader.ReadLine());
             }
-            for (int i = 0; i < FC_3.biases_tensor.values.Length; i++) {
-                FC_3.biases_tensor.values[i] = Convert.ToDouble(reader.ReadLine());
+            for (int i = 0; i < FC_3.biases.values.Length; i++) {
+                FC_3.biases.values[i] = Convert.ToDouble(reader.ReadLine());
             }
-            for (int i = 0; i < FC_3.weights_tensor.values.Length; i++) {
-                FC_3.weights_tensor.values[i] = Convert.ToDouble(reader.ReadLine());
+            for (int i = 0; i < FC_3.weights.values.Length; i++) {
+                FC_3.weights.values[i] = Convert.ToDouble(reader.ReadLine());
             }
         }
     }

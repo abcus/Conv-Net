@@ -233,44 +233,44 @@ namespace Conv_Net {
         }
 
 
-        static public void printWeightsBiases(Fully_Connected_Layer Inner1, Fully_Connected_Layer Inner2, Fully_Connected_Layer Inner3) {
+        //static public void printWeightsBiases(Fully_Connected_Layer Inner1, Fully_Connected_Layer Inner2, Fully_Connected_Layer Inner3) {
 
-            Console.WriteLine("Layer 1 weights");
-            for (int i = 0; i < Inner1.weights.Count(); i++) {
-                for (int j = 0; j < Inner1.weights[0].GetLength(2); j++) {
-                    Console.WriteLine(Inner1.weights[i][0, 0, j]);
-                }
-            }
+        //    Console.WriteLine("Layer 1 weights");
+        //    for (int i = 0; i < Inner1.weights.Count(); i++) {
+        //        for (int j = 0; j < Inner1.weights[0].GetLength(2); j++) {
+        //            Console.WriteLine(Inner1.weights[i][0, 0, j]);
+        //        }
+        //    }
 
-            Console.WriteLine("Layer 2 weights");
-            for (int i = 0; i < Inner2.weights.Count(); i++) {
-                for (int j = 0; j < Inner2.weights[0].GetLength(2); j++) {
-                    Console.WriteLine(Inner2.weights[i][0, 0, j]);
-                }
-            }
+        //    Console.WriteLine("Layer 2 weights");
+        //    for (int i = 0; i < Inner2.weights.Count(); i++) {
+        //        for (int j = 0; j < Inner2.weights[0].GetLength(2); j++) {
+        //            Console.WriteLine(Inner2.weights[i][0, 0, j]);
+        //        }
+        //    }
 
-            Console.WriteLine("Layer 3 weights");
-            for (int i = 0; i < Inner3.weights.Count(); i++) {
-                for (int j = 0; j < Inner3.weights[0].GetLength(2); j++) {
-                    Console.WriteLine(Inner3.weights[i][0, 0, j]);
-                }
-            }
+        //    Console.WriteLine("Layer 3 weights");
+        //    for (int i = 0; i < Inner3.weights.Count(); i++) {
+        //        for (int j = 0; j < Inner3.weights[0].GetLength(2); j++) {
+        //            Console.WriteLine(Inner3.weights[i][0, 0, j]);
+        //        }
+        //    }
 
-            Console.WriteLine("Layer 1 biases");
-            for (int i = 0; i < Inner1.biases.Count(); i++) {
-                Console.WriteLine(Inner1.biases[i][0, 0, 0]);
-            }
+        //    Console.WriteLine("Layer 1 biases");
+        //    for (int i = 0; i < Inner1.biases.Count(); i++) {
+        //        Console.WriteLine(Inner1.biases[i][0, 0, 0]);
+        //    }
 
-            Console.WriteLine("Layer 2 biases");
-            for (int i = 0; i < Inner2.biases.Count(); i++) {
-                Console.WriteLine(Inner2.biases[i][0, 0, 0]);
-            }
+        //    Console.WriteLine("Layer 2 biases");
+        //    for (int i = 0; i < Inner2.biases.Count(); i++) {
+        //        Console.WriteLine(Inner2.biases[i][0, 0, 0]);
+        //    }
 
-            Console.WriteLine("Layer 3 biases");
-            for (int i = 0; i < Inner3.biases.Count(); i++) {
-                Console.WriteLine(Inner3.biases[i][0, 0, 0]);
-            }
-        }
+        //    Console.WriteLine("Layer 3 biases");
+        //    for (int i = 0; i < Inner3.biases.Count(); i++) {
+        //        Console.WriteLine(Inner3.biases[i][0, 0, 0]);
+        //    }
+        //}
 
         static public void printImages(Double[,,] image) {
             int size_x = image.GetLength(0);

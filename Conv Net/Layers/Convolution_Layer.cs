@@ -9,361 +9,217 @@ using System.Diagnostics;
 namespace Conv_Net {
     class Convolution_Layer {
 
-        private int num_input_samples;
-        private int num_input_rows;
-        private int num_input_columns;
-        private int numInputChannels;
+        private int input_samples, input_rows, input_columns, input_channels;
+        private int num_biases;
+        private int num_filters, filter_rows, filter_columns, filter_channels;
+        private int output_samples, output_rows, output_columns, output_channels;
 
-        private int numFilters;
-        private int numFilterRows;
-        private int numFilterColumns;
-        private int numFilterChannels;
-        
-        private int numBiases;
+        private int input_gradient_samples, input_gradient_rows, input_gradient_columns, input_gradient_channels;
+        private int num_bias_gradients;
+        private int num_filter_gradients, filter_gradient_rows, filter_gradient_columns, filter_gradient_channels;
+        private int gradient_output_rows, gradient_output_columns;
 
-        private int numOutputRows;
-        private int numOutputColumns;
-        private int numOutputChannels;
-
+        private bool needs_gradient;
         private int stride;
 
-        private int num_gradient_output_samples;
-        private int numGradientOutputRows;
-        private int numGradientOutputColumns;
-        private int numGradientOutputChannels;
+        public Tensor input, biases, filters, gradient_biases, gradient_filters;
 
-        private bool needsGradient;
+        public Convolution_Layer(int input_channels, int num_filters, int filter_rows, int filter_columns, bool needs_gradient, int stride = 1) {
 
-        public Double[][,,] filters;
-        public Double[][,,] biases;
-        public Double[][,,] gradientFilters;
-        public Double[][,,] gradientBiases;
-        public Double[,,] input;
+            this.input_channels = input_channels;
 
-        public Tensor filter_tensor;
-        public Tensor bias_tensor;
-        public Tensor gradient_filter_tensor;
-        public Tensor gradient_bias_tensor;
-        public Tensor input_tensor;
-        public int num_output_samples_tensor;
+            this.num_biases = num_filters;
 
-        public Convolution_Layer(int numInputChannels, int numFilters, int numFilterRows, int numFilterColumns, bool needsGradient, int stride = 1) {
+            this.num_filters = num_filters;
+            this.filter_rows = filter_rows;
+            this.filter_columns = filter_columns;
+            this.filter_channels = input_channels;
 
-            this.numInputChannels = numInputChannels;
+            this.num_bias_gradients = this.num_biases;
 
-            this.numFilters = numFilters;
-            this.numFilterRows = numFilterRows;
-            this.numFilterColumns = numFilterColumns;
-            this.numFilterChannels = numInputChannels;
+            this.num_filter_gradients = this.num_filters;
+            this.filter_gradient_rows = this.filter_rows;
+            this.filter_gradient_columns = this.filter_columns;
+            this.filter_gradient_channels = this.filter_channels;
+
+            this.needs_gradient = needs_gradient;
             this.stride = stride;
 
-            this.numBiases = numFilters;
+            this.biases = new Tensor(1, this.num_biases, 1, 1, 1);
+            this.filters = new Tensor(4, this.num_filters, this.filter_rows, this.filter_columns, this.filter_channels);
 
-            this.needsGradient = needsGradient;
+            // Initialize dL/db and dL/df (have to store these for gradient descent)
+            this.gradient_biases = new Tensor(1, this.num_bias_gradients, 1, 1, 1);
+            this.gradient_filters = new Tensor(4, this.num_filter_gradients, this.filter_gradient_rows, this.filter_gradient_columns, this.filter_gradient_channels);
 
-            this.filters = new Double[this.numFilters][,,];
-            this.biases = new Double[this.numBiases][,,];
-            this.gradientFilters = new Double[this.numFilters][,,];
-            this.gradientBiases = new Double[this.numBiases][,,];
-
-
-            this.bias_tensor = new Tensor(1, numFilters, 1, 1, 1);
-            this.filter_tensor = new Tensor(4, numFilters, numFilterRows, numFilterColumns, numFilterChannels);
-            this.gradient_bias_tensor = new Tensor(1, numFilters, 1, 1, 1);
-            this.gradient_filter_tensor = new Tensor(4, numFilters, numFilterRows, numFilterColumns, numFilterChannels);
-
-
-            for (int i = 0; i < this.numFilters; i++) {
+            // Biases and filters initialization
+            // Biases are set to 0
+            // Filters are set to random value from normal distribution * sqrt(2/ (num_filters * filter_rows * filter_columns))
+            for (int i = 0; i < this.num_filters; i++) {
                 
-                // Bias initialization (set to 0)
-                Double[,,] tempBias = new Double[1, 1, 1];
-                tempBias[0, 0, 0] = 0.0;
-                this.biases[i] = tempBias;
-                bias_tensor.values[i] = 0.0;
+                biases.values[i] = 0.0;
 
-                // Filter initialization (set to random value from normal distribution * sqrt(2/ numFilters * numFilterRows * numFilterColumns))
-                Double[,,] tempFilter = new Double[this.numFilterRows, this.numFilterColumns, this.numFilterChannels];
-                for (int j = 0; j < this.numFilterRows; j++) {
-                    for (int k = 0; k < this.numFilterColumns; k++) {
-                        for (int l = 0; l < this.numFilterChannels; l++) {
-                            tempFilter[j, k, l] = Program.normalDist.Sample() * Math.Sqrt(2 / ((Double)this.numFilters * this.numFilterRows * this.numFilterColumns));
-                            this.filter_tensor.values[i * this.numFilterRows * this.numFilterColumns * this.numFilterChannels + j * this.numFilterColumns * this.numFilterChannels + k * this.numFilterChannels + l] = tempFilter[j, k, l];
+                for (int j = 0; j < this.filter_rows; j++) {
+                    for (int k = 0; k < this.filter_columns; k++) {
+                        for (int l = 0; l < this.filter_channels; l++) {
+                            this.filters.values[this.filters.index(i, j, k, l)] = Program.normalDist.Sample() * Math.Sqrt(2 / ((Double)this.num_filters * this.filter_rows * this.filter_columns));
                         }
                     }
                 }
-                this.filters[i] = tempFilter;
-
-                // Initialize gradient of biases and filters with respect to loss (have to store these for gradient descent)
-                Double[,,] tempBiasGradient = new Double[1, 1, 1];
-                this.gradientBiases[i] = tempBiasGradient;
-
-                Double[,,] tempFilterGradient = new Double[this.numFilterRows, this.numFilterColumns, this.numFilterChannels];
-                this.gradientFilters[i] = tempFilterGradient;
             }
         }
-
-        public Double[,,] forward (Double[,,] input) {
+        /// <summary>
+        /// Feed forward for convolutional layer
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public Tensor forward (Tensor input) {
             this.input = input;
-            this.num_input_rows = input.GetLength(0);
-            this.num_input_columns = input.GetLength(1);
+            this.input_samples = input.dim_1;
+            this.input_rows = input.dim_2;
+            this.input_columns = input.dim_3;
 
-            Debug.Assert(this.numInputChannels == input.GetLength(2));
+            this.output_samples = input.dim_1;
+            this.output_rows = (this.input_rows - this.filter_rows) / this.stride + 1;
+            this.output_columns = (this.input_columns - this.filter_rows) / this.stride + 1;
+            this.output_channels = this.num_filters;
+            Tensor output = new Tensor(4, this.output_samples, this.output_rows, this.output_columns, this.output_channels);
 
-            this.numOutputRows= (this.num_input_rows - this.numFilterRows) / this.stride + 1;
-            this.numOutputColumns = (this.num_input_columns - this.numFilterRows) / this.stride + 1;
-            this.numOutputChannels = this.numFilters;
-            Double[,,] output = new Double[this.numOutputRows, this.numOutputColumns, this.numOutputChannels];
-
-            Double elementwiseProduct = 0.0;
-
+            // Select the input sample from the batch
             // Select the filter
-            for (int i = 0; i < this.numFilters; i++) {
+            // Select the row on the input where the top left corner of the filter is positioned 
+            // Select the column on the input where the top left corner of the filter is positioned 
+            Parallel.For(0, this.input_samples, i => {    
+                for (int j = 0; j < this.num_filters; j++) {
+                    for (int k = 0; k <= this.input_rows - this.filter_rows; k += this.stride) {
+                        for (int l = 0; l <= this.input_columns - this.filter_columns; l += this.stride) {
 
-                // Select the row on the input where the top left corner of the filter is positioned 
-                for (int j = 0; j <= this.num_input_rows - this.numFilterRows; j += this.stride) {
-
-                    // Select the column on the input where the top left corner of the filter is positioned 
-                    for (int k = 0; k <= this.num_input_columns - this.numFilterColumns; k += this.stride) {
-
-                        // Loop through each element of the filter and multiply by the corresponding element of the input, add the products
-                        for (int l = 0; l < this.numFilterRows; l++) {
-                            for (int m = 0; m < this.numFilterColumns; m++) {
-                                for (int n = 0; n < this.numFilterChannels; n++) {
-                                    elementwiseProduct += filters[i][l, m, n] * input[j + l, k + m, n];
-                                }
-                            }
-                        }
-                        // Add the bias to elementwise product
-                        elementwiseProduct += this.biases[i][0, 0, 0];
-
-                        // Set the value of output
-                        output[j / stride, k / stride, i] = elementwiseProduct;
-                        elementwiseProduct = 0.0;
-                    }
-                }
-            }
-            return output;
-        }
-        public Tensor forward_tensor (Tensor input) {
-            this.input_tensor = input;
-            this.num_output_samples_tensor = input.dim_1;
-            this.num_input_samples = input.dim_1;
-            this.num_input_rows = input.dim_2;
-            this.num_input_columns = input.dim_3;
-            Debug.Assert(this.numInputChannels == input.dim_4);
-
-            this.numOutputRows = (this.num_input_rows - this.numFilterRows) / this.stride + 1;
-            this.numOutputColumns = (this.num_input_columns - this.numFilterRows) / this.stride + 1;
-            this.numOutputChannels = this.numFilters;
-            Tensor output = new Tensor(4, this.num_output_samples_tensor, this.numOutputRows, this.numOutputColumns, this.numOutputChannels);
-
-            // Select the input image
-            Parallel.For(0, this.num_output_samples_tensor, i => {
-                Double elementwiseProduct = 0.0;
-
-                // Select the filter
-                for (int j = 0; j < this.numFilters; j++) {
-
-                    // Select the row on the input where the top left corner of the filter is positioned 
-                    for (int k = 0; k <= this.num_input_rows - this.numFilterRows; k += this.stride) {
-
-                        // Select the column on the input where the top left corner of the filter is positioned 
-                        for (int l = 0; l <= this.num_input_columns - this.numFilterColumns; l += this.stride) {
+                            Double elementwise_product = 0.0;
 
                             // Loop through each element of the filter and multiply by the corresponding element of the input, add the products
-                            for (int m = 0; m < this.numFilterRows; m++) {
-                                for (int n = 0; n < this.numFilterColumns; n++) {
-                                    for (int o = 0; o < this.numFilterChannels; o++) {
-                                        elementwiseProduct += this.filter_tensor.values[this.filter_tensor.index(j, m, n, o)] * input_tensor.values[this.input_tensor.index(i, (k + m), (l + n), o)];
+                            for (int m = 0; m < this.filter_rows; m++) {
+                                for (int n = 0; n < this.filter_columns; n++) {
+                                    for (int o = 0; o < this.filter_channels; o++) {
+                                        elementwise_product += this.filters.values[this.filters.index(j, m, n, o)] * this.input.values[this.input.index(i, (k + m), (l + n), o)];
                                     }
                                 }
                             }
-                            // Add the bias to elementwise product (***** check accuracy when bias != 0)
-                            elementwiseProduct += this.bias_tensor.values[j];
+                            // Add the bias to elementwise product
+                            elementwise_product += this.biases.values[j];
 
                             // Set the value of output
-                            output.values[output.index(i, (k / stride), (l / stride), j)] = elementwiseProduct;
-                            elementwiseProduct = 0.0;
+                            output.values[output.index(i, (k / stride), (l / stride), j)] = elementwise_product;
+                            elementwise_product = 0.0;
                         }
                     }
                 }
             });
             return output;
         }
+        /// <summary>
+        /// Backpropagation for convolutional layer
+        /// </summary>
+        /// <param name="gradient_output"></param>
+        /// <returns></returns>
+        public Tensor backward(Tensor gradient_output) {
 
-        public Double [,,] backward (Double[,,] gradientOutput) {
-            this.numGradientOutputRows = gradientOutput.GetLength(0);
-            this.numGradientOutputColumns = gradientOutput.GetLength(1);
-            this.numGradientOutputChannels = gradientOutput.GetLength(2);
+            this.gradient_output_rows = gradient_output.dim_2;
+            this.gradient_output_columns = gradient_output.dim_3;
 
-            Debug.Assert(this.numGradientOutputRows == this.numOutputRows);
-            Debug.Assert(this.numGradientOutputColumns == this.numOutputColumns);
-            Debug.Assert(this.numGradientOutputChannels == this.numOutputChannels);
-
-            Double[,,] gradientInput = new Double[this.num_input_rows, this.num_input_columns, this.numInputChannels];
-
-            Double[][,,] zeroPadded180RotatedFilters = new Double[this.numFilters][,,];
-
-            Double elementwiseProduct = 0.0;
-
-            // Initialize zero padded, 180 degree rotated filter
-            // During backpropagation, will convolve the gradient of output over the padded, rotated filters so pad the filters on each side by (gradient of output size - 1)
-            for (int i = 0; i < this.numFilters; i++) {
-
-                // Check that the gradient of output is square
-                Debug.Assert(this.numGradientOutputRows == this.numGradientOutputColumns);
-                zeroPadded180RotatedFilters[i] = Utils.zeroPad(this.numGradientOutputRows - 1, Utils.rotate180(this.filters[i]));
-            }
-
-            // CALCULATING GRADIENTS-------------------------------------------------------------------------------------------------------------------------
-
-            // Calculate gradient of loss with respect to biases
-            for (int i = 0; i < this.numBiases; i++) {
-                Double sum = 0.0;
-                for (int j = 0; j < this.numGradientOutputRows; j++) {
-                    for (int k = 0; k < this.numGradientOutputColumns; k++) {
-                        sum += gradientOutput[j, k, i];
-                    }
-                }
-                this.gradientBiases[i][0, 0, 0] += sum;
-                sum = 0.0;
-            }
-
-            // Calculate gradient of loss with respect to filters
-            elementwiseProduct = 0.0;
-
-            // Select the filter gradient
-            for (int i = 0; i < this.numFilters; i++) {
-
-                // Select the Z position of the filter gradient to be calculated
-                for (int j = 0; j < this.numFilterChannels; j++) {
-
-                    // gradientFilters[gradientFilterIndex][__,__,gradientFilterPosZ] is the convolution of gradientOutput[__,__,gradientFilterIndex] over input [__,__,gradientFilterPosZ]
-                    // Select the Y position of the filter gradient to be calculated (also the Y position on the input where the top left corner of the output gradient is positioned for the convolution)
-                    for (int k = 0; k < this.numFilterRows; k++) {
-
-                        // Select the X position of the filter gradient to be calculated (also the X position on the input where the top left corner of the output gradient is positioned for the convolution)
-                        for (int l = 0; l < this.numFilterColumns; l++) {
-
-                            // Loop through each element of the output gradient and multiply by the corresponding element in the input, add the products
-                            for (int m = 0; m < this.numGradientOutputRows; m++) {
-                                for (int n = 0; n < this.numGradientOutputColumns; n++) {
-                                    elementwiseProduct += gradientOutput[m, n, i] * this.input[k + m, l + n, j];
-                                }
-                            }
-                            // Set the value of the filter gradient
-                            this.gradientFilters[i][k, l, j] += elementwiseProduct;
-                            elementwiseProduct = 0.0;
-                        }
-                    }
-                }
-            }
-
-            if (this.needsGradient == true) {
-                // Calculate gradient of loss with respect to input
-                elementwiseProduct = 0.0;
-
-                // Select the Z position of the input gradient to be calculated
-                for (int i = 0; i < this.numInputChannels; i++) {
-
-                    // Loop through each filter
-                    for (int j = 0; j < this.numFilters; j++) {
-
-                        // For all filterIndex, calculate the full convolutions from right to left, bottom to top of gradientOutput[__,__, filterIndex] over 180 rotated filter [filterIndex][__,__,gradientInputPosZ] 
-                        // gradientInput[__,__,gradientInputPosZ] is the elementwise sum of those convolutions
-
-                        // Select the Y position of the input gradient to be calculated (to get the Y position on the rotated filter where the top left corner of the output gradient is positioned for convolution, reflect across X axis)
-                        for (int k = 0; k < this.num_input_rows; k++) {
-
-                            // Select the X position of the input gradient to be calculated (to get the X position on the rotated filter where the top left corner of the output gradient is positioned for convolution, reflect across Y axis)
-                            for (int l = 0; l < this.num_input_columns; l++) {
-
-                                // Loop through each element of the output gradient and multiply by the corresponding element in the filter, add the products
-                                for (int m = 0; m < this.numGradientOutputRows; m++) {
-                                    for (int n = 0; n < this.numGradientOutputColumns; n++) {
-                                        elementwiseProduct += gradientOutput[m, n, j] * zeroPadded180RotatedFilters[j][this.num_input_rows - k - 1 + m, this.num_input_columns - l - 1 + n, i];
-
-                                    }
-                                }
-                                // Increment the value of the input gradient (value is incremented each loop through filterIndex)
-                                gradientInput[k, l, i] += elementwiseProduct;
-                                elementwiseProduct = 0.0;
-                            }
-                        }
-                    }
-                }
-                return gradientInput;
-            } else {
-                return null;
-            }
-        }
-
-        public Tensor backward_tensor(Tensor gradient_output) {
-            this.num_gradient_output_samples = gradient_output.dim_1;
-            this.numGradientOutputRows = gradient_output.dim_2;
-            this.numGradientOutputColumns = gradient_output.dim_3;
-            this.numGradientOutputChannels = gradient_output.dim_4;
-
-            Tensor gradient_input = new Tensor(4, this.num_input_samples, this.num_input_rows, this.num_input_columns, this.numInputChannels);
             Tensor padded_rotated_filters;
             Tensor rotated_filters;
 
-            rotated_filters = this.filter_tensor.rotate_180();
-            padded_rotated_filters = rotated_filters.zero_pad(this.numGradientOutputRows - 1);
+            // Create zero padded, 180 degree rotated filters
+            // During backpropagation, will convolve the gradient of output over the padded, rotated filters so pad the filters on each side by (gradient output size - 1)
+            rotated_filters = this.filters.rotate_180();
+            padded_rotated_filters = rotated_filters.zero_pad(this.gradient_output_rows - 1);
 
+            // CALCULATE GRADIENTS------------------------------------------------------------------------------------
 
-            // Calculate Gradients
+            // Select the input sample from the batch
+            for (int i = 0; i < this.input_samples; i++) {
 
-            for (int sample = 0; sample < input_tensor.dim_1; sample++) {
-                
-                // Bias
-                for (int j = 0; j < this.numBiases; j++) {
+                // Calculate dL/db
+                // Select the bias gradient
+                //      For a given input sample, gradient_biases[num_gradient_bias] is the sum of elements in gradient_output[input_sample,__,__,num_gradient_bias]
+                //      Increment gradient_biases for each input sample
+                for (int j = 0; j < this.num_bias_gradients; j++) {
                     Double sum = 0.0;
-                    for (int k = 0; k < this.numGradientOutputRows; k++) {
-                        for (int l = 0; l < this.numGradientOutputColumns; l++) {
-                            sum += gradient_output.values[gradient_output.index(sample, k, l, j)];
+                    
+                    // Loop through each element of the output gradient and add
+                    for (int k = 0; k < this.gradient_output_rows; k++) {
+                        for (int l = 0; l < this.gradient_output_columns; l++) {
+                            sum += gradient_output.values[gradient_output.index(i, k, l, j)];
                         }
                     }
-                    this.gradient_bias_tensor.values[j] += sum;
+                    // Set the value of the bias gradient 
+                    this.gradient_biases.values[j] += sum;
                     sum = 0.0;
                 }
 
-                // Filter
+                // Calculate dL/df 
+                // Select the filter gradient
+                // Select the channel of the filter gradient to be calculated
+                //      For a given input sample, gradient_filters[num_gradient_filter,__,__,gradient_filter_channel] is the convolution of gradient_output[input_sample,__,__,num_gradient_filter] over input[input_sample,__,__,gradient_filter_channel]
+                //      Increment gradient_filters for each input sample
+                for (int j = 0; j < this.num_filter_gradients; j++) {
+                    for (int k = 0; k < this.filter_gradient_channels; k++) {
 
-
-                for (int i = 0; i < this.numFilters; i++) {
-                    for (int j = 0; j < this.numFilterChannels; j++) {
-                        for (int l = 0; l < this.numFilterRows; l++) {
-                            for (int m = 0; m < this.numFilterColumns; m++) {
+                        // Select the row of the filter gradient to be calculated (also the row on the input where the top left corner of the output gradient is positioned for the convolution)
+                        // Select the column of the filter gradient to be calculated (also the column on the input where the top left corner of the output gradient is positioned for the convolution)
+                        for (int l = 0; l < this.filter_gradient_rows; l++) {
+                            for (int m = 0; m < this.filter_gradient_columns; m++) {
+                                
                                 Double elementwise_product = 0.0;
-                                for (int n = 0; n < this.numGradientOutputRows; n++) {
-                                    for (int o = 0; o < this.numGradientOutputColumns; o++) {
-                                        elementwise_product += gradient_output.values[gradient_output.index(sample, n, o, i)] * this.input_tensor.values[this.input_tensor.index(sample, (l + n), (m + o), j)];
+
+                                // Loop through each element of the output gradient and multiply by the corresponding element in the input, add the products
+                                for (int n = 0; n < this.gradient_output_rows; n++) {
+                                    for (int o = 0; o < this.gradient_output_columns; o++) {
+                                        elementwise_product += gradient_output.values[gradient_output.index(i, n, o, j)] * this.input.values[this.input.index(i, (l + n), (m + o), k)];
                                     }
                                 }
-                                this.gradient_filter_tensor.values[this.gradient_filter_tensor.index(i, l, m, j)] += elementwise_product;
+                                // Set the value of the filter gradient
+                                this.gradient_filters.values[this.gradient_filters.index(j, l, m, k)] += elementwise_product;
                                 elementwise_product = 0.0;
                             }
                         }
                     }
                 }
             }
+            // If not first layer and dL/dI needs to be returned, calculate dL/dI
+            if (this.needs_gradient == true) {
+                this.input_gradient_samples = this.input_samples;
+                this.input_gradient_rows = this.input_rows;
+                this.input_gradient_columns = this.input_columns;
+                this.input_gradient_channels = this.input_channels;
+                
+                Tensor gradient_input = new Tensor(4, this.input_gradient_samples, this.input_gradient_rows, this.input_gradient_columns, this.input_gradient_channels);
 
-                // Input
-            if (this.needsGradient == true) {
+                // Select the input sample from the batch
+                Parallel.For(0, this.input_gradient_samples, i => {
 
-                Parallel.For(0, input_tensor.dim_1, sample => {
-                    for (int i = 0; i < this.numInputChannels; i++) {
-                        for (int j = 0; j < this.numFilters; j++) {
-                            for (int k = 0; k < this.num_input_rows; k++) {
-                                for (int l = 0; l < this.num_input_columns; l++) {
+                    // Select the channel of the input gradient to be calculated
+                    // Loop through each filter
+                    // For all num_filters, calculate the full convolutions from right to left, bottom to top of gradientOutput[input_sample__,__,num_filter] over 180 rotated filter [num_filter,__,__,input_gradient_channel] 
+                    // gradientInput[input_sample,__,__,input_gradient_channel] is the elementwise sum of those convolutions
+                    for (int j = 0; j < this.input_gradient_channels; j++) {
+                        for (int k = 0; k < this.num_filters; k++) {
+
+                            // Select the row of the input gradient to be calculated (to get the row on the rotated filter where the top left corner of the output gradient is positioned for convolution, reflect across X axis)
+                            // Select the column of the input gradient to be calculated (to get the column on the rotated filter where the top left corner of the output gradient is positioned for convolution, reflect across Y axis)
+                            for (int l = 0; l < this.input_gradient_rows; l++) {
+                                for (int m = 0; m < this.input_gradient_columns; m++) {
+                                    
                                     Double elementwise_product = 0.0;
-                                    for (int m = 0; m < this.numGradientOutputRows; m++) {
-                                        for (int n = 0; n < this.numGradientOutputColumns; n++) {
-                                            elementwise_product += gradient_output.values[gradient_output.index(sample, m, n, j)] * padded_rotated_filters.values[padded_rotated_filters.index(j, (this.num_input_rows - k - 1 + m), (this.num_input_columns - l - 1 + n), i)];
+
+                                    // Loop through each element of the output gradient and multiply by the corresponding element in the filter, add the products  
+                                    for (int n = 0; n < this.gradient_output_rows; n++) {
+                                        for (int o = 0; o < this.gradient_output_columns; o++) {
+                                            elementwise_product += gradient_output.values[gradient_output.index(i, n, o, k)] * padded_rotated_filters.values[padded_rotated_filters.index(k, (this.input_rows - l - 1 + n), (this.input_columns - m - 1 + o), j)];
                                         }
                                     }
-                                    gradient_input.values[gradient_input.index(sample, k, l, i)] += elementwise_product;
+                                    // Increment the value of the input gradient (value is incremented each loop through num_filters)
+                                    gradient_input.values[gradient_input.index(i, l, m, j)] += elementwise_product;
                                     elementwise_product = 0.0;
                                 }
                             }
@@ -376,37 +232,24 @@ namespace Conv_Net {
             }
         }
 
-        // Update filters and biases
-        public void update (int batchSize) {
-            for (int i=0; i < this.numFilters; i++) {
-                this.biases[i][0, 0, 0] -= (this.gradientBiases[i][0, 0, 0] * Program.eta / batchSize);
-                this.gradientBiases[i][0, 0, 0] = 0.0;
-            
-                for (int j = 0; j < this.numFilterRows; j ++) {
-                    for (int k=0; k < this.numFilterColumns; k++) {
-                        for (int l=0; l < this.numFilterChannels; l++) {
-                            this.filters[i][j, k, l] -= (this.gradientFilters[i][j, k, l] * Program.eta / batchSize);
-                            this.gradientFilters[i][j, k, l] = 0.0;
-                        }
-                    }
-                }
-            }
-        }
-        public void update_tensor (int batch_size) {
-            for (int i = 0; i < this.numFilters; i++) {
-                this.bias_tensor.values[i] -= (this.gradient_bias_tensor.values[i] * Program.eta / batch_size);
-                this.gradient_bias_tensor.values[i] = 0.0;
+        /// <summary>
+        /// Update biases and filters
+        /// </summary>
+        /// <param name="batch_size"></param>
+        public void update (int batch_size) {
+            for (int i = 0; i < this.num_filters; i++) {
+                this.biases.values[i] -= (this.gradient_biases.values[i] * Program.eta / batch_size);
+                this.gradient_biases.values[i] = 0.0;
 
-                for (int j = 0; j < this.numFilterRows; j++) {
-                    for (int k = 0; k < this.numFilterColumns; k++) {
-                        for (int l = 0; l < this.numFilterChannels; l++) {
-                            this.filter_tensor.values[i * (filter_tensor.dim_2 * filter_tensor.dim_3 * filter_tensor.dim_4) + j * (filter_tensor.dim_3 * filter_tensor.dim_4) + k * (filter_tensor.dim_4) + l] -= (this.gradient_filter_tensor.values[i * (gradient_filter_tensor.dim_2 * gradient_filter_tensor.dim_3 * gradient_filter_tensor.dim_4) + j * (gradient_filter_tensor.dim_3 * gradient_filter_tensor.dim_4) + k * (gradient_filter_tensor.dim_4) + l] * Program.eta / batch_size);
-                            this.gradient_filter_tensor.values[i * (gradient_filter_tensor.dim_2 * gradient_filter_tensor.dim_3 * gradient_filter_tensor.dim_4) + j * (gradient_filter_tensor.dim_3 * gradient_filter_tensor.dim_4) + k * (gradient_filter_tensor.dim_4) + l] = 0.0;
+                for (int j = 0; j < this.filter_rows; j++) {
+                    for (int k = 0; k < this.filter_columns; k++) {
+                        for (int l = 0; l < this.filter_channels; l++) {
+                            this.filters.values[this.filters.index(i, j, k, l)] -= (this.gradient_filters.values[this.gradient_filters.index(i, j, k, l)] * Program.eta / batch_size);
+                            this.gradient_filters.values[this.gradient_filters.index(i, j, k, l)] = 0.0;
                         }
                     }
                 }
             }
         }
-        
     }
 }

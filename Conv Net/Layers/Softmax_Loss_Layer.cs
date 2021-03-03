@@ -7,15 +7,15 @@ using System.Threading.Tasks;
 namespace Conv_Net {
     class Softmax_Loss_Layer {
 
-        public Tensor input_tensor;
-        public Tensor output_tensor;
-        public Tensor target_tensor;
+        public Tensor input;
+        public Tensor output;
+        public Tensor target;
 
         public Softmax_Loss_Layer() {
         }
 
         public Tensor forward(Tensor input) {
-            this.input_tensor = input;
+            this.input = input;
 
             Tensor output = new Tensor(input.dimensions, input.dim_1, input.dim_2, input.dim_3, input.dim_4);
 
@@ -45,7 +45,7 @@ namespace Conv_Net {
                     output.values[i * output.dim_2 + j] = Math.Exp(input.values[i * output.dim_2 + j]) / denominator;
                 }
             });
-            this.output_tensor = output;
+            this.output = output;
             return output;
         }
 
@@ -55,12 +55,12 @@ namespace Conv_Net {
         /// <param name="target"></param>
         /// <returns></returns>
         public Tensor loss(Tensor target) {
-            this.target_tensor = target;
-            Tensor loss = new Tensor(1, this.output_tensor.dim_1, 1, 1, 1);
+            this.target = target;
+            Tensor loss = new Tensor(1, this.output.dim_1, 1, 1, 1);
 
             Parallel.For(0, loss.dim_1, i=> {
-                for (int j = 0; j < this.output_tensor.dim_2; j++) {
-                    loss.values[i] -= (this.target_tensor.values[i * this.output_tensor.dim_2 + j] * Math.Log(this.output_tensor.values[i * this.output_tensor.dim_2 + j]));
+                for (int j = 0; j < this.output.dim_2; j++) {
+                    loss.values[i] -= (this.target.values[i * this.output.dim_2 + j] * Math.Log(this.output.values[i * this.output.dim_2 + j]));
                 }
             });
             return loss;
@@ -69,13 +69,13 @@ namespace Conv_Net {
         public Tensor backward () {
 
             // dL/dI
-            Tensor gradient_input = new Tensor(input_tensor.dimensions, input_tensor.dim_1, input_tensor.dim_2, input_tensor.dim_3, input_tensor.dim_4);
+            Tensor gradient_input = new Tensor(input.dimensions, input.dim_1, input.dim_2, input.dim_3, input.dim_4);
 
-            Parallel.For(0, input_tensor.dim_1, i => {
+            Parallel.For(0, input.dim_1, i => {
 
                 // dL/dI = (softmax output - target)
-                for (int j = 0; j < input_tensor.dim_2; j++) {
-                    gradient_input.values[i * input_tensor.dim_2 + j] = this.output_tensor.values[i * input_tensor.dim_2 + j] - this.target_tensor.values[i * input_tensor.dim_2 + j];
+                for (int j = 0; j < input.dim_2; j++) {
+                    gradient_input.values[i * input.dim_2 + j] = this.output.values[i * input.dim_2 + j] - this.target.values[i * input.dim_2 + j];
                 }
             });
             return gradient_input;

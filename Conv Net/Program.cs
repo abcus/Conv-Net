@@ -46,7 +46,7 @@ namespace Conv_Net {
             test_CNN(testing_sample_size);
             for (int epoch = 0; epoch < 10; epoch++) {
                 Console.WriteLine("____________________________________________________________\nEPOCH: " + epoch);
-                Utils.shuffle_Tensor(training_images, training_labels);
+                Utils.shuffle_training(training_images, training_labels);
                 train_CNN(CNN_training_sample_size, batch_size);
                 test_CNN(testing_sample_size);
             }

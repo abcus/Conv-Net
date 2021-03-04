@@ -23,21 +23,17 @@ namespace Conv_Net {
             values = new Double[this.dim_1 * this.dim_2 * this.dim_3 * this.dim_4];
         }
 
-        public Double get (int i, int j, int k, int l) {
-            return values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l];
-        }
-
-        public void set (int i, int j, int k, int l, Double value) {
-            values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l] = value;
-        }
-
+        /// <summary>
+        /// Takes indices of 4D array [i, j, k, l], returns corresponding index of 1D array
+        /// Faster to return 1D array index and have the caller access the element than return the element directly
+        /// </summary>
         public int index(int i, int j, int k, int l) {
             return (i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l);
         }
 
-
         /// <summary>
         /// Transposes a 2D tensor
+        /// Used in backpropagation of fully connected layer to transpose weights[layer_size, previous_layer_size, 0, 0] to weights[previous_layer_size, layer_size, 0, 0]
         /// </summary>
         public Tensor transpose_2D () {
             Tensor output = new Tensor(this.dimensions, this.dim_2, this.dim_1, this.dim_3, this.dim_4);
@@ -50,18 +46,23 @@ namespace Conv_Net {
         }
 
         /// <summary>
-        ///  Returns subset of original 4D tensor which starts at values[dim_1_i * this.dim_2 * this.dim_3 * this.dim_4] and has size [dim_1_size * this.dim_2 * this.dim_3 * this.dim_4]
+        ///  Returns subset of original 4D tensor from values[image_sample_i,__,__,__] to values[(image_sample_i + image_samples),__,__,__] 
+        /// Used to get batches of training images
         /// </summary>
-        public Tensor subset(int dim_1_i, int dim_1_size) {
-            Tensor t = new Tensor(this.dimensions, dim_1_size, this.dim_2, this.dim_3, this.dim_4);
+        public Tensor subset(int image_sample_i, int image_samples) {
+            Tensor subset = new Tensor(this.dimensions, image_samples, this.dim_2, this.dim_3, this.dim_4);
 
-            Parallel.For(0, dim_1_size * this.dim_2 * this.dim_3 * this.dim_4, i => {
-                t.values[i] = this.values[(dim_1_i * this.dim_2 * this.dim_3 * this.dim_4) + i];
+            Parallel.For(0, image_samples * this.dim_2 * this.dim_3 * this.dim_4, i => {
+                subset.values[i] = this.values[(image_sample_i * this.dim_2 * this.dim_3 * this.dim_4) + i];
             });
-            return t;
+            return subset;
         }
 
-
+        /// <summary>
+        /// Rotates tensor at values[num_filter,__,__,filter_channel] by 180 degrees (flip about X and Y axis)
+        /// Used during backpropagation of convolutional layer to calculate dL/dI
+        /// </summary>
+        /// <returns></returns>
         public Tensor rotate_180() {
             Tensor output = new Tensor(this.dimensions, this.dim_1, this.dim_2, this.dim_3, this.dim_4);
 
@@ -69,8 +70,7 @@ namespace Conv_Net {
                 for (int i = 0; i < this.dim_2; i++) {
                     for (int j = 0; j < this.dim_3; j++) {
                         for (int k = 0; k < this.dim_4; k++) {
-                            output.values[filter * (this.dim_2 * this.dim_3 * this.dim_4) + i * (this.dim_3 * this.dim_4) + j * (this.dim_4) + k] 
-                                = this.values[filter * (this.dim_2 * this.dim_3 * this.dim_4) + (this.dim_2- 1 - i) * (this.dim_3 * this.dim_4) + (this.dim_3 - 1 - j) * (this.dim_4) + k];
+                            output.values[output.index(filter, i, j, k)] = this.values[this.index(filter, (this.dim_2- 1 - i), (this.dim_3 - 1 - j), k)];
                         }
                     }
                 }
@@ -78,14 +78,19 @@ namespace Conv_Net {
             return output;
         }
 
+        /// <summary>
+        /// Pads tensor at values [dim_1,__,__,dim_4] by pad_size
+        /// Used during backpropagation of convolution layer to calculate dL/dI (also during forward propagation)
+        /// </summary>
+        /// <param name="pad_size"></param>
+        /// <returns></returns>
         public Tensor zero_pad(int pad_size) {
             Tensor output = new Tensor(this.dimensions, this.dim_1, this.dim_2 + 2 * pad_size, this.dim_3 + 2 * pad_size, this.dim_4);
             for (int filter = 0; filter < this.dim_1; filter++) {
                 for (int i = 0; i < this.dim_2; i++) {
                     for (int j = 0; j < this.dim_3; j++) {
                         for (int k = 0; k < this.dim_4; k++) {
-                            output.values[filter * (output.dim_2 * output.dim_3 * output.dim_4) + (i + pad_size) * (output.dim_3 * output.dim_4) + (j + pad_size) * (output.dim_4) + k] 
-                                = this.values[filter * (this.dim_2 * this.dim_3 * this.dim_4) + i * (this.dim_3 * this.dim_4) + j * (this.dim_4) + k];
+                            output.values[output.index(filter, (i + pad_size), (j + pad_size), k)] = this.values[this.index(filter, i, j, k)];
                         }
                     }
                 }
@@ -178,7 +183,6 @@ namespace Conv_Net {
         }
 
         public bool Equals(Tensor t) {
-            bool equals = true;
             if (this.dimensions != t.dimensions 
                 || this.dim_1 != t.dim_1 
                 || this.dim_2 != t.dim_2 

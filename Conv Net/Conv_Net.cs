@@ -77,10 +77,10 @@ namespace Conv_Net {
         /// Backpropagation for CNN
         /// Output of Conv_1 is null (dL/dI is not needed because Conv_1 is the first layer)
         /// </summary>
-        public void backward() {
+        public void backward(int batch_size) {
             Tensor grad;
 
-            grad = Softmax.backward();
+            grad = Softmax.backward(batch_size);
             grad = FC_3.backward(grad);
             grad = Flatten_3.backward(grad);
 
@@ -93,10 +93,10 @@ namespace Conv_Net {
             grad = Conv_1.backward(grad);
         }
 
-        public void update (int batch_size) {
-            FC_3.update(batch_size);
-            Conv_2.update(batch_size);
-            Conv_1.update(batch_size);
+        public void update () {
+            FC_3.update();
+            Conv_2.update();
+            Conv_1.update();
         }
 
         public void save_parameters(int epoch) {

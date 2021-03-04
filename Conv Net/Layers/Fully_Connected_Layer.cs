@@ -110,19 +110,18 @@ namespace Conv_Net {
         /// <summary>
         /// Updates the biases and weights of the fully connected layer
         /// </summary>
-        /// <param name="batch_size"></param>
-        public void update (int batch_size) {
+        public void update () {
              
             for (int i = 0; i < layer_size; i++) {
                 
                 // bias gradient array contains sum of gradients from all examples in batch (divide by batch size to calculate the average gradient)
-                this.biases.values[i] -= (this.gradient_biases.values[i] * Program.eta / batch_size);
+                this.biases.values[i] -= (this.gradient_biases.values[i] * Program.eta);
                 gradient_biases.values[i] = 0.0;
 
                 for (int j=0; j < previous_layer_size; j++) {
 
                     // weights gradient array contains sum of gradients from all examples in batch (divide by batch size to calculate the average gradient)
-                    this.weights.values[i * previous_layer_size + j] -= (gradient_weights.values[i * previous_layer_size + j] * Program.eta / batch_size);
+                    this.weights.values[i * previous_layer_size + j] -= (gradient_weights.values[i * previous_layer_size + j] * Program.eta);
                     gradient_weights.values[i * previous_layer_size + j] = 0.0;
                 }
             }

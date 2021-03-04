@@ -43,20 +43,20 @@ namespace Conv_Net {
 
 
 
-            //test_CNN(testing_sample_size);
-            //for (int epoch = 0; epoch < 10; epoch++) {
-            //    Console.WriteLine("____________________________________________________________\nEPOCH: " + epoch);
-            //    Utils.shuffle_training(training_images, training_labels);
-            //    train_CNN(CNN_training_sample_size, batch_size);
-            //    test_CNN(testing_sample_size);
-            //}
-
-            Tuple<Tensor, Tensor> t;
-            t = CNN.forward(testing_images, testing_labels);
-            for (int i=0; i < 100; i++) {
-                Utils.print_images(testing_images, i);
-                Utils.print_labels(testing_labels, t.Item2, i);
+            test_CNN(testing_sample_size);
+            for (int epoch = 0; epoch < 10; epoch++) {
+                Console.WriteLine("____________________________________________________________\nEPOCH: " + epoch);
+                Utils.shuffle_training(training_images, training_labels);
+                train_CNN(CNN_training_sample_size, batch_size);
+                test_CNN(testing_sample_size);
             }
+
+            //Tuple<Tensor, Tensor> t;
+            //t = CNN.forward(testing_images, testing_labels);
+            //for (int i=0; i < 100; i++) {
+            //    Utils.print_images(testing_images, i);
+            //    Utils.print_labels(testing_labels, t.Item2, i);
+            //}
 
             //test_NN(testing_sample_size);
             //for (int epoch = 0; epoch < 10; epoch++) {
@@ -121,15 +121,15 @@ namespace Conv_Net {
                 A = training_images.subset(i * batch_size, batch_size);
                 B = training_labels.subset(i * batch_size, batch_size);
                 R = CNN.forward(A, B);
-                CNN.backward();
-                CNN.update(batch_size);
+                CNN.backward(batch_size);
+                CNN.update();
             }
             if (remainder != 0) {
                 A = training_images.subset(num_batches * batch_size, remainder);
                 B = training_labels.subset(num_batches * batch_size, remainder);
                 R = CNN.forward(A, B);
-                CNN.backward();
-                CNN.update(remainder);
+                CNN.backward(remainder);
+                CNN.update();
             }
             stopwatch.Stop();
             Console.WriteLine("Training time:\t" + stopwatch.Elapsed + "\n");

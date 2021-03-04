@@ -235,16 +235,15 @@ namespace Conv_Net {
         /// <summary>
         /// Update biases and filters
         /// </summary>
-        /// <param name="batch_size"></param>
-        public void update (int batch_size) {
+        public void update () {
             for (int i = 0; i < this.num_filters; i++) {
-                this.biases.values[i] -= (this.gradient_biases.values[i] * Program.eta / batch_size);
+                this.biases.values[i] -= (this.gradient_biases.values[i] * Program.eta);
                 this.gradient_biases.values[i] = 0.0;
 
                 for (int j = 0; j < this.filter_rows; j++) {
                     for (int k = 0; k < this.filter_columns; k++) {
                         for (int l = 0; l < this.filter_channels; l++) {
-                            this.filters.values[this.filters.index(i, j, k, l)] -= (this.gradient_filters.values[this.gradient_filters.index(i, j, k, l)] * Program.eta / batch_size);
+                            this.filters.values[this.filters.index(i, j, k, l)] -= (this.gradient_filters.values[this.gradient_filters.index(i, j, k, l)] * Program.eta);
                             this.gradient_filters.values[this.gradient_filters.index(i, j, k, l)] = 0.0;
                         }
                     }

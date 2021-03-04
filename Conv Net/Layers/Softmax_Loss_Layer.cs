@@ -81,7 +81,7 @@ namespace Conv_Net {
             return loss;
         }
 
-        public Tensor backward () {
+        public Tensor backward (int batch_size) {
 
             this.input_gradient_samples = this.input_samples;
             this.input_gradient_rows = this.input_rows;
@@ -95,7 +95,7 @@ namespace Conv_Net {
 
                 // dL/dI = (softmax output - target)
                 for (int j = 0; j < this.input_gradient_rows; j++) {
-                    gradient_input.values[i * this.input_gradient_rows + j] = this.output.values[i * this.input_gradient_rows + j] - this.target.values[i * this.input_gradient_rows + j];
+                    gradient_input.values[i * this.input_gradient_rows + j] = (this.output.values[i * this.input_gradient_rows + j] - this.target.values[i * this.input_gradient_rows + j]) / batch_size;
                 }
             });
             return gradient_input;

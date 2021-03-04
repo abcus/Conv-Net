@@ -57,11 +57,11 @@ namespace Conv_Net {
             return Tuple.Create(output, loss);
         }
 
-        public void backward () {
+        public void backward (int batch_size) {
             Tensor grad;
 
             // Output layer
-            grad = Softmax.backward();
+            grad = Softmax.backward(batch_size);
             grad = FC_3.backward(grad);
 
             // Hidden layer 2
@@ -74,10 +74,10 @@ namespace Conv_Net {
             grad = FC_1.backward(grad);
         }
 
-        public void update (int batch_size) {
-            FC_3.update(batch_size);
-            FC_2.update(batch_size);
-            FC_1.update(batch_size);
+        public void update () {
+            FC_3.update();
+            FC_2.update();
+            FC_1.update();
         }
     }
 }

@@ -139,7 +139,7 @@ namespace Conv_Net {
             // Select the input sample from the batch
             for (int i = 0; i < this.input_samples; i++) {
 
-                // Calculate dL/db
+                // Calculate dL/dB
                 // Select the bias gradient
                 //      For a given input sample, gradient_biases[num_gradient_bias] is the sum of elements in gradient_output[input_sample,__,__,num_gradient_bias]
                 //      Increment gradient_biases for each input sample
@@ -157,7 +157,7 @@ namespace Conv_Net {
                     sum = 0.0;
                 }
 
-                // Calculate dL/df 
+                // Calculate dL/dF
                 // Select the filter gradient
                 // Select the channel of the filter gradient to be calculated
                 //      For a given input sample, gradient_filters[num_gradient_filter,__,__,gradient_filter_channel] is the convolution of gradient_output[input_sample,__,__,num_gradient_filter] over input[input_sample,__,__,gradient_filter_channel]

@@ -130,57 +130,79 @@ namespace Conv_Net {
             }
         }
         
-        static public int index_max_value(Tensor input) {
-            Double max = Double.MinValue;
-            int index = -1;
-            for (int i = 0; i < input.dim_2; i++) {
-                if (input.values[i] > max) {
-                    max = input.values[i];
-                    index = i;
-                }
-            }
-            return index;
-        }
-        static public void print_images(Double[,,] image) {
-            int size_x = image.GetLength(0);
-            int size_y = image.GetLength(1);
-            int size_z = image.GetLength(2);
-            string s = "";
+        static public void print_images(Tensor image, int image_sample) {
+            
+            int image_rows = image.dim_2;
+            int image_columns = image.dim_3;
+            int image_channels = image.dim_4; // 1
 
-            for (int z = 0; z < size_z; z++) {
-                for (int x = 0; x < size_x; x++) {
-                    for (int y = 0; y < size_y; y++) {
-                        if (image[x, y, z] == -1) {
-                            s += ".";
-                        } else if (image[x, y, z] == 1) {
-                            s += "%";
-                        } else {
-                            s += "o";
+            Console.WriteLine("\t\t\t\t   ╔════════════════════════════╗");
+            for (int i = 0; i < image_rows; i++) {
+                Console.Write("\t\t\t\t   ║");
+                for (int j = 0; j < image_columns; j++) {
+                    for (int k = 0; k < image_channels; k++) {
+                        Double pixel = image.values[image.index(image_sample, i, j, k)];
+                        if (pixel == -1) {
+                            Console.Write(".");
+                        } else if (pixel == 1) {
+                            Console.Write("%");
+                        } else { 
+                            Console.Write("o"); 
                         }
                     }
-                    s += "\n";
+                }
+                Console.Write("║\n");
+            }
+            Console.WriteLine("\t\t\t\t   ╚════════════════════════════╝");
+        }
+
+        static public void print_labels(Tensor label, int label_sample) {
+
+            int label_rows = label.dim_2;
+            int max_index = -1;
+            Double max_value = Double.MinValue;
+
+            for (int i=0; i < label_rows; i++) {
+                if (label.values[label_sample * label_rows + i] > max_value) {
+                    max_value = label.values[label_sample * label_rows + i];
+                    max_index = i;
                 }
             }
-            Console.WriteLine(s);
-        }
+            
+            
+            Console.WriteLine("┌─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┐");
+            Console.Write("│");
 
-        static public void print_labels(Double[,,] label) {
-            int size_z = label.GetLength(2);
-            string s = "";
+            for (int i = 0; i < label_rows; i++) {
+                if (i == max_index) {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write("    " + i);
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.Write("    │");
 
-            for (int z = 0; z < size_z; z++) {
-                s += z;
-                s += "\t";
+                } else {
+                    Console.Write("    " + i);
+                    Console.Write("    │");
+                }
             }
-            s += "\n";
 
-            for (int z = 0; z < size_z; z++) {
-                s += label[0, 0, z];
-                s += "\t";
+            Console.WriteLine("\n├─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┤");
+            Console.Write("│");
+
+            for (int i=0; i < label_rows; i++) {
+                if (i == max_index) {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write(" " + "{0:0.00000}", label.values[label_sample * label_rows + i]);
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.Write(" │");
+                    
+                } else {
+                    Console.Write(" " + "{0:0.00000}", label.values[label_sample * label_rows + i]);
+                    Console.Write(" │");
+                }
             }
-            s += "\n";
-            Console.WriteLine(s);
-        }
 
+            Console.WriteLine("\n└─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┘");
+        }
     }
 }

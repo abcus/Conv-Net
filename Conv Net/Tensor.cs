@@ -102,69 +102,66 @@ namespace Conv_Net {
         public override string ToString() {
             StringBuilder sb = new StringBuilder();
 
-           
-            if (dimensions <= 2) {
-                if (dimensions == 2) sb.Append("{"); if (this.dimensions == 1) sb.Append("<");
-                for (int i = 0; i < this.dim_1; i++) {
-                    if (dimensions == 2) sb.Append("<");
-                    for (int j=0; j < this.dim_2; j++) {
-                        sb.AppendFormat("{0:0.00000}", this.values[i * dim_2 + j]);
-                        if (this.dimensions == 1 && i < this.dim_1 - 1) sb.Append(", ");
-                        if (this.dimensions == 2 && j < this.dim_2 - 1) sb.Append(", ");
-                    }
-                    if (this.dimensions == 2) sb.Append(">");
-                    if (this.dimensions == 2 && i < this.dim_1 - 1) sb.Append(",\n");
-                }
-                if (dimensions == 2) sb.Append("}"); if (this.dimensions == 1) sb.Append(">");
-                sb.Append("\n");
+            if (this.dimensions == 4) {sb.Append("("); }
+            else if (this.dimensions == 3) {sb.Append("[");}
+            else if (this.dimensions == 2) {sb.Append("{");}
+            else if (this.dimensions == 1) {sb.Append("<");}
 
-            } 
-            else if (dimensions == 3) {
-                sb.Append("[");
-                for (int i=0; i < this.dim_1; i++) {
-                    sb.Append("{");
-                    for (int j=0; j < this.dim_2; j++) {
-                        sb.Append("<");
-                        for (int k=0; k < this.dim_3; k++) {
-                            sb.AppendFormat("{0:0.00000}", this.values[i * this.dim_2 * this.dim_3 + j * this.dim_3 + k]);
-                            if (k < this.dim_3 - 1) sb.Append(", ");
+            for (int i = 0; i < this.dim_1; i++) {
+                if (this.dimensions == 4) {sb.Append("[");}
+                else if (this.dimensions == 3) {sb.Append("{");} 
+                else if (this.dimensions == 2) {sb.Append("<");}
+                
+                for (int j = 0; j < this.dim_2; j++) {
+                    if (this.dimensions == 4) {sb.Append("{");}
+                    else if (this.dimensions == 3) {sb.Append("<");}
+
+                    for (int k = 0; k < this.dim_3; k++) {
+                        if (this.dimensions == 4) {sb.Append("<");}
+
+                        for (int l = 0; l < this.dim_4; l++) {
+                            sb.AppendFormat("{0:0.00000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
+                            if (this.dimensions == 4 && l < this.dim_4 - 1) {sb.Append(", ");}
+                            else if (this.dimensions == 3 && k < this.dim_3 - 1) {sb.Append(", ");}
+                            else if (this.dimensions == 2 && j < this.dim_2 - 1) {sb.Append(", ");}
+                            else if (this.dimensions == 1 && i < this.dim_1 - 1) {sb.Append(", ");}
                         }
-                        sb.Append(">");
-                        if (j < this.dim_2 - 1) sb.Append(", ");
-                    }
-                    sb.Append("}");
-                    if (i < this.dim_1 - 1) sb.Append(",\n");
-                }
-                sb.Append("]");
-                sb.Append("\n");
-
-            } 
-            else if (dimensions == 4) {
-                sb.Append("(");
-                for (int i=0; i < this.dim_1; i++) {
-                    sb.Append("[");
-                    for (int j=0; j < this.dim_2; j++) {
-                        sb.Append("{");
-                        for (int k=0; k < this.dim_3; k++) {
-                            sb.Append("<");
-                            for (int l=0; l < this.dim_4; l++) {
-                                sb.AppendFormat("{0:0.00000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
-                                if (l < this.dim_4 - 1) sb.Append(", ");
-                            }
+                        if (this.dimensions == 4) {
                             sb.Append(">");
-                            if (k < this.dim_3 - 1) sb.Append(", ");
-                        }
-                        sb.Append("}");
-                        if (j < this.dim_2 - 1) sb.Append(",\n");
+                            if (k < this.dim_3 - 1) {sb.Append(", ");}
+                        } 
                     }
-                    sb.Append("]");
-                    if (i < this.dim_1 - 1) sb.Append(",\n\n");
+                    if (this.dimensions == 4) {
+                        sb.Append("}");
+                        if (j < this.dim_2 - 1) {sb.Append(",\n");}
+                    } else if (this.dimensions == 3) {
+                        sb.Append(">");
+                        if (j < this.dim_2 - 1) {sb.Append(", ");}
+                    }
                 }
-                sb.Append(")");
-                sb.Append("\n");
-
+                if (this.dimensions == 4) {
+                    sb.Append("]");
+                    if (i < this.dim_1 - 1) {sb.Append(",\n\n");}
+                } else if (this.dimensions == 3) {
+                    sb.Append("}");
+                    if (i < this.dim_1 - 1) {sb.Append(",\n");}
+                } else if (this.dimensions == 2) {
+                    sb.Append(">");
+                    if (i < this.dim_1 - 1) {sb.Append(",\n");}
+                }
             }
-            sb.Append("dimensions: " + this.dimensions + "\nsamples: " + this.dim_1 + "\nrows: " + this.dim_2 + "\ncolumns: " + this.dim_3 + "\nchannels: " + this.dim_4 + "\n");
+
+            if (this.dimensions == 4) {sb.Append(")");}
+            else if (this.dimensions == 3) {sb.Append("]");}
+            else if (this.dimensions == 2) {sb.Append("}");} 
+            else if (this.dimensions == 1) {sb.Append(">");}
+            
+            sb.Append("\n\ndimensions: " + this.dimensions);
+            if (this.dimensions >= 1) {sb.Append("\ndimension 1 size: " + this.dim_1);}
+            if (this.dimensions >= 2) {sb.Append("\ndimension 2 size: " + this.dim_2);}
+            if (this.dimensions >= 3) {sb.Append("\ndimension 3 size: " + this.dim_3);}
+            if (this.dimensions >= 4) {sb.Append("\ndimension 4 size: " + this.dim_4);}
+            sb.Append("\n");
             return sb.ToString();            
         }
 

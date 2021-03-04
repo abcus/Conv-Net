@@ -142,12 +142,14 @@ namespace Conv_Net {
                 for (int j = 0; j < image_columns; j++) {
                     for (int k = 0; k < image_channels; k++) {
                         Double pixel = image.values[image.index(image_sample, i, j, k)];
-                        if (pixel == -1) {
-                            Console.Write(".");
-                        } else if (pixel == 1) {
-                            Console.Write("%");
-                        } else { 
-                            Console.Write("o"); 
+                        if (pixel < 0.0) {
+                            Console.Write(" ");
+                        } else if (pixel >= 0.0 && pixel < 0.5) {
+                            Console.Write("▒");
+                        } else if (pixel >= 0.5 && pixel < 0.75) {
+                            Console.Write("▓");
+                        } else if (pixel >= 0.75) {
+                            Console.Write("█");
                         }
                     }
                 }
@@ -156,26 +158,35 @@ namespace Conv_Net {
             Console.WriteLine("\t\t\t\t   ╚════════════════════════════╝");
         }
 
-        static public void print_labels(Tensor label, int label_sample) {
+        static public void print_labels(Tensor label, Tensor output, int label_sample) {
 
             int label_rows = label.dim_2;
-            int max_index = -1;
-            Double max_value = Double.MinValue;
+            int max_index_label = -1;
+            Double max_value_label = Double.MinValue;
+
+            int max_index_output = -1;
+            Double max_value_output = Double.MinValue;
 
             for (int i=0; i < label_rows; i++) {
-                if (label.values[label_sample * label_rows + i] > max_value) {
-                    max_value = label.values[label_sample * label_rows + i];
-                    max_index = i;
+                if (label.values[label_sample * label_rows + i] > max_value_label) {
+                    max_value_label = label.values[label_sample * label_rows + i];
+                    max_index_label = i;
                 }
             }
-            
-            
+
+            for (int i = 0; i < label_rows; i++) {
+                if (output.values[label_sample * label_rows + i] > max_value_output) {
+                    max_value_output = output.values[label_sample * label_rows + i];
+                    max_index_output = i;
+                }
+            }
+
             Console.WriteLine("┌─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┐");
             Console.Write("│");
 
             for (int i = 0; i < label_rows; i++) {
-                if (i == max_index) {
-                    Console.ForegroundColor = ConsoleColor.Red;
+                if (i == max_index_label) {
+                    Console.ForegroundColor = ConsoleColor.Green;
                     Console.Write("    " + i);
                     Console.ForegroundColor = ConsoleColor.White;
                     Console.Write("    │");
@@ -189,15 +200,20 @@ namespace Conv_Net {
             Console.WriteLine("\n├─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┤");
             Console.Write("│");
 
-            for (int i=0; i < label_rows; i++) {
-                if (i == max_index) {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Write(" " + "{0:0.00000}", label.values[label_sample * label_rows + i]);
+            for (int i = 0; i < label_rows; i++) {
+                if (i == max_index_output) {
+                    if (max_index_output == max_index_label) {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.Write(" " + "{0:0.00000}", output.values[label_sample * label_rows + i]);
+                    } else {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Write(" " + "{0:0.00000}", output.values[label_sample * label_rows + i]);
+                    }
                     Console.ForegroundColor = ConsoleColor.White;
                     Console.Write(" │");
-                    
+
                 } else {
-                    Console.Write(" " + "{0:0.00000}", label.values[label_sample * label_rows + i]);
+                    Console.Write(" " + "{0:0.00000}", output.values[label_sample * label_rows + i]);
                     Console.Write(" │");
                 }
             }

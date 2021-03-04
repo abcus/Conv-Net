@@ -41,14 +41,8 @@ namespace Conv_Net {
             testing_images = data.Item3;
             testing_labels = data.Item4;
 
-            for (int i=0; i < 20; i++) {
-
-                Utils.print_images(training_images, i);
-                Utils.print_labels(training_labels, i);
-            }
 
 
-            
             //test_CNN(testing_sample_size);
             //for (int epoch = 0; epoch < 10; epoch++) {
             //    Console.WriteLine("____________________________________________________________\nEPOCH: " + epoch);
@@ -56,6 +50,13 @@ namespace Conv_Net {
             //    train_CNN(CNN_training_sample_size, batch_size);
             //    test_CNN(testing_sample_size);
             //}
+
+            Tuple<Tensor, Tensor> t;
+            t = CNN.forward(testing_images, testing_labels);
+            for (int i=0; i < 100; i++) {
+                Utils.print_images(testing_images, i);
+                Utils.print_labels(testing_labels, t.Item2, i);
+            }
 
             //test_NN(testing_sample_size);
             //for (int epoch = 0; epoch < 10; epoch++) {

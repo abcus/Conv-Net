@@ -84,7 +84,7 @@ namespace Conv_Net {
                     }
                 }
             }
-
+            
             // If not first layer and dL/dI needs to be returned, calculate and return dL/dI = dL/dO * dO/dI; otherwise return null
             if (this.needs_gradient == true) {
                 Tensor transposed_weights_tensor = this.weights.transpose_2D();

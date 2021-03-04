@@ -8,6 +8,7 @@ using System.IO;
 namespace Conv_Net {
     class Conv_Net {
 
+        public Input_Layer Input;
         public Convolution_Layer Conv_1, Conv_2;
         public Relu_Layer Relu_1, Relu_2;
         public Max_Pooling_Layer Pool_1, Pool_2;
@@ -34,6 +35,8 @@ namespace Conv_Net {
         /// </summary>
         public Conv_Net () {
 
+            Input = new Input_Layer();
+
             Conv_1 = new Convolution_Layer(1, 8, 5, 5, false); 
             Relu_1 = new Relu_Layer();
             Pool_1 = new Max_Pooling_Layer(2, 2, 2); 
@@ -51,7 +54,9 @@ namespace Conv_Net {
             Tensor output;
             Tensor loss;
 
-            output = Conv_1.forward(input);
+            output = Input.forward(input);
+
+            output = Conv_1.forward(output);
             output = Relu_1.forward(output);
             output = Pool_1.forward(output);
 

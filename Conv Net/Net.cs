@@ -9,26 +9,26 @@ namespace Conv_Net {
 
         public Input_Layer Input;
         public Flatten_Layer Flatten;
-        public Fully_Connected_Layer FC1, FC2, FC3;
-        public Relu_Layer Relu1, Relu2;
+        public Fully_Connected_Layer FC_1, FC_2, FC_3;
+        public Relu_Layer Relu_1, Relu_2;
         public Softmax_Loss_Layer Softmax;
 
         public Net () {
 
             // Input layer
-            Input = new Input_Layer(28, 28, 1);
+            Input = new Input_Layer();
             Flatten = new Flatten_Layer();
             
             // Hidden layer 1
-            FC1 = new Fully_Connected_Layer(784, 5, false);
-            Relu1 = new Relu_Layer();
+            FC_1 = new Fully_Connected_Layer(784, 5, false);
+            Relu_1 = new Relu_Layer();
             
             // Hidden layer 2
-            FC2 = new Fully_Connected_Layer(5, 6, true);
-            Relu2 = new Relu_Layer();
+            FC_2 = new Fully_Connected_Layer(5, 6, true);
+            Relu_2 = new Relu_Layer();
             
             // Hidden layer 3
-            FC3 = new Fully_Connected_Layer(6, 10, true);
+            FC_3 = new Fully_Connected_Layer(6, 10, true);
             Softmax = new Softmax_Loss_Layer();
         }
 
@@ -37,18 +37,19 @@ namespace Conv_Net {
             Tensor loss;
 
             // Input and flatten layer
-            output = Flatten.forward(input);
+            output = Input.forward(input);
+            output = Flatten.forward(output);
 
             // Hidden layer 1
-            output = FC1.forward(output);
-            output = Relu1.forward(output);
+            output = FC_1.forward(output);
+            output = Relu_1.forward(output);
 
             // Hidden layer 2
-            output = FC2.forward(output);
-            output = Relu2.forward(output);
+            output = FC_2.forward(output);
+            output = Relu_2.forward(output);
 
             // Output layer
-            output = FC3.forward(output);
+            output = FC_3.forward(output);
             output = Softmax.forward(output);
 
             // Loss layer
@@ -61,22 +62,22 @@ namespace Conv_Net {
 
             // Output layer
             grad = Softmax.backward();
-            grad = FC3.backward(grad);
+            grad = FC_3.backward(grad);
 
             // Hidden layer 2
-            grad = Relu2.backward(grad);
-            grad = FC2.backward(grad);
+            grad = Relu_2.backward(grad);
+            grad = FC_2.backward(grad);
 
             // Hidden layer 1 
             // FC1.backward returns null as gradient of loss with respect to FC1 inputs (which is the image) is not needed
-            grad = Relu1.backward(grad);
-            grad = FC1.backward(grad);
+            grad = Relu_1.backward(grad);
+            grad = FC_1.backward(grad);
         }
 
         public void update (int batch_size) {
-            FC3.update(batch_size);
-            FC2.update(batch_size);
-            FC1.update(batch_size);
+            FC_3.update(batch_size);
+            FC_2.update(batch_size);
+            FC_1.update(batch_size);
         }
     }
 }

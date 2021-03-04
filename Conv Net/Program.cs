@@ -41,15 +41,25 @@ namespace Conv_Net {
             testing_images = data.Item3;
             testing_labels = data.Item4;
 
+            Tensor a = new Tensor(0, 1, 1, 1, 1);
+            Tensor b = new Tensor(1, 2, 1, 1, 1);
+            Tensor c = new Tensor(2, 2, 3, 1, 1);
+            Tensor d = new Tensor(3, 2, 3, 4, 1);
+            Tensor e = new Tensor(4, 2, 3, 4, 5);
 
+            Console.WriteLine(a);
+            Console.WriteLine(b);
+            Console.WriteLine(c);
+            Console.WriteLine(d);
+            Console.WriteLine(e);
 
-            test_CNN(testing_sample_size);
-            for (int epoch = 0; epoch < 10; epoch++) {
-                Console.WriteLine("____________________________________________________________\nEPOCH: " + epoch);
-                Utils.shuffle_training(training_images, training_labels);
-                train_CNN(CNN_training_sample_size, batch_size);
-                test_CNN(testing_sample_size);
-            }
+            //test_CNN(testing_sample_size);
+            //for (int epoch = 0; epoch < 10; epoch++) {
+            //    Console.WriteLine("____________________________________________________________\nEPOCH: " + epoch);
+            //    Utils.shuffle_training(training_images, training_labels);
+            //    train_CNN(CNN_training_sample_size, batch_size);
+            //    test_CNN(testing_sample_size);
+            //}
 
             //test_NN(testing_sample_size);
             //for (int epoch = 0; epoch < 10; epoch++) {

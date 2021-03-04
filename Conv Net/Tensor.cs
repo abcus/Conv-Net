@@ -102,36 +102,22 @@ namespace Conv_Net {
         public override string ToString() {
             StringBuilder sb = new StringBuilder();
 
-            if (dimensions == 0) {
-                
-                sb.AppendFormat("{0:0.00000}", this.values[0]);
-                sb.Append("\n");
-                sb.Append("dimensions: " + this.dimensions + "\n");
-
-            } else if (dimensions == 1) {
-                sb.Append("<");
+           
+            if (dimensions <= 2) {
+                if (dimensions == 2) sb.Append("{"); if (this.dimensions == 1) sb.Append("<");
                 for (int i = 0; i < this.dim_1; i++) {
-                    sb.AppendFormat("{0:0.00000}", this.values[i]);
-                    if (i < this.dim_1 - 1) sb.Append(", ");
-                }
-                sb.Append(">");
-                sb.Append("\n");
-                sb.Append("dimensions: " + this.dimensions + "\nsize: " + this.dim_1 + "\n");
-            } 
-            else if (dimensions == 2) {
-                sb.Append("{");
-                for (int i = 0; i < this.dim_1; i++) {
-                    sb.Append("<");
+                    if (dimensions == 2) sb.Append("<");
                     for (int j=0; j < this.dim_2; j++) {
                         sb.AppendFormat("{0:0.00000}", this.values[i * dim_2 + j]);
-                        if (j < this.dim_2 - 1) sb.Append(", ");
+                        if (this.dimensions == 1 && i < this.dim_1 - 1) sb.Append(", ");
+                        if (this.dimensions == 2 && j < this.dim_2 - 1) sb.Append(", ");
                     }
-                    sb.Append(">");
-                    if (i < this.dim_1 - 1) sb.Append(",\n");
+                    if (this.dimensions == 2) sb.Append(">");
+                    if (this.dimensions == 2 && i < this.dim_1 - 1) sb.Append(",\n");
                 }
-                sb.Append("}");
+                if (dimensions == 2) sb.Append("}"); if (this.dimensions == 1) sb.Append(">");
                 sb.Append("\n");
-                sb.Append("dimensions: " + this.dimensions + "\nrows: " + this.dim_1 + "\ncolumns: " + this.dim_2 + "\n");
+
             } 
             else if (dimensions == 3) {
                 sb.Append("[");
@@ -151,7 +137,7 @@ namespace Conv_Net {
                 }
                 sb.Append("]");
                 sb.Append("\n");
-                sb.Append("dimensions: " + this.dimensions + "\nrows: " + this.dim_1 + "\ncolumns: " + this.dim_2 + "\nchannels: " + this.dim_3 + "\n");
+
             } 
             else if (dimensions == 4) {
                 sb.Append("(");
@@ -176,9 +162,9 @@ namespace Conv_Net {
                 }
                 sb.Append(")");
                 sb.Append("\n");
-                sb.Append("dimensions: " + this.dimensions + "\nsamples: " + this.dim_1 + "\nrows: " + this.dim_2 + "\ncolumns: " + this.dim_3 + "\nchannels: " + this.dim_4 + "\n");
+
             }
-            
+            sb.Append("dimensions: " + this.dimensions + "\nsamples: " + this.dim_1 + "\nrows: " + this.dim_2 + "\ncolumns: " + this.dim_3 + "\nchannels: " + this.dim_4 + "\n");
             return sb.ToString();            
         }
 

@@ -12,7 +12,11 @@ namespace Conv_Net {
         
         private bool needs_gradient;
 
-        public Tensor input, biases, weights, gradient_biases, gradient_weights;
+        public Tensor input, biases, weights;
+
+        // Tensors to hold dL/dB and dL/dW
+        // Will have separate entries for each input sample
+        public Tensor gradient_biases, gradient_weights;
 
         public Fully_Connected_Layer(int previous_layer_size, int layer_size, bool needs_gradient) {
             this.previous_layer_size = previous_layer_size;
@@ -21,10 +25,6 @@ namespace Conv_Net {
 
             this.biases = new Tensor(1, this.layer_size, 1, 1, 1);
             this.weights = new Tensor(2, this.layer_size, this.previous_layer_size, 1, 1);
-
-            // Initialize dL/db and dL/dw (have to store these for gradient descent)
-            this.gradient_biases = new Tensor(1, layer_size, 1, 1, 1);
-            this.gradient_weights = new Tensor(2, layer_size, previous_layer_size, 1, 1);
 
             // Biases and weights initialization
             // Biases are set to 0
@@ -66,27 +66,30 @@ namespace Conv_Net {
         }
 
         public Tensor backward (Tensor gradient_output) {
-            Tensor gradient_input = new Tensor(2, this.input_samples, this.input_rows, this.input_columns, this.input_channels);
 
-            // For each input sample in the batch, gradient arrays are incremented (when updating, average gradients are calculated by dividing by batch size)
-            // Keeping track of gradients for each input sample separately requires another dimension on the gradient arrays, which is slower
-            // Outer for loop not parallelized as locking arrays is slower
-            for (int i=0; i < this.input_samples; i++) {
+            // Initialize dL/dB and dL/dW (have to store these for gradient descent)
+            // Input samples is stored as the highest dimension to allow for faster access when calculating the sum across all input samples
+            // Don't have to set values to 0.0 after updating because a new gradient tensor is created during each backward pass
+            this.gradient_biases = new Tensor(2, this.layer_size, this.input_samples, 1, 1);
+            this.gradient_weights = new Tensor(3, this.layer_size, this.previous_layer_size, this.input_samples, 1);
+
+            Parallel.For(0, this.input_samples, i => {
                 for (int j = 0; j < layer_size; j++) {
 
                     // dL/dB = dL/dO * dO/dB, stores it for gradient descent
-                    this.gradient_biases.values[j] += gradient_output.values[i * layer_size + j]; // * 1
-                    
+                    this.gradient_biases.values[j * this.input_samples + i] = gradient_output.values[i * layer_size + j]; // * 1
+
                     for (int k = 0; k < previous_layer_size; k++) {
 
                         // dL/dW = dL/dO * dO/dW, stores it for gradient descent
-                        this.gradient_weights.values[j * previous_layer_size + k] += gradient_output.values[i * layer_size + j] * this.input.values[i * previous_layer_size + k];
+                        this.gradient_weights.values[j * this.previous_layer_size * this.input_samples + k * this.input_samples + i] = gradient_output.values[i * layer_size + j] * this.input.values[i * previous_layer_size + k];
                     }
                 }
-            }
+            });
             
             // If not first layer and dL/dI needs to be returned, calculate and return dL/dI = dL/dO * dO/dI; otherwise return null
             if (this.needs_gradient == true) {
+                Tensor gradient_input = new Tensor(2, this.input_samples, this.input_rows, this.input_columns, this.input_channels);
                 Tensor transposed_weights_tensor = this.weights.transpose_2D();
                 
                 Parallel.For(0, this.input_samples, i => {
@@ -109,22 +112,20 @@ namespace Conv_Net {
 
         /// <summary>
         /// Updates the biases and weights of the fully connected layer
+        /// Don't need to divide by batch size because this was done in softmax layer
         /// </summary>
         public void update () {
-             
-            for (int i = 0; i < layer_size; i++) {
-                
-                // bias gradient array contains sum of gradients from all examples in batch (divide by batch size to calculate the average gradient)
-                this.biases.values[i] -= (this.gradient_biases.values[i] * Program.eta);
-                gradient_biases.values[i] = 0.0;
 
-                for (int j=0; j < previous_layer_size; j++) {
-
-                    // weights gradient array contains sum of gradients from all examples in batch (divide by batch size to calculate the average gradient)
-                    this.weights.values[i * previous_layer_size + j] -= (gradient_weights.values[i * previous_layer_size + j] * Program.eta);
-                    gradient_weights.values[i * previous_layer_size + j] = 0.0;
+            Parallel.For(0, this.layer_size, i => {
+                for (int s = 0; s < this.input_samples; s++) {
+                    this.biases.values[i] -= (this.gradient_biases.values[i * this.input_samples + s] * Program.eta);
                 }
-            }
+                for (int j = 0; j < this.previous_layer_size; j++) {
+                    for (int s = 0; s < this.input_samples; s++) {
+                        this.weights.values[i * this.previous_layer_size + j] -= (this.gradient_weights.values[i * previous_layer_size * this.input_samples + j * this.input_samples + s] * Program.eta);
+                    }
+                }
+            });
         }
     }
 }

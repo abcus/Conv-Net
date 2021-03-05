@@ -123,7 +123,7 @@ namespace Conv_Net {
         /// <returns></returns>
         public Tensor backward(Tensor gradient_output) {
 
-            // Initialize dL/db and dL/df (have to store these for gradient descent)
+            // Initialize dL/dB and dL/dF (have to store these for gradient descent)
             // Input samples is stored as the highest dimension to allow for faster access when calculating the sum across all input dimensions
             // Don't have to set values to 0.0 after updating because a new gradient tensor is created during each backward pass
             this.gradient_biases = new Tensor(2, this.num_bias_gradients, this.input_samples, 1, 1);
@@ -146,8 +146,8 @@ namespace Conv_Net {
             Parallel.For(0, this.input_samples, i => {
                 // Calculate dL/dB
                 // Select the bias gradient
-                //      For a given input sample, gradient_biases[num_gradient_bias] is the sum of elements in gradient_output[input_sample,__,__,num_gradient_bias]
-                //      Increment gradient_biases for each input sample
+                //      For a given input sample, gradient_biases[num_gradient_bias, input_sample] is the sum of elements in gradient_output[input_sample,__,__,num_gradient_bias]
+                //      Set gradient_biases for each input sample
                 for (int j = 0; j < this.num_bias_gradients; j++) {
                     Double sum = 0.0;
 
@@ -165,7 +165,7 @@ namespace Conv_Net {
                 // Calculate dL/dF
                 // Select the filter gradient
                 // Select the channel of the filter gradient to be calculated
-                //      For a given input sample, gradient_filters[num_gradient_filter,__,__,gradient_filter_channel] is the convolution of gradient_output[input_sample,__,__,num_gradient_filter] over input[input_sample,__,__,gradient_filter_channel]
+                //      For a given input sample, gradient_filters[num_gradient_filter,__,__,gradient_filter_channel, input_sample] is the convolution of gradient_output[input_sample,__,__,num_gradient_filter] over input[input_sample,__,__,gradient_filter_channel]
                 //      Increment gradient_filters for each input sample
                 for (int j = 0; j < this.num_filter_gradients; j++) {
                     for (int k = 0; k < this.filter_gradient_channels; k++) {

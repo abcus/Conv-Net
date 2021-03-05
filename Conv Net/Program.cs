@@ -58,8 +58,8 @@ namespace Conv_Net {
             //test_NN(testing_sample_size);
             //for (int epoch = 0; epoch < 10; epoch++) {
             //    Console.WriteLine("____________________________________________________________\nEPOCH: " + epoch);
-            //    Utils.shuffle_Tensor(training_images, training_labels);
-            //    train_NN(training_sample_size, batchSize);
+            //    Utils.shuffle_training(training_images, training_labels);
+            //    train_NN(training_sample_size, batch_size);
             //    test_NN(testing_sample_size);
             //}
         }
@@ -186,15 +186,15 @@ namespace Conv_Net {
         //        A = training_images.subset(i * batch_size, batch_size);
         //        B = training_labels.subset(i * batch_size, batch_size);
         //        R = NN.forward(A, B);
-        //        NN.backward();
-        //        NN.update(batch_size);
+        //        NN.backward(batch_size);
+        //        NN.update();
         //    }
         //    if (remainder != 0) {
         //        A = training_images.subset(num_batches * batch_size, remainder);
         //        B = training_labels.subset(num_batches * batch_size, remainder);
         //        R = NN.forward(A, B);
-        //        NN.backward();
-        //        NN.update(remainder);
+        //        NN.backward(remainder);
+        //        NN.update();
         //    }
 
         //    stopwatch.Stop();

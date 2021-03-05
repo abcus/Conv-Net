@@ -125,6 +125,10 @@ namespace Conv_Net {
 
 
         public override string ToString() {
+            if (this.dimensions == 5) {
+                return "";
+            }
+            
             StringBuilder sb = new StringBuilder();
 
             if (this.dimensions == 4) {sb.Append("("); }

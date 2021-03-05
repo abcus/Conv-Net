@@ -8,8 +8,6 @@ using System.IO;
 namespace Conv_Net {
     class Conv_Net {
 
-        public Pad Pad_1, Pad_2;
-
         public Input_Layer Input;
         public Convolution_Layer Conv_1, Conv_2;
         public Relu_Layer Relu_1, Relu_2;
@@ -39,12 +37,10 @@ namespace Conv_Net {
 
             Input = new Input_Layer();
 
-            Pad_1 = new Pad(2);
             Conv_1 = new Convolution_Layer(1, 8, 5, 5, 2, false); 
             Relu_1 = new Relu_Layer();
             Pool_1 = new Max_Pooling_Layer(2, 2, 2);
 
-            Pad_2 = new Pad(2);
             Conv_2 = new Convolution_Layer(8, 8, 5, 5, 2, true); 
             Relu_2 = new Relu_Layer();
             Pool_2 = new Max_Pooling_Layer(2, 2, 2);  
@@ -60,12 +56,10 @@ namespace Conv_Net {
 
             output = Input.forward(input);
 
-            output = Pad_1.forward(output);
             output = Conv_1.forward(output);
             output = Relu_1.forward(output);
             output = Pool_1.forward(output);
 
-            output = Pad_2.forward(output);
             output = Conv_2.forward(output);
             output = Relu_2.forward(output);
             output = Pool_2.forward(output);
@@ -93,7 +87,6 @@ namespace Conv_Net {
             grad = Pool_2.backward(grad);
             grad = Relu_2.backward(grad);
             grad = Conv_2.backward(grad);
-            grad = Pad_2.backward(grad);
 
             grad = Pool_1.backward(grad);
             grad = Relu_1.backward(grad);

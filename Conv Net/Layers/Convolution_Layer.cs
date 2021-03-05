@@ -73,13 +73,12 @@ namespace Conv_Net {
         /// <summary>
         /// Feed forward for convolutional layer
         /// </summary>
-        /// <param name="input"></param>
         /// <returns></returns>
         public Tensor forward (Tensor input) {
-            this.input = input;
-            this.input_samples = input.dim_1;
-            this.input_rows = input.dim_2;
-            this.input_columns = input.dim_3;
+            this.input = input.pad(this.pad_size);
+            this.input_samples = this.input.dim_1;
+            this.input_rows = this.input.dim_2;
+            this.input_columns = this.input.dim_3;
 
             this.output_samples = this.input_samples;
             this.output_rows = (this.input_rows - this.filter_rows) / this.stride + 1;
@@ -234,7 +233,7 @@ namespace Conv_Net {
                         }
                     }
                 }); 
-                return gradient_input;
+                return gradient_input.unpad(this.pad_size);
             } else {
                 return null;
             }

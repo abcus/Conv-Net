@@ -26,8 +26,7 @@ namespace Conv_Net {
 
         // Tensors to hold dL/dB and dL/dF
         // Will have separate entries for each input sample
-        public Tensor gradient_biases;
-        public Tensor[] gradient_filters;
+        public Tensor gradient_biases, gradient_filters;
 
         public Convolution_Layer(int input_channels, int num_filters, int filter_rows, int filter_columns, bool needs_gradient, int stride = 1) {
 
@@ -86,14 +85,6 @@ namespace Conv_Net {
             this.output_channels = this.num_filters;
             Tensor output = new Tensor(4, this.output_samples, this.output_rows, this.output_columns, this.output_channels);
 
-            // Initialize dL/db and dL/df (have to store these for gradient descent)
-            // Input samples is stored as the highest dimension to allow for faster access when calculating the sum across all input dimensions
-            this.gradient_biases = new Tensor(2, this.num_bias_gradients, input_samples, 1, 1);
-            this.gradient_filters = new Tensor[input_samples];
-            for (int i=0; i < this.input_samples; i++) {
-                this.gradient_filters[i] = new Tensor(4, this.num_filter_gradients, this.filter_gradient_rows, this.filter_gradient_columns, this.filter_gradient_channels);
-            }
-
             // Select the input sample from the batch
             // Select the filter
             // Select the row on the input where the top left corner of the filter is positioned 
@@ -131,6 +122,12 @@ namespace Conv_Net {
         /// <param name="gradient_output"></param>
         /// <returns></returns>
         public Tensor backward(Tensor gradient_output) {
+
+            // Initialize dL/db and dL/df (have to store these for gradient descent)
+            // Input samples is stored as the highest dimension to allow for faster access when calculating the sum across all input dimensions
+            // Don't have to set values to 0.0 after updating because a new gradient tensor is created during each backward pass
+            this.gradient_biases = new Tensor(2, this.num_bias_gradients, this.input_samples, 1, 1);
+            this.gradient_filters = new Tensor(5, this.num_filter_gradients, this.filter_gradient_rows, this.filter_gradient_columns, this.filter_gradient_channels, this.input_samples);
 
             this.gradient_output_rows = gradient_output.dim_2;
             this.gradient_output_columns = gradient_output.dim_3;
@@ -186,8 +183,8 @@ namespace Conv_Net {
                                         elementwise_product += gradient_output.values[gradient_output.index(i, n, o, j)] * this.input.values[this.input.index(i, (l + n), (m + o), k)];
                                     }
                                 }
-                                // Set the value of the filter gradient
-                                this.gradient_filters[i].values[this.gradient_filters[i].index(j, l, m, k)] += elementwise_product;
+                                // Set the value of the filter gradient (5D tensor with input_sample as the highest dimension)
+                                this.gradient_filters.values[this.gradient_filters.index(j, l, m, k, i)] = elementwise_product;
                                 elementwise_product = 0.0;
                             }
                         }
@@ -245,23 +242,21 @@ namespace Conv_Net {
         /// Update biases and filters
         /// </summary>
         public void update () {
-            for (int i = 0; i < this.num_filters; i++) {
-                for (int zz =0; zz < this.input_samples; zz++) {
-                    this.biases.values[i] -= (this.gradient_biases.values[i * this.input_samples + zz] * Program.eta);
-                    this.gradient_biases.values[i * this.input_samples + zz] = 0.0;
+            Parallel.For(0, this.num_filters, i => {
+                for (int s = 0; s < this.input_samples; s++) {
+                    this.biases.values[i] -= (this.gradient_biases.values[i * this.input_samples + s] * Program.eta);
                 }
 
                 for (int j = 0; j < this.filter_rows; j++) {
                     for (int k = 0; k < this.filter_columns; k++) {
                         for (int l = 0; l < this.filter_channels; l++) {
-                            for (int zzz = 0; zzz < this.input_samples; zzz++) {
-                                this.filters.values[this.filters.index(i, j, k, l)] -= (this.gradient_filters[zzz].values[this.gradient_filters[zzz].index(i, j, k, l)] * Program.eta);
-                                this.gradient_filters[zzz].values[this.gradient_filters[zzz].index(i, j, k, l)] = 0.0;
+                            for (int s = 0; s < this.input_samples; s++) {
+                                this.filters.values[this.filters.index(i, j, k, l)] -= (this.gradient_filters.values[this.gradient_filters.index(i, j, k, l, s)] * Program.eta);
                             }
                         }
                     }
                 }
-            }
+            });
         }
     }
 }

@@ -12,6 +12,7 @@ namespace Conv_Net {
         public int dim_2;
         public int dim_3;
         public int dim_4;
+        public int dim_5; 
         public Double[] values;
 
         public Tensor (int dimensions, int dim_1, int dim_2, int dim_3, int dim_4) {
@@ -20,8 +21,24 @@ namespace Conv_Net {
             this.dim_2 = dim_2;
             this.dim_3 = dim_3;
             this.dim_4 = dim_4;
+            this.dim_5 = 1;
             values = new Double[this.dim_1 * this.dim_2 * this.dim_3 * this.dim_4];
         }
+
+        /// <summary>
+        /// Overloaded constructor for tensor with 5 dimensions
+        /// Only used to store the filter gradient in the convolutional layer backprop 
+        /// </summary>
+        public Tensor(int dimensions, int dim_1, int dim_2, int dim_3, int dim_4, int dim_5) {
+            this.dimensions = dimensions;
+            this.dim_1 = dim_1;
+            this.dim_2 = dim_2;
+            this.dim_3 = dim_3;
+            this.dim_4 = dim_4;
+            this.dim_5 = dim_5;
+            values = new Double[this.dim_1 * this.dim_2 * this.dim_3 * this.dim_4 * this.dim_5];
+        }
+
 
         /// <summary>
         /// Takes indices of 4D array [i, j, k, l], returns corresponding index of 1D array
@@ -30,6 +47,14 @@ namespace Conv_Net {
         public int index(int i, int j, int k, int l) {
             return (i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l);
         }
+
+        /// <summary>
+        /// Takes indices of a 5D array [i, j, k, l, m], returns corresponding index of 1D array
+        /// </summary>
+        public int index(int i, int j, int k, int l, int m) {
+            return ((i * this.dim_2 * this.dim_3 * this.dim_4 * this.dim_5) + (j * this.dim_3 * this.dim_4 * this.dim_5) + (k * this.dim_4 * this.dim_5) + (l * this.dim_5) + m);
+        }
+
 
         /// <summary>
         /// Transposes a 2D tensor

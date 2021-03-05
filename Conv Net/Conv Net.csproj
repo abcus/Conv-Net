@@ -79,6 +79,7 @@
     <Compile Include="Layers\Flatten_Layer.cs" />
     <Compile Include="Layers\Fully_Connected_Layer.cs" />
     <Compile Include="Layers\Input_Layer.cs" />
+    <Compile Include="Layers\Pad.cs" />
     <Compile Include="Layers\Relu_Layer.cs" />
     <Compile Include="Layers\Softmax_Loss_Layer.cs" />
     <Compile Include="Layers\Max_Pooling_Layer.cs" />

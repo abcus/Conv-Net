@@ -40,30 +40,15 @@ namespace Conv_Net {
             testing_images = data.Item3;
             testing_labels = data.Item4;
 
-            Tensor test1 = new Tensor(4, 2, 3, 3, 2);
-            Tensor test2 = new Tensor(4, 2, 3, 3, 2);
 
-            for (int i = 0; i < 2 * 3 * 3 * 2; i++) { 
-                test1.values[i] = i;
-                test2.values[i] = i;
+
+            test_CNN(testing_sample_size);
+            for (int i = 0; i < epochs; i++) {
+                Console.WriteLine("____________________________________________________________\nEPOCH: " + i);
+                Utils.shuffle_training(training_images, training_labels);
+                train_CNN(CNN_training_sample_size, batch_size);
+                test_CNN(testing_sample_size);
             }
-
-            Tensor padded = test2.pad(2);
-            Tensor unpadded = padded.unpad(2);
-            Console.WriteLine(test1.Equals(unpadded));
-
-            //Tensor output = test2.zero_pad(1);
-            //Console.WriteLine(output);
-
-            //Console.WriteLine(test2 == output);
-
-            //test_CNN(testing_sample_size);
-            //for (int i = 0; i < epochs; i++) {
-            //    Console.WriteLine("____________________________________________________________\nEPOCH: " + i);
-            //    Utils.shuffle_training(training_images, training_labels);
-            //    train_CNN(CNN_training_sample_size, batch_size);
-            //    test_CNN(testing_sample_size);
-            //}
 
             //Tuple<Tensor, Tensor> t;
             //t = CNN.forward(testing_images, testing_labels);

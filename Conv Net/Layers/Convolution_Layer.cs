@@ -19,6 +19,7 @@ namespace Conv_Net {
         private int num_filter_gradients, filter_gradient_rows, filter_gradient_columns, filter_gradient_channels;
         private int gradient_output_rows, gradient_output_columns;
 
+        private int pad_size;
         private bool needs_gradient;
         private int stride;
 
@@ -28,7 +29,7 @@ namespace Conv_Net {
         // Will have separate entries for each input sample
         public Tensor gradient_biases, gradient_filters;
 
-        public Convolution_Layer(int input_channels, int num_filters, int filter_rows, int filter_columns, bool needs_gradient, int stride = 1) {
+        public Convolution_Layer(int input_channels, int num_filters, int filter_rows, int filter_columns, int pad_size, bool needs_gradient, int stride = 1) {
 
             this.input_channels = input_channels;
 
@@ -46,6 +47,7 @@ namespace Conv_Net {
             this.filter_gradient_columns = this.filter_columns;
             this.filter_gradient_channels = this.filter_channels;
 
+            this.pad_size = pad_size;
             this.needs_gradient = needs_gradient;
             this.stride = stride;
 

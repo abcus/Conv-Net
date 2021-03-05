@@ -104,18 +104,18 @@ namespace Conv_Net {
         }
 
         /// <summary>
-        /// Pads tensor at values [dim_1,__,__,dim_4] by pad_size
+        /// Zero pads tensor at values [dim_1,__,__,dim_4] by pad_size
         /// Used during backpropagation of convolution layer to calculate dL/dI (also during forward propagation)
         /// </summary>
         /// <param name="pad_size"></param>
         /// <returns></returns>
-        public Tensor zero_pad(int pad_size) {
-            Tensor output = new Tensor(this.dimensions, this.dim_1, this.dim_2 + 2 * pad_size, this.dim_3 + 2 * pad_size, this.dim_4);
-            for (int filter = 0; filter < this.dim_1; filter++) {
-                for (int i = 0; i < this.dim_2; i++) {
-                    for (int j = 0; j < this.dim_3; j++) {
-                        for (int k = 0; k < this.dim_4; k++) {
-                            output.values[output.index(filter, (i + pad_size), (j + pad_size), k)] = this.values[this.index(filter, i, j, k)];
+        public Tensor pad(int pad_size) {
+            Tensor output = new Tensor(this.dimensions, this.dim_1, (this.dim_2 + (2 * pad_size)), (this.dim_3 + (2 * pad_size)), this.dim_4);
+            for (int i = 0; i < this.dim_1; i++) {
+                for (int j = 0; j < this.dim_2; j++) {
+                    for (int k = 0; k < this.dim_3; k++) {
+                        for (int l = 0; l < this.dim_4; l++) {
+                            output.values[output.index(i, (j + pad_size), (k + pad_size), l)] = this.values[this.index(i, j, k, l)];
                         }
                     }
                 }
@@ -123,6 +123,19 @@ namespace Conv_Net {
             return output;
         }
 
+        public Tensor unpad(int pad_size) {
+            Tensor output = new Tensor(this.dimensions, this.dim_1, (this.dim_2 - (2 * pad_size)), (this.dim_3 - (2 * pad_size)), this.dim_4);
+            for (int i = 0; i < output.dim_1; i++) {
+                for (int j = 0; j < output.dim_2; j++) {
+                    for (int k = 0; k < output.dim_3; k++) {
+                        for (int l = 0; l < output.dim_4; l++) {
+                            output.values[output.index(i, j, k, l)] = this.values[this.index(i, (j + pad_size), (k + pad_size), l)]; 
+                        }
+                    }
+                }
+            }
+            return output;
+        }
 
         public override string ToString() {
             if (this.dimensions == 5) {

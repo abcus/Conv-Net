@@ -138,7 +138,7 @@ namespace Conv_Net {
             // Create zero padded, 180 degree rotated filters
             // During backpropagation, will convolve the gradient of output over the padded, rotated filters so pad the filters on each side by (gradient output size - 1)
             rotated_filters = this.filters.rotate_180();
-            padded_rotated_filters = rotated_filters.zero_pad(this.gradient_output_rows - 1);
+            padded_rotated_filters = rotated_filters.pad(this.gradient_output_rows - 1);
 
             // CALCULATE GRADIENTS------------------------------------------------------------------------------------
 

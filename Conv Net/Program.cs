@@ -12,6 +12,7 @@ namespace Conv_Net {
         //[STAThread]
 
         public static Random rand = new Random(0);
+        public static Random dropopout_rand = new Random(0);
         public static MathNet.Numerics.Distributions.Normal normalDist = new MathNet.Numerics.Distributions.Normal(0, 1, rand);
         public static Stopwatch stopwatch = new Stopwatch();
 
@@ -41,14 +42,24 @@ namespace Conv_Net {
             testing_labels = data.Item4;
 
 
-
-            test_CNN(testing_sample_size);
-            for (int i = 0; i < epochs; i++) {
-                Console.WriteLine("____________________________________________________________\nEPOCH: " + i);
-                Utils.shuffle_training(training_images, training_labels);
-                train_CNN(CNN_training_sample_size, batch_size);
-                test_CNN(testing_sample_size);
+            Dropout_Layer DO = new Dropout_Layer(0.5);
+            Tensor test = new Tensor(4, 2, 2, 2, 5);
+            Tensor gradient = new Tensor(4, 2, 2, 2, 5);
+            for (int i=0; i < 40; i++) {
+                test.values[i] = 2 * (1 + i);
+                gradient.values[i] = 1;
             }
+            Console.WriteLine(test);
+            Console.WriteLine(DO.forward(test));
+            Console.WriteLine(DO.backward(gradient));
+
+            //test_CNN(testing_sample_size);
+            //for (int i = 0; i < epochs; i++) {
+            //    Console.WriteLine("____________________________________________________________\nEPOCH: " + i);
+            //    Utils.shuffle_training(training_images, training_labels);
+            //    train_CNN(CNN_training_sample_size, batch_size);
+            //    test_CNN(testing_sample_size);
+            //}
 
             //Tuple<Tensor, Tensor> t;
             //t = CNN.forward(testing_images, testing_labels);

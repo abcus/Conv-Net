@@ -76,6 +76,7 @@
   <ItemGroup>
     <Compile Include="Conv_Net.cs" />
     <Compile Include="Layers\Convolution_Layer.cs" />
+    <Compile Include="Layers\Dropout_Layer.cs" />
     <Compile Include="Layers\Flatten_Layer.cs" />
     <Compile Include="Layers\Fully_Connected_Layer.cs" />
     <Compile Include="Layers\Input_Layer.cs" />

@@ -111,7 +111,7 @@ namespace Conv_Net {
         /// <returns></returns>
         public Tensor pad(int pad_size) {
             Tensor output = new Tensor(this.dimensions, this.dim_1, (this.dim_2 + (2 * pad_size)), (this.dim_3 + (2 * pad_size)), this.dim_4);
-            for (int i = 0; i < this.dim_1; i++) {
+            Parallel.For(0, this.dim_1, i => {
                 for (int j = 0; j < this.dim_2; j++) {
                     for (int k = 0; k < this.dim_3; k++) {
                         for (int l = 0; l < this.dim_4; l++) {
@@ -119,21 +119,21 @@ namespace Conv_Net {
                         }
                     }
                 }
-            }
+            });
             return output;
         }
 
         public Tensor unpad(int pad_size) {
             Tensor output = new Tensor(this.dimensions, this.dim_1, (this.dim_2 - (2 * pad_size)), (this.dim_3 - (2 * pad_size)), this.dim_4);
-            for (int i = 0; i < output.dim_1; i++) {
+            Parallel.For(0, output.dim_1, i => {
                 for (int j = 0; j < output.dim_2; j++) {
                     for (int k = 0; k < output.dim_3; k++) {
                         for (int l = 0; l < output.dim_4; l++) {
-                            output.values[output.index(i, j, k, l)] = this.values[this.index(i, (j + pad_size), (k + pad_size), l)]; 
+                            output.values[output.index(i, j, k, l)] = this.values[this.index(i, (j + pad_size), (k + pad_size), l)];
                         }
                     }
                 }
-            }
+            });
             return output;
         }
 

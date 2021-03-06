@@ -34,7 +34,7 @@ namespace Conv_Net {
             Tensor output = new Tensor(this.input_dimensions, this.input_samples, this.input_rows, this.input_columns, this.input_channels);
 
             for (int i=0; i < this.input_samples * this.input_rows * this.input_columns * this.input_channels; i++) {
-                if (Program.rand.NextDouble() < this.p) {
+                if (Program.dropout_rand.NextDouble() < this.p) {
                     output.values[i] = 0;
                     gradient_local.values[i] = 0;
                 } else {

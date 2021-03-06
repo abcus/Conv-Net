@@ -12,7 +12,7 @@ namespace Conv_Net {
         //[STAThread]
 
         public static Random rand = new Random(0);
-        public static Random dropopout_rand = new Random(0);
+        public static Random dropout_rand = new Random(0);
         public static MathNet.Numerics.Distributions.Normal normalDist = new MathNet.Numerics.Distributions.Normal(0, 1, rand);
         public static Stopwatch stopwatch = new Stopwatch();
 
@@ -22,10 +22,10 @@ namespace Conv_Net {
         public static Tensor training_images, training_labels, testing_images, testing_labels;
        
         public static int testing_sample_size = 10000;
-        public static int epochs = 10;
+        public static int epochs = 20;
         public static int training_sample_size = 60000;
-        public static int CNN_training_sample_size = 600;
-        public static int batch_size = 16;
+        public static int CNN_training_sample_size = 60000;
+        public static int batch_size = 32;
 
         public static Double eta = 0.01;
 
@@ -41,25 +41,15 @@ namespace Conv_Net {
             testing_images = data.Item3;
             testing_labels = data.Item4;
 
-
-            Dropout_Layer DO = new Dropout_Layer(0.5);
-            Tensor test = new Tensor(4, 2, 2, 2, 5);
-            Tensor gradient = new Tensor(4, 2, 2, 2, 5);
-            for (int i=0; i < 40; i++) {
-                test.values[i] = 2 * (1 + i);
-                gradient.values[i] = 1;
+            CNN.load_parameters();
+            test_CNN(testing_sample_size);
+            for (int i = 0; i < epochs; i++) {
+                Console.WriteLine("____________________________________________________________\nEPOCH: " + i);
+                Utils.shuffle_training(training_images, training_labels);
+                train_CNN(CNN_training_sample_size, batch_size);
+                test_CNN(testing_sample_size);
+                CNN.save_parameters(i);
             }
-            Console.WriteLine(test);
-            Console.WriteLine(DO.forward(test));
-            Console.WriteLine(DO.backward(gradient));
-
-            //test_CNN(testing_sample_size);
-            //for (int i = 0; i < epochs; i++) {
-            //    Console.WriteLine("____________________________________________________________\nEPOCH: " + i);
-            //    Utils.shuffle_training(training_images, training_labels);
-            //    train_CNN(CNN_training_sample_size, batch_size);
-            //    test_CNN(testing_sample_size);
-            //}
 
             //Tuple<Tensor, Tensor> t;
             //t = CNN.forward(testing_images, testing_labels);
@@ -85,7 +75,7 @@ namespace Conv_Net {
             Double total_cross_entropy_loss = 0.0;
             Tuple<Tensor, Tensor> t;
 
-            t = CNN.forward(testing_images, testing_labels);
+            t = CNN.forward(testing_images, testing_labels, false);
 
             for (int i = 0; i < testing_sample_size; i++) {
                 total_cross_entropy_loss += t.Item1.values[i];
@@ -130,14 +120,14 @@ namespace Conv_Net {
             for (int i = 0; i < num_batches; i++) {
                 A = training_images.subset(i * batch_size, batch_size);
                 B = training_labels.subset(i * batch_size, batch_size);
-                R = CNN.forward(A, B);
+                R = CNN.forward(A, B, true);
                 CNN.backward(batch_size);
                 CNN.update();
             }
             if (remainder != 0) {
                 A = training_images.subset(num_batches * batch_size, remainder);
                 B = training_labels.subset(num_batches * batch_size, remainder);
-                R = CNN.forward(A, B);
+                R = CNN.forward(A, B, true);
                 CNN.backward(remainder);
                 CNN.update();
             }

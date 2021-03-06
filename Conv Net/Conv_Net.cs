@@ -12,6 +12,7 @@ namespace Conv_Net {
         public Convolution_Layer Conv_1, Conv_2;
         public Relu_Layer Relu_1, Relu_2;
         public Max_Pooling_Layer Pool_1, Pool_2;
+        public Dropout_Layer Dropout_1, Dropout_2;
         public Flatten_Layer Flatten_3;
         public Fully_Connected_Layer FC_3;
         public Softmax_Loss_Layer Softmax;
@@ -19,17 +20,17 @@ namespace Conv_Net {
         /// <summary>
         /// Conv layer 1
         /// Input of Conv_1: [batch size x 28 x 28 x 1]
-        /// Output of Conv_1: [batch size x 24 x 24 x 8]
-        /// Output of Pool_1: [batch size x 12 x 12 x 8]
+        /// Output of Conv_1: [batch size x 24 x 24 x 16]
+        /// Output of Pool_1: [batch size x 12 x 12 x 16]
         ///
         /// Conv layer 2
-        /// Input of Conv_2: [batch size x 12 x 12 x 8]
-        /// Output of Conv_2: [batch size x 8 x 8 x 8]
-        /// Output of Pool_2: [batch size x 4 x 4 x 8]
+        /// Input of Conv_2: [batch size x 12 x 12 x 16]
+        /// Output of Conv_2: [batch size x 8 x 8 x 32]
+        /// Output of Pool_2: [batch size x 4 x 4 x 32]
         ///
         /// Fully connected layer 3
-        /// Input of Flatten_3: [batch size x 4 x 4 x 8]
-        /// Output of Flatten 3: [batch size x 128 x 1 x 1]
+        /// Input of Flatten_3: [batch size x 4 x 4 x 32]
+        /// Output of Flatten 3: [batch size x 512 x 1 x 1]
         /// Output of FC_3: [batch size x 10 x 1 x 1]
         /// Output of Softmax: [batch size x 10 x 1 x 1]
         /// </summary>
@@ -37,20 +38,29 @@ namespace Conv_Net {
 
             Input = new Input_Layer();
 
-            Conv_1 = new Convolution_Layer(1, 8, 5, 5, 2, false); 
+            Conv_1 = new Convolution_Layer(1, 16, 5, 5, 0, false); 
             Relu_1 = new Relu_Layer();
             Pool_1 = new Max_Pooling_Layer(2, 2, 2);
+            Dropout_1 = new Dropout_Layer(0.2);
 
-            Conv_2 = new Convolution_Layer(8, 8, 5, 5, 2, true); 
+            Conv_2 = new Convolution_Layer(16, 32, 5, 5, 0, true); 
             Relu_2 = new Relu_Layer();
-            Pool_2 = new Max_Pooling_Layer(2, 2, 2);  
-            
+            Pool_2 = new Max_Pooling_Layer(2, 2, 2);
+            Dropout_2 = new Dropout_Layer(0.2);
+
             Flatten_3 = new Flatten_Layer(); 
-            FC_3 = new Fully_Connected_Layer(7 * 7 * 8, 10, true); 
+            FC_3 = new Fully_Connected_Layer(4 * 4 * 32, 10, true); 
             Softmax = new Softmax_Loss_Layer();
         }
 
-        public Tuple<Tensor, Tensor> forward (Tensor input, Tensor target) {
+        /// <summary>
+        /// If training, then apply dropout
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="target"></param>
+        /// <param name="is_train"></param>
+        /// <returns></returns>
+        public Tuple<Tensor, Tensor> forward (Tensor input, Tensor target, bool is_train) {
             Tensor output;
             Tensor loss;
 
@@ -59,10 +69,12 @@ namespace Conv_Net {
             output = Conv_1.forward(output);
             output = Relu_1.forward(output);
             output = Pool_1.forward(output);
+            if (is_train == true) { output = Dropout_1.forward(output); }
 
             output = Conv_2.forward(output);
             output = Relu_2.forward(output);
             output = Pool_2.forward(output);
+            if (is_train == true) { output = Dropout_2.forward(output); }
 
             output = Flatten_3.forward(output);
             output = FC_3.forward(output);
@@ -72,7 +84,7 @@ namespace Conv_Net {
 
             return Tuple.Create(loss, output);
         }
-         
+
         /// <summary>
         /// Backpropagation for CNN
         /// Output of Conv_1 is null (dL/dI is not needed because Conv_1 is the first layer)
@@ -84,10 +96,12 @@ namespace Conv_Net {
             grad = FC_3.backward(grad);
             grad = Flatten_3.backward(grad);
 
+            grad = Dropout_2.backward(grad);
             grad = Pool_2.backward(grad);
             grad = Relu_2.backward(grad);
             grad = Conv_2.backward(grad);
 
+            grad = Dropout_1.backward(grad);
             grad = Pool_1.backward(grad);
             grad = Relu_1.backward(grad);
             grad = Conv_1.backward(grad);
@@ -125,7 +139,7 @@ namespace Conv_Net {
 
 
         public void load_parameters() {
-            System.IO.StreamReader reader = new System.IO.StreamReader(@"parameters 15.txt");
+            System.IO.StreamReader reader = new System.IO.StreamReader(@"parameters 997.txt");
 
             for (int i=0; i < Conv_1.biases.values.Length; i++) {
                 Conv_1.biases.values[i] = Convert.ToDouble(reader.ReadLine());

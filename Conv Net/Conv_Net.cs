@@ -113,8 +113,8 @@ namespace Conv_Net {
 
         public void update () {
             Grad.SGD_FC(FC_3.B, FC_3.W, FC_3.dB, FC_3.dW);
-            Grad.SGD_Conv(Conv_2.B, Conv_2.F, Conv_2.dB, Conv_2.dF, Conv_2.V_dB, Conv_2.S_dB, Conv_2.V_dF, Conv_2.S_dF);
-            Grad.SGD_Conv(Conv_1.B, Conv_1.F, Conv_1.dB, Conv_1.dF, Conv_1.V_dB, Conv_1.S_dB, Conv_1.V_dF, Conv_1.S_dF);
+            Grad.ADAM_Conv(Conv_2.B, Conv_2.F, Conv_2.dB, Conv_2.dF, Conv_2.V_dB, Conv_2.S_dB, Conv_2.V_dF, Conv_2.S_dF);
+            Grad.ADAM_Conv(Conv_1.B, Conv_1.F, Conv_1.dB, Conv_1.dF, Conv_1.V_dB, Conv_1.S_dB, Conv_1.V_dF, Conv_1.S_dF);
             Grad.t += 1; // iterate t for bias correction
         }
 

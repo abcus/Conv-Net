@@ -112,31 +112,31 @@ namespace Conv_Net {
         }
 
         public void update () {
-            Grad.SGD_FC(FC_3.biases, FC_3.weights, FC_3.gradient_biases, FC_3.gradient_weights);
-            Grad.SGD_Conv(Conv_2.biases, Conv_2.filters, Conv_2.gradient_biases, Conv_2.gradient_filters);
-            Grad.SGD_Conv(Conv_1.biases, Conv_1.filters, Conv_1.gradient_biases, Conv_1.gradient_filters);
+            Grad.SGD_FC(FC_3.B, FC_3.W, FC_3.dB, FC_3.dW);
+            Grad.SGD_Conv(Conv_2.B, Conv_2.F, Conv_2.dB, Conv_2.dF, Conv_2.V_dB, Conv_2.S_dB, Conv_2.V_dF, Conv_2.S_dF);
+            Grad.SGD_Conv(Conv_1.B, Conv_1.F, Conv_1.dB, Conv_1.dF, Conv_1.V_dB, Conv_1.S_dB, Conv_1.V_dF, Conv_1.S_dF);
             Grad.t += 1; // iterate t for bias correction
         }
 
         public void save_parameters(int epoch) {
             StreamWriter writer = new StreamWriter("parameters " + epoch + ".txt", false);
 
-            foreach(Double b in Conv_1.biases.values) {
+            foreach(Double b in Conv_1.B.values) {
                 writer.WriteLine(b);
             }
-            foreach (Double b in Conv_1.filters.values) {
+            foreach (Double b in Conv_1.F.values) {
                 writer.WriteLine(b);
             }
-            foreach (Double b in Conv_2.biases.values) {
+            foreach (Double b in Conv_2.B.values) {
                 writer.WriteLine(b);
             }
-            foreach (Double b in Conv_2.filters.values) {
+            foreach (Double b in Conv_2.F.values) {
                 writer.WriteLine(b);
             }
-            foreach (Double b in FC_3.biases.values) {
+            foreach (Double b in FC_3.B.values) {
                 writer.WriteLine(b);
             }
-            foreach (Double b in FC_3.weights.values) {
+            foreach (Double b in FC_3.W.values) {
                 writer.WriteLine(b);
             }
             writer.Close();
@@ -146,23 +146,23 @@ namespace Conv_Net {
         public void load_parameters() {
             System.IO.StreamReader reader = new System.IO.StreamReader(@"parameters 997.txt");
 
-            for (int i=0; i < Conv_1.biases.values.Length; i++) {
-                Conv_1.biases.values[i] = Convert.ToDouble(reader.ReadLine());
+            for (int i=0; i < Conv_1.B.values.Length; i++) {
+                Conv_1.B.values[i] = Convert.ToDouble(reader.ReadLine());
             }
-            for (int i = 0; i < Conv_1.filters.values.Length; i++) {
-                Conv_1.filters.values[i] = Convert.ToDouble(reader.ReadLine());
+            for (int i = 0; i < Conv_1.F.values.Length; i++) {
+                Conv_1.F.values[i] = Convert.ToDouble(reader.ReadLine());
             }
-            for (int i = 0; i < Conv_2.biases.values.Length; i++) {
-                Conv_2.biases.values[i] = Convert.ToDouble(reader.ReadLine());
+            for (int i = 0; i < Conv_2.B.values.Length; i++) {
+                Conv_2.B.values[i] = Convert.ToDouble(reader.ReadLine());
             }
-            for (int i = 0; i < Conv_2.filters.values.Length; i++) {
-                Conv_2.filters.values[i] = Convert.ToDouble(reader.ReadLine());
+            for (int i = 0; i < Conv_2.F.values.Length; i++) {
+                Conv_2.F.values[i] = Convert.ToDouble(reader.ReadLine());
             }
-            for (int i = 0; i < FC_3.biases.values.Length; i++) {
-                FC_3.biases.values[i] = Convert.ToDouble(reader.ReadLine());
+            for (int i = 0; i < FC_3.B.values.Length; i++) {
+                FC_3.B.values[i] = Convert.ToDouble(reader.ReadLine());
             }
-            for (int i = 0; i < FC_3.weights.values.Length; i++) {
-                FC_3.weights.values[i] = Convert.ToDouble(reader.ReadLine());
+            for (int i = 0; i < FC_3.W.values.Length; i++) {
+                FC_3.W.values[i] = Convert.ToDouble(reader.ReadLine());
             }
         }
     }

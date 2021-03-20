@@ -23,11 +23,14 @@ namespace Conv_Net {
         private bool needs_gradient;
         private int stride;
 
-        public Tensor input, biases, filters;
+        // Input, bias, and filter tensors
+        public Tensor I, B, F;
 
         // Tensors to hold dL/dB and dL/dF
         // Will have separate entries for each input sample
-        public Tensor gradient_biases, gradient_filters;
+        public Tensor dB, dF;
+
+        public Tensor V_dB, S_dB, V_dF, S_dF;
 
         public Convolution_Layer(int input_channels, int num_filters, int filter_rows, int filter_columns, int pad_size, bool needs_gradient, int stride = 1) {
 
@@ -51,20 +54,25 @@ namespace Conv_Net {
             this.needs_gradient = needs_gradient;
             this.stride = stride;
 
-            this.biases = new Tensor(1, this.num_biases, 1, 1, 1);
-            this.filters = new Tensor(4, this.num_filters, this.filter_rows, this.filter_columns, this.filter_channels);
+            this.B = new Tensor(1, this.num_biases, 1, 1, 1);
+            this.V_dB = new Tensor(1, this.num_bias_gradients, 1, 1, 1);
+            this.S_dB = new Tensor(1, this.num_bias_gradients, 1, 1, 1);
+
+            this.F = new Tensor(4, this.num_filters, this.filter_rows, this.filter_columns, this.filter_channels);
+            this.V_dF = new Tensor(4, this.num_filter_gradients, this.filter_gradient_rows, this.filter_gradient_columns, this.filter_gradient_channels);
+            this.S_dF = new Tensor(4, this.num_filter_gradients, this.filter_gradient_rows, this.filter_gradient_columns, this.filter_gradient_channels);
 
             // Biases and filters initialization
             // Biases are set to 0
             // Filters are set to random value from normal distribution * sqrt(2/ (num_filters * filter_rows * filter_columns))
             for (int i = 0; i < this.num_filters; i++) {
                 
-                biases.values[i] = 0.0;
+                B.values[i] = 0.0;
 
                 for (int j = 0; j < this.filter_rows; j++) {
                     for (int k = 0; k < this.filter_columns; k++) {
                         for (int l = 0; l < this.filter_channels; l++) {
-                            this.filters.values[this.filters.index(i, j, k, l)] = Program.normalDist.Sample() * Math.Sqrt(2 / ((Double)this.num_filters * this.filter_rows * this.filter_columns));
+                            this.F.values[this.F.index(i, j, k, l)] = Program.normalDist.Sample() * Math.Sqrt(2 / ((Double)this.num_filters * this.filter_rows * this.filter_columns));
                         }
                     }
                 }
@@ -75,10 +83,10 @@ namespace Conv_Net {
         /// </summary>
         /// <returns></returns>
         public Tensor forward (Tensor input) {
-            this.input = input.pad(this.pad_size);
-            this.input_samples = this.input.dim_1;
-            this.input_rows = this.input.dim_2;
-            this.input_columns = this.input.dim_3;
+            this.I = input.pad(this.pad_size);
+            this.input_samples = this.I.dim_1;
+            this.input_rows = this.I.dim_2;
+            this.input_columns = this.I.dim_3;
 
             this.output_samples = this.input_samples;
             this.output_rows = (this.input_rows - this.filter_rows) / this.stride + 1;
@@ -101,12 +109,12 @@ namespace Conv_Net {
                             for (int m = 0; m < this.filter_rows; m++) {
                                 for (int n = 0; n < this.filter_columns; n++) {
                                     for (int o = 0; o < this.filter_channels; o++) {
-                                        elementwise_product += this.filters.values[this.filters.index(j, m, n, o)] * this.input.values[this.input.index(i, (k + m), (l + n), o)];
+                                        elementwise_product += this.F.values[this.F.index(j, m, n, o)] * this.I.values[this.I.index(i, (k + m), (l + n), o)];
                                     }
                                 }
                             }
                             // Add the bias to elementwise product
-                            elementwise_product += this.biases.values[j];
+                            elementwise_product += this.B.values[j];
 
                             // Set the value of output
                             output.values[output.index(i, (k / stride), (l / stride), j)] = elementwise_product;
@@ -127,8 +135,8 @@ namespace Conv_Net {
             // Initialize dL/dB and dL/dF (have to store these for gradient descent)
             // Input samples is stored as the highest dimension to allow for faster access when calculating the sum across all input dimensions
             // Don't have to set values to 0.0 after updating because a new gradient tensor is created during each backward pass
-            this.gradient_biases = new Tensor(2, this.num_bias_gradients, this.input_samples, 1, 1);
-            this.gradient_filters = new Tensor(5, this.num_filter_gradients, this.filter_gradient_rows, this.filter_gradient_columns, this.filter_gradient_channels, this.input_samples);
+            this.dB = new Tensor(2, this.num_bias_gradients, this.input_samples, 1, 1);
+            this.dF = new Tensor(5, this.num_filter_gradients, this.filter_gradient_rows, this.filter_gradient_columns, this.filter_gradient_channels, this.input_samples);
 
             this.gradient_output_rows = gradient_output.dim_2;
             this.gradient_output_columns = gradient_output.dim_3;
@@ -138,7 +146,7 @@ namespace Conv_Net {
 
             // Create zero padded, 180 degree rotated filters
             // During backpropagation, will convolve the gradient of output over the padded, rotated filters so pad the filters on each side by (gradient output size - 1)
-            rotated_filters = this.filters.rotate_180();
+            rotated_filters = this.F.rotate_180();
             padded_rotated_filters = rotated_filters.pad(this.gradient_output_rows - 1);
 
             // CALCULATE GRADIENTS------------------------------------------------------------------------------------
@@ -159,7 +167,7 @@ namespace Conv_Net {
                         }
                     }
                     // Set the value of the bias gradient 
-                    this.gradient_biases.values[j * this.input_samples + i] = sum;
+                    this.dB.values[j * this.input_samples + i] = sum;
                     sum = 0.0;
                 }
 
@@ -181,11 +189,11 @@ namespace Conv_Net {
                                 // Loop through each element of the output gradient and multiply by the corresponding element in the input, add the products
                                 for (int n = 0; n < this.gradient_output_rows; n++) {
                                     for (int o = 0; o < this.gradient_output_columns; o++) {
-                                        elementwise_product += gradient_output.values[gradient_output.index(i, n, o, j)] * this.input.values[this.input.index(i, (l + n), (m + o), k)];
+                                        elementwise_product += gradient_output.values[gradient_output.index(i, n, o, j)] * this.I.values[this.I.index(i, (l + n), (m + o), k)];
                                     }
                                 }
                                 // Set the value of the filter gradient (5D tensor with input_sample as the highest dimension)
-                                this.gradient_filters.values[this.gradient_filters.index(j, l, m, k, i)] = elementwise_product;
+                                this.dF.values[this.dF.index(j, l, m, k, i)] = elementwise_product;
                                 elementwise_product = 0.0;
                             }
                         }

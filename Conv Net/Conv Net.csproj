@@ -75,6 +75,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Conv_Net.cs" />
+    <Compile Include="Gradient_Descent.cs" />
     <Compile Include="Layers\Convolution_Layer.cs" />
     <Compile Include="Layers\Dropout_Layer.cs" />
     <Compile Include="Layers\Flatten_Layer.cs" />

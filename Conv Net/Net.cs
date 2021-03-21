@@ -13,6 +13,7 @@ namespace Conv_Net {
         public Relu_Layer Relu_1, Relu_2;
         public Softmax_Loss_Layer Softmax;
 
+        public Gradient_Descent Grad;
         public Net () {
 
             // Input layer
@@ -75,9 +76,9 @@ namespace Conv_Net {
         }
 
         public void update () {
-            FC_3.update();
-            FC_2.update();
-            FC_1.update();
+            Grad.SGD_FC(FC_3.biases, FC_3.weights, FC_3.gradient_biases, FC_3.gradient_weights);
+            Grad.SGD_FC(FC_2.biases, FC_2.weights, FC_2.gradient_biases, FC_2.gradient_weights);
+            Grad.SGD_FC(FC_1.biases, FC_1.weights, FC_1.gradient_biases, FC_1.gradient_weights);
         }
     }
 }

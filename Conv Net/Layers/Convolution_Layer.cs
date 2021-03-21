@@ -238,26 +238,5 @@ namespace Conv_Net {
                 return null;
             }
         }
-
-        /// <summary>
-        /// Update biases and filters
-        /// </summary>
-        public void update () {
-            Parallel.For(0, this.num_filters, i => {
-                for (int s = 0; s < this.input_samples; s++) {
-                    this.biases.values[i] -= (this.gradient_biases.values[i * this.input_samples + s] * Program.eta);
-                }
-
-                for (int j = 0; j < this.filter_rows; j++) {
-                    for (int k = 0; k < this.filter_columns; k++) {
-                        for (int l = 0; l < this.filter_channels; l++) {
-                            for (int s = 0; s < this.input_samples; s++) {
-                                this.filters.values[this.filters.index(i, j, k, l)] -= (this.gradient_filters.values[this.gradient_filters.index(i, j, k, l, s)] * Program.eta);
-                            }
-                        }
-                    }
-                }
-            });
-        }
     }
 }

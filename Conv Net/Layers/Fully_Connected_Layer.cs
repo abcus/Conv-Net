@@ -109,23 +109,5 @@ namespace Conv_Net {
                 return null;
             }
         }
-
-        /// <summary>
-        /// Updates the biases and weights of the fully connected layer
-        /// Don't need to divide by batch size because this was done in softmax layer
-        /// </summary>
-        public void update () {
-
-            Parallel.For(0, this.layer_size, i => {
-                for (int s = 0; s < this.input_samples; s++) {
-                    this.biases.values[i] -= (this.gradient_biases.values[i * this.input_samples + s] * Program.eta);
-                }
-                for (int j = 0; j < this.previous_layer_size; j++) {
-                    for (int s = 0; s < this.input_samples; s++) {
-                        this.weights.values[i * this.previous_layer_size + j] -= (this.gradient_weights.values[i * previous_layer_size * this.input_samples + j * this.input_samples + s] * Program.eta);
-                    }
-                }
-            });
-        }
     }
 }

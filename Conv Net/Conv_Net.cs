@@ -17,6 +17,8 @@ namespace Conv_Net {
         public Fully_Connected_Layer FC_3;
         public Softmax_Loss_Layer Softmax;
 
+        public Gradient_Descent Grad;
+
         /// <summary>
         /// Conv layer 1
         /// Input of Conv_1: [batch size x 28 x 28 x 1]
@@ -51,6 +53,8 @@ namespace Conv_Net {
             Flatten_3 = new Flatten_Layer(); 
             FC_3 = new Fully_Connected_Layer(4 * 4 * 32, 10, true); 
             Softmax = new Softmax_Loss_Layer();
+
+            Grad = new Gradient_Descent();
         }
 
         /// <summary>
@@ -108,9 +112,10 @@ namespace Conv_Net {
         }
 
         public void update () {
-            FC_3.update();
-            Conv_2.update();
-            Conv_1.update();
+            Grad.SGD_FC(FC_3.biases, FC_3.weights, FC_3.gradient_biases, FC_3.gradient_weights);
+            Grad.SGD_Conv(Conv_2.biases, Conv_2.filters, Conv_2.gradient_biases, Conv_2.gradient_filters);
+            Grad.SGD_Conv(Conv_1.biases, Conv_1.filters, Conv_1.gradient_biases, Conv_1.gradient_filters);
+            Grad.t += 1; // iterate t for bias correction
         }
 
         public void save_parameters(int epoch) {

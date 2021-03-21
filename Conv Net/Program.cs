@@ -24,10 +24,13 @@ namespace Conv_Net {
         public static int testing_sample_size = 10000;
         public static int epochs = 20;
         public static int training_sample_size = 60000;
-        public static int CNN_training_sample_size = 60000;
+        public static int CNN_training_sample_size = 600;
         public static int batch_size = 32;
 
-        public static Double eta = 0.01;
+        public static Double ALPHA = 0.01; // learning rate
+        public static Double BETA_1 = 0.9; // momentum
+        public static Double BETA_2 = 0.999; // RMS prop
+        public static Double EPSILON = 0.00000001;
 
         static void Main() {
 
@@ -43,13 +46,13 @@ namespace Conv_Net {
 
             //CNN.load_parameters();
              test_CNN(testing_sample_size);
-            //for (int i = 0; i < epochs; i++) {
-            //    Console.WriteLine("____________________________________________________________\nEPOCH: " + i);
-            //    Utils.shuffle_training(training_images, training_labels);
-            //    train_CNN(CNN_training_sample_size, batch_size);
-            //    test_CNN(testing_sample_size);
-            //    //CNN.save_parameters(i);
-            //}
+            for (int i = 0; i < epochs; i++) {
+                Console.WriteLine("____________________________________________________________\nEPOCH: " + i);
+                Utils.shuffle_training(training_images, training_labels);
+                train_CNN(CNN_training_sample_size, batch_size);
+                test_CNN(testing_sample_size);
+                CNN.save_parameters(i);
+            }
 
             //Tuple<Tensor, Tensor> t;
             //t = CNN.forward(testing_images, testing_labels);

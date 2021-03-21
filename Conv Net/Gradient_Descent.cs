@@ -13,11 +13,10 @@ namespace Conv_Net {
             t = 1;
         }
 
-        /// <summary>
+        /// <summary>   
         /// Update biases and filters
         /// </summary>
         public void ADAM_Conv (Tensor B, Tensor F, Tensor dB, Tensor dF, Tensor V_dB, Tensor S_dB, Tensor V_dF, Tensor S_dF) {
-
             int num_filters = dF.dim_1;
             int filter_rows = dF.dim_2;
             int filter_columns = dF.dim_3;

@@ -41,15 +41,15 @@ namespace Conv_Net {
             testing_images = data.Item3;
             testing_labels = data.Item4;
 
-            CNN.load_parameters();
-            test_CNN(testing_sample_size);
-            for (int i = 0; i < epochs; i++) {
-                Console.WriteLine("____________________________________________________________\nEPOCH: " + i);
-                Utils.shuffle_training(training_images, training_labels);
-                train_CNN(CNN_training_sample_size, batch_size);
-                test_CNN(testing_sample_size);
-                CNN.save_parameters(i);
-            }
+            //CNN.load_parameters();
+             test_CNN(testing_sample_size);
+            //for (int i = 0; i < epochs; i++) {
+            //    Console.WriteLine("____________________________________________________________\nEPOCH: " + i);
+            //    Utils.shuffle_training(training_images, training_labels);
+            //    train_CNN(CNN_training_sample_size, batch_size);
+            //    test_CNN(testing_sample_size);
+            //    //CNN.save_parameters(i);
+            //}
 
             //Tuple<Tensor, Tensor> t;
             //t = CNN.forward(testing_images, testing_labels);
@@ -73,12 +73,15 @@ namespace Conv_Net {
 
             int correct = 0;
             Double total_cross_entropy_loss = 0.0;
+            Tensor A, B;
             Tuple<Tensor, Tensor> t;
 
-            t = CNN.forward(testing_images, testing_labels, false);
+            for (int z=0; z < testing_sample_size; z++) {
+                A = testing_images.subset(z, 1);
+                B = testing_labels.subset(z, 1);
+                t = CNN.forward(A, B, false);
 
-            for (int i = 0; i < testing_sample_size; i++) {
-                total_cross_entropy_loss += t.Item1.values[i];
+                total_cross_entropy_loss += t.Item1.values[0];
 
                 int index_max_value_output = -1;
                 Double max_output = Double.MinValue;
@@ -87,12 +90,12 @@ namespace Conv_Net {
                 Double max_label = Double.MinValue;
 
                 for (int j = 0; j < t.Item2.dim_2; j++) {
-                    if (t.Item2.values[i * t.Item2.dim_2 + j] > max_output) {
-                        max_output = t.Item2.values[i * t.Item2.dim_2 + j];
+                    if (t.Item2.values[j] > max_output) {
+                        max_output = t.Item2.values[j];
                         index_max_value_output = j;
                     }
-                    if (testing_labels.values[i * t.Item2.dim_2 + j] > index_max_value_label) {
-                        max_label = testing_labels.values[i * t.Item2.dim_2 + j];
+                    if (B.values[j] > index_max_value_label) {
+                        max_label = B.values[j];
                         index_max_value_label = j;
                     }
                 }
@@ -100,6 +103,8 @@ namespace Conv_Net {
                     correct++;
                 }
             }
+
+
             stopwatch.Stop();
             Console.WriteLine("Testing time:\t" + stopwatch.Elapsed);
             Console.WriteLine("Accuracy:\t" + (Double)correct / testing_sample_size * 100 + "% (" + correct + " correct out of " + testing_sample_size + ")");

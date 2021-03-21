@@ -61,10 +61,12 @@ namespace Conv_Net {
         /// Updates the biases and weights of the fully connected layer
         /// Don't need to divide by batch size because this was done in softmax layer
         /// </summary>
-        public void SGD_FC(Tensor B, Tensor W, Tensor dB, Tensor dW) {
+        public void ADAM_FC(Tensor B, Tensor W, Tensor dB, Tensor dW, Tensor V_dB, Tensor S_dB, Tensor V_dW, Tensor S_dW) {
             int layer_size = dW.dim_1;
             int previous_layer_size = dW.dim_2;
             int input_samples = dW.dim_3;
+            Double V_bias_correction = (1 - Math.Pow(Program.BETA_1, this.t));
+            Double S_bias_correction = (1 - Math.Pow(Program.BETA_2, this.t));
 
             Parallel.For(0, layer_size, i => {
 
@@ -74,15 +76,21 @@ namespace Conv_Net {
                 for (int s = 0; s < input_samples; s++) {
                     dB_sum += dB.values[i * input_samples + s];
                 }
-                B.values[i] -= (Program.ALPHA * dB_sum);
+                V_dB.values[i] = Program.BETA_1 * V_dB.values[i] + (1 - Program.BETA_1) * dB_sum;
+                S_dB.values[i] = Program.BETA_2 * S_dB.values[i] + (1 - Program.BETA_2) * Math.Pow(dB_sum, 2);
                 dB_sum = 0.0;
+
+                B.values[i] -= (Program.ALPHA * (V_dB.values[i] / V_bias_correction) / (Math.Sqrt(S_dB.values[i] / S_bias_correction) + Program.EPSILON));
 
                 for (int j = 0; j < previous_layer_size; j++) {
                     for (int s = 0; s < input_samples; s++) {
                         dW_sum += dW.values[i * previous_layer_size * input_samples + j * input_samples + s];
                     }
-                    W.values[i * previous_layer_size + j] -= (Program.ALPHA * dW_sum);
+                    V_dW.values[i * previous_layer_size + j] = Program.BETA_1 * V_dW.values[i * previous_layer_size + j] + (1 - Program.BETA_1) * dW_sum;
+                    S_dW.values[i * previous_layer_size + j] = Program.BETA_2 * S_dW.values[i * previous_layer_size + j] + (1 - Program.BETA_2) * Math.Pow(dW_sum, 2);
                     dW_sum = 0.0;
+
+                    W.values[i * previous_layer_size + j] -= (Program.ALPHA * (V_dW.values[i * previous_layer_size + j] / V_bias_correction) / (Math.Sqrt(S_dW.values[i * previous_layer_size + j] / S_bias_correction) + Program.EPSILON));                    
                 }
             });
         }

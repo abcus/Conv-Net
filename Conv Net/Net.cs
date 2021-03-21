@@ -76,9 +76,9 @@ namespace Conv_Net {
         }
 
         public void update () {
-            Grad.SGD_FC(FC_3.B, FC_3.W, FC_3.dB, FC_3.dW);
-            Grad.SGD_FC(FC_2.B, FC_2.W, FC_2.dB, FC_2.dW);
-            Grad.SGD_FC(FC_1.B, FC_1.W, FC_1.dB, FC_1.dW);
+            Grad.ADAM_FC(FC_3.B, FC_3.W, FC_3.dB, FC_3.dW, FC_3.V_dB, FC_3.S_dB, FC_3.V_dW, FC_3.S_dW);
+            Grad.ADAM_FC(FC_2.B, FC_2.W, FC_2.dB, FC_2.dW, FC_2.V_dB, FC_2.S_dB, FC_2.V_dW, FC_2.S_dW);
+            Grad.ADAM_FC(FC_1.B, FC_1.W, FC_1.dB, FC_1.dW, FC_1.V_dB, FC_1.S_dB, FC_1.V_dW, FC_1.S_dW);
         }
     }
 }

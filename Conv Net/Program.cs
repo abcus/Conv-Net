@@ -24,7 +24,7 @@ namespace Conv_Net {
         public static int testing_sample_size = 10000;
         public static int epochs = 20;
         public static int training_sample_size = 60000;
-        public static int CNN_training_sample_size = 600;
+        public static int CNN_training_sample_size = 60000;
         public static int batch_size = 32;
 
         public static Double ALPHA = 0.01; // learning rate

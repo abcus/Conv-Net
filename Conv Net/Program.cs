@@ -60,14 +60,6 @@ namespace Conv_Net {
             //    Utils.print_images(testing_images, i);
             //    Utils.print_labels(testing_labels, t.Item2, i);
             //}
-
-            //test_NN(testing_sample_size);
-            //for (int epoch = 0; epoch < 10; epoch++) {
-            //    Console.WriteLine("____________________________________________________________\nEPOCH: " + epoch);
-            //    Utils.shuffle_training(training_images, training_labels);
-            //    train_NN(training_sample_size, batch_size);
-            //    test_NN(testing_sample_size);
-            //}
         }
 
 
@@ -143,74 +135,5 @@ namespace Conv_Net {
             Console.WriteLine("Training time:\t" + stopwatch.Elapsed + "\n");
             stopwatch.Reset();
         }
-
-        //static void test_NN(int testing_sample_size) {
-        //    stopwatch.Start();
-
-        //    int correct = 0;
-        //    Double total_cross_entropy_loss = 0.0;
-        //    Tuple<Tensor, Tensor> t;
-
-        //    t = NN.forward(testing_images, testing_labels);
-
-        //    for (int i = 0; i < testing_sample_size; i++) {
-        //        total_cross_entropy_loss += t.Item2.values[i];
-
-        //        int index_max_value_output = -1;
-        //        Double max_output = Double.MinValue;
-
-        //        int index_max_value_label = -1;
-        //        Double max_label = Double.MinValue;
-
-        //        for (int j = 0; j < t.Item1.dim_2; j++) {
-        //            if (t.Item1.values[i * t.Item1.dim_2 + j] > max_output) {
-        //                max_output = t.Item1.values[i * t.Item1.dim_2 + j];
-        //                index_max_value_output = j;
-        //            }
-        //            if (testing_labels.values[i * t.Item1.dim_2 + j] > max_label) {
-        //                max_label = testing_labels.values[i * t.Item1.dim_2 + j];
-        //                index_max_value_label = j;
-        //            }
-        //        }
-        //        if (index_max_value_output == index_max_value_label) {
-        //            correct++;
-        //        }
-        //    }
-        //    stopwatch.Stop();
-        //    Console.WriteLine("Testing time:\t" + stopwatch.Elapsed);
-        //    Console.WriteLine("Accuracy:\t" + (Double)correct / testing_sample_size * 100 + "% (" + correct + " correct out of " + testing_sample_size + ")");
-        //    Console.WriteLine("Average loss:\t" + total_cross_entropy_loss / testing_sample_size);
-        //    stopwatch.Reset();
-        //}
-
-        //static void train_NN(int training_sample_size, int batch_size) {
-
-        //    stopwatch.Start();
-
-        //    int num_batches = training_sample_size / batch_size;
-        //    int remainder = training_sample_size - num_batches * batch_size;
-        //    Tensor A;
-        //    Tensor B;
-        //    Tuple<Tensor, Tensor> R;
-
-        //    for (int i = 0; i < num_batches; i++) {
-        //        A = training_images.subset(i * batch_size, batch_size);
-        //        B = training_labels.subset(i * batch_size, batch_size);
-        //        R = NN.forward(A, B);
-        //        NN.backward(batch_size);
-        //        NN.update();
-        //    }
-        //    if (remainder != 0) {
-        //        A = training_images.subset(num_batches * batch_size, remainder);
-        //        B = training_labels.subset(num_batches * batch_size, remainder);
-        //        R = NN.forward(A, B);
-        //        NN.backward(remainder);
-        //        NN.update();
-        //    }
-
-        //    stopwatch.Stop();
-        //    Console.WriteLine("Training time:\t" + stopwatch.Elapsed + "\n");
-        //    stopwatch.Reset();
-        //}
     }
 }

@@ -75,7 +75,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Conv_Net.cs" />
-    <Compile Include="Gradient_Descent.cs" />
+    <Compile Include="Optimizer.cs" />
     <Compile Include="Layers\Convolution_Layer.cs" />
     <Compile Include="Layers\Dropout_Layer.cs" />
     <Compile Include="Layers\Flatten_Layer.cs" />
@@ -84,7 +84,6 @@
     <Compile Include="Layers\Relu_Layer.cs" />
     <Compile Include="Layers\Softmax_Loss_Layer.cs" />
     <Compile Include="Layers\Max_Pooling_Layer.cs" />
-    <Compile Include="Net.cs" />
     <Compile Include="Tensor.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="Form1.cs">

@@ -5,11 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class Gradient_Descent {
+    class Optimizer {
 
         public int t; //number of updates performed, used for bias correction
 
-        public Gradient_Descent() {
+        public Optimizer() {
             t = 1;
         }
 

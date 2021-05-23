@@ -15,6 +15,30 @@ namespace Conv_Net {
         public int dim_5; 
         public Double[] values;
 
+        /// <summary>
+        /// 2D tensor
+        /// </summary>
+        /// <param name="dimensions"></param>
+        /// <param name="dim_1"></param>
+        /// <param name="dim_2"></param>
+        public Tensor (int dimensions, int dim_1, int dim_2) {
+            this.dimensions = dimensions;
+            this.dim_1 = dim_1;
+            this.dim_2 = dim_2;
+            this.dim_3 = 1;
+            this.dim_4 = 1;
+            this.dim_5 = 1;
+            values = new Double[this.dim_1 * this.dim_2];
+        }
+
+        /// <summary>
+        /// 4D tensor
+        /// </summary>
+        /// <param name="dimensions"></param>
+        /// <param name="dim_1"></param>
+        /// <param name="dim_2"></param>
+        /// <param name="dim_3"></param>
+        /// <param name="dim_4"></param>
         public Tensor (int dimensions, int dim_1, int dim_2, int dim_3, int dim_4) {
             this.dimensions = dimensions;
             this.dim_1 = dim_1;
@@ -26,7 +50,7 @@ namespace Conv_Net {
         }
 
         /// <summary>
-        /// Overloaded constructor for tensor with 5 dimensions
+        /// 5D tensor
         /// Only used to store the filter gradient in the convolutional layer backprop 
         /// </summary>
         public Tensor(int dimensions, int dim_1, int dim_2, int dim_3, int dim_4, int dim_5) {

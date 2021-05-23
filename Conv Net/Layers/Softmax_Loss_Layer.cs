@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace Conv_Net {
     class Softmax_Loss_Layer {
@@ -81,12 +82,14 @@ namespace Conv_Net {
             return loss;
         }
 
-        public Tensor backward (int batch_size) {
+        public Tensor backward () {
 
             this.input_gradient_samples = this.input_samples;
             this.input_gradient_rows = this.input_rows;
             this.input_gradient_columns = this.input_columns;
             this.input_gradient_channels = this.input_channels;
+
+            int batch_size = this.input_samples;
 
             // dL/dI
             Tensor gradient_input = new Tensor(2, this.input_gradient_samples, this.input_gradient_rows, this.input_gradient_columns, this.input_gradient_channels);

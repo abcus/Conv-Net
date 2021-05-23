@@ -94,9 +94,9 @@ namespace Conv_Net {
         /// Output of Conv_1 is null (dL/dI is not needed because Conv_1 is the first layer)
         /// </summary>
         public void backward(int batch_size) {
-            Tensor grad;
+            Tensor grad = new Tensor (0, 0, 0, 0, 0);
 
-            grad = Softmax.backward(batch_size);
+            grad = Softmax.backward();
             grad = FC_3.backward(grad);
             grad = Flatten_3.backward(grad);
 
@@ -112,9 +112,9 @@ namespace Conv_Net {
         }
 
         public void update () {
-            Optim.ADAM_FC(FC_3.B, FC_3.W, FC_3.dB, FC_3.dW, FC_3.V_dB, FC_3.S_dB, FC_3.V_dW, FC_3.S_dW);
-            Optim.ADAM_Conv(Conv_2.B, Conv_2.F, Conv_2.dB, Conv_2.dF, Conv_2.V_dB, Conv_2.S_dB, Conv_2.V_dF, Conv_2.S_dF);
-            Optim.ADAM_Conv(Conv_1.B, Conv_1.F, Conv_1.dB, Conv_1.dF, Conv_1.V_dB, Conv_1.S_dB, Conv_1.V_dF, Conv_1.S_dF);
+            Optim.SGD_FC(FC_3.B, FC_3.W, FC_3.dB, FC_3.dW, FC_3.V_dB, FC_3.S_dB, FC_3.V_dW, FC_3.S_dW);
+            Optim.SGD_Conv(Conv_2.B, Conv_2.F, Conv_2.dB, Conv_2.dF, Conv_2.V_dB, Conv_2.S_dB, Conv_2.V_dF, Conv_2.S_dF);
+            Optim.SGD_Conv(Conv_1.B, Conv_1.F, Conv_1.dB, Conv_1.dF, Conv_1.V_dB, Conv_1.S_dB, Conv_1.V_dF, Conv_1.S_dF);
             Optim.t += 1; // iterate t for bias correction
         }
 

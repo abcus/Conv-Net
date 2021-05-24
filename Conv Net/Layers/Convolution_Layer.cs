@@ -144,11 +144,13 @@ namespace Conv_Net {
 
             Tensor rotated_F;
             Tensor padded_rotated_F;
-            
+            Tensor padded_dO;
+
             // Create zero padded, 180 degree rotated filters
             // During backpropagation, will convolve the gradient of output over the padded, rotated filters so pad the filters on each side by (gradient output size - 1)
             rotated_F = this.F.rotate_180();
             padded_rotated_F = rotated_F.pad(this.dO_rows - 1);
+            padded_dO = dO.pad(this.F_rows - 1);
 
             // CALCULATE GRADIENTS------------------------------------------------------------------------------------
 
@@ -209,40 +211,38 @@ namespace Conv_Net {
                 this.dI_columns = this.I_columns;
                 this.dI_channels = this.I_channels;
                 
-                Tensor gradient_input = new Tensor(4, this.dI_samples, this.dI_rows, this.dI_columns, this.dI_channels);
+                Tensor dI = new Tensor(4, this.dI_samples, this.dI_rows, this.dI_columns, this.dI_channels);
 
                 // Select the input sample from the batch
                 Parallel.For(0, this.dI_samples, i => {
 
                     // Select the channel of the input gradient to be calculated
                     // Loop through each filter
-                    // For all num_filters, calculate the full convolutions from right to left, bottom to top of gradientOutput[input_sample__,__,num_filter] over 180 rotated filter [num_filter,__,__,input_gradient_channel] 
+                    // For all num_filters, calculate the full convolutions of 180 rotated filter [num_filter,__,__,input_gradient_channel] over gradientOutput[input_sample__,__,num_filter]  
                     // gradientInput[input_sample,__,__,input_gradient_channel] is the elementwise sum of those convolutions
                     for (int j = 0; j < this.dI_channels; j++) {
                         for (int k = 0; k < this.F_num; k++) {
 
-                            // Select the row of the input gradient to be calculated (to get the row on the rotated filter where the top left corner of the output gradient is positioned for convolution, reflect across X axis)
-                            // Select the column of the input gradient to be calculated (to get the column on the rotated filter where the top left corner of the output gradient is positioned for convolution, reflect across Y axis)
+                            // Select the row of the input gradient to be calculated 
+                            // Select the column of the input gradient to be calculated 
                             for (int l = 0; l < this.dI_rows; l++) {
                                 for (int m = 0; m < this.dI_columns; m++) {
-                                    
-                                    Double elementwise_product = 0.0;
 
-                                    // Loop through each element of the output gradient and multiply by the corresponding element in the filter, add the products  
-                                    for (int n = 0; n < this.dO_rows; n++) {
-                                        for (int o = 0; o < this.dO_columns; o++) {
-                                            elementwise_product += dO.values[dO.index(i, n, o, k)] * padded_rotated_F.values[padded_rotated_F.index(k, (this.I_rows - l - 1 + n), (this.I_columns - m - 1 + o), j)];
+                                    Double elementwise_product = 0.0;
+                                    // Loop through each element of the filter and multiply by the corresponding element in the output gradient, add the products
+                                    for (int n=0; n < this.F_rows; n++) {
+                                        for (int o=0; o < this.F_columns; o++) {
+                                            elementwise_product += rotated_F.values[rotated_F.index(k, n, o, j)] * padded_dO.values[padded_dO.index(i, l + n, m + o, k)];
                                         }
                                     }
                                     // Increment the value of the input gradient (value is incremented each loop through num_filters)
-                                    gradient_input.values[gradient_input.index(i, l, m, j)] += elementwise_product;
-                                    elementwise_product = 0.0;
+                                    dI.values[dI.index(i, l, m, j)] += elementwise_product;
                                 }
                             }
                         }
                     }
                 }); 
-                return gradient_input.unpad(this.pad_size);
+                return dI.unpad(this.pad_size);
             } else {
                 return null;
             }

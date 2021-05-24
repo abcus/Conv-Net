@@ -37,34 +37,21 @@ namespace Conv_Net {
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());*/
 
-            Tensor test = new Tensor(4, 1, 9, 9, 1);
-            for (int i=0; i < 9; i++) {
-                for (int j=0; j < 9; j++) {
-                    test.values[i * test.dim_2 + j] = (i + j + 1);
-                }
-            }
-            Convolution_Layer conv = new Convolution_Layer(1, 1, 3, 3, true, 1, 3, 2);
-            for (int i=0; i < 9; i++) {
-                conv.F.values[i] = i + 2;
-            }
-            Console.WriteLine(conv.forward(test));
-            
-
-            //Tuple<Tensor, Tensor, Tensor, Tensor> data = Utils.load_MNIST(60000, 10000, 28, 28, 1, 10);
-            //training_images = data.Item1; 
-            //training_labels = data.Item2;
-            //testing_images = data.Item3;
-            //testing_labels = data.Item4;
+            Tuple<Tensor, Tensor, Tensor, Tensor> data = Utils.load_MNIST(60000, 10000, 28, 28, 1, 10);
+            training_images = data.Item1; 
+            training_labels = data.Item2;
+            testing_images = data.Item3;
+            testing_labels = data.Item4;
 
             //CNN.load_parameters();
-            // test_CNN(testing_sample_size);
-            //for (int i = 0; i < epochs; i++) {
-            //    Console.WriteLine("____________________________________________________________\nEPOCH: " + i);
-            //    Utils.shuffle_training(training_images, training_labels);
-            //    train_CNN(CNN_training_sample_size, batch_size);
-            //    test_CNN(testing_sample_size);
-            //     CNN.save_parameters(i);
-            //}
+             test_CNN(testing_sample_size);
+            for (int i = 0; i < epochs; i++) {
+                Console.WriteLine("____________________________________________________________\nEPOCH: " + i);
+                Utils.shuffle_training(training_images, training_labels);
+                train_CNN(CNN_training_sample_size, batch_size);
+                test_CNN(testing_sample_size);
+                // CNN.save_parameters(i);
+            }
 
             //Tuple<Tensor, Tensor> t;
             //t = CNN.forward(testing_images, testing_labels);

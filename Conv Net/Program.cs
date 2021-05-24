@@ -33,7 +33,7 @@ namespace Conv_Net {
 
         static void Main() {
 
-            Grad_Check.forward();
+            Grad_Check.test();
 
             /*Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);

@@ -141,6 +141,14 @@ namespace Conv_Net {
             return output;
         }
 
+        public Tensor difference (Tensor X) {
+            Tensor D = new Tensor(this.dimensions, this.dim_1, this.dim_2, this.dim_3, this.dim_4, this.dim_5);
+            for (int i=0; i < this.dim_1 * this.dim_2 * this.dim_3 * this.dim_4 * this.dim_5; i++) {
+                D.values[i] = this.values[i] - X.values[i];
+            }
+            return D;
+        }
+
         public override string ToString() {
             if (this.dimensions == 5) {
                 return "";
@@ -166,7 +174,7 @@ namespace Conv_Net {
                         if (this.dimensions == 4) {sb.Append("<");}
 
                         for (int l = 0; l < this.dim_4; l++) {
-                            sb.AppendFormat("{0:0.00000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
+                            sb.AppendFormat("{0:0.0000000000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
                             if (this.dimensions == 4 && l < this.dim_4 - 1) {sb.Append(", ");}
                             else if (this.dimensions == 3 && k < this.dim_3 - 1) {sb.Append(", ");}
                             else if (this.dimensions == 2 && j < this.dim_2 - 1) {sb.Append(", ");}

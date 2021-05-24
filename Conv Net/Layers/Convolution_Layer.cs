@@ -39,8 +39,8 @@ namespace Conv_Net {
             this.B_num = F_num;
             
             this.F_num = F_num;
-            this.F_rows = (F_rows - 1) * dilation + 1;
-            this.F_columns = (F_columns - 1) * dilation + 1;
+            this.F_rows = F_rows;
+            this.F_columns = F_columns;
             this.F_channels = I_channels;
 
             this.dB_num = this.B_num;
@@ -85,14 +85,16 @@ namespace Conv_Net {
         /// <returns></returns>
         public Tensor forward (Tensor I) {
             this.I = I;
-            if (this.pad_size != 0) { this.I = I.pad(this.pad_size); }
+            if (this.pad_size != 0) {
+                this.I = I.pad(this.pad_size); 
+            }
             this.I_samples = this.I.dim_1;
             this.I_rows = this.I.dim_2;
             this.I_columns = this.I.dim_3;
 
             this.O_samples = this.I_samples;
-            this.O_rows = (this.I_rows - this.F_rows) / this.stride + 1;
-            this.O_columns = (this.I_columns - this.F_columns) / this.stride + 1;
+            this.O_rows = (this.I_rows - this.F_rows * this.dilation + this.dilation - 1) / this.stride + 1;
+            this.O_columns = (this.I_columns - this.F_columns * this.dilation + this.dilation - 1) / this.stride + 1;
             this.O_channels = this.F_num;
             Tensor O = new Tensor(4, this.O_samples, this.O_rows, this.O_columns, this.O_channels);
 
@@ -111,7 +113,7 @@ namespace Conv_Net {
                             for (int m = 0; m < this.F_rows; m++) {
                                 for (int n = 0; n < this.F_columns; n++) {
                                     for (int o = 0; o < this.F_channels; o++) {
-                                        elementwise_product += this.F.values[this.F.index(l, m, n, o)] * this.I.values[this.I.index(i, (j * stride + m), (k * stride + n), o)];
+                                        elementwise_product += this.F.values[this.F.index(l, m, n, o)] * this.I.values[this.I.index(i, (j * stride + m * dilation), (k * stride + n * dilation), o)];
                                     }
                                 }
                             }

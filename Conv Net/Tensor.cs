@@ -8,12 +8,18 @@ namespace Conv_Net {
     class Tensor {
 
         public int dimensions;
-        public int dim_1;
-        public int dim_2;
-        public int dim_3;
-        public int dim_4;
-        public int dim_5; 
+        public int dim_1 = 1;
+        public int dim_2 = 1;
+        public int dim_3 = 1;
+        public int dim_4 = 1;
+        public int dim_5 = 1; 
         public Double[] values;
+
+        public Tensor (int dimensions, int dim_1) {
+            this.dimensions = dimensions;
+            this.dim_1 = dim_1;
+            values = new Double[this.dim_1];
+        }
 
         /// <summary>
         /// 2D tensor
@@ -25,9 +31,6 @@ namespace Conv_Net {
             this.dimensions = dimensions;
             this.dim_1 = dim_1;
             this.dim_2 = dim_2;
-            this.dim_3 = 1;
-            this.dim_4 = 1;
-            this.dim_5 = 1;
             values = new Double[this.dim_1 * this.dim_2];
         }
 
@@ -36,8 +39,6 @@ namespace Conv_Net {
             this.dim_1 = dim_1;
             this.dim_2 = dim_2;
             this.dim_3 = dim_3;
-            this.dim_4 = 1;
-            this.dim_5 = 1;
             values = new Double[this.dim_1 * this.dim_2 * this.dim_3];
         }
 
@@ -55,7 +56,6 @@ namespace Conv_Net {
             this.dim_2 = dim_2;
             this.dim_3 = dim_3;
             this.dim_4 = dim_4;
-            this.dim_5 = 1;
             values = new Double[this.dim_1 * this.dim_2 * this.dim_3 * this.dim_4];
         }
 

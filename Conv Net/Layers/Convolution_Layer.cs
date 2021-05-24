@@ -22,41 +22,42 @@ namespace Conv_Net {
         private int pad_size;
         private bool needs_gradient;
         private int stride;
+        private int dilation;
 
         // Input, bias, and filter tensors
         public Tensor I, B, F;
 
         // Tensors to hold dL/dB and dL/dF
-        // Will have separate entries for each input sample
+        // Separate entries for each input sample to allow for multi-threading
         public Tensor dB, dF;
-
         public Tensor V_dB, S_dB, V_dF, S_dF;
 
-        public Convolution_Layer(int input_channels, int num_filters, int filter_rows, int filter_columns, int pad_size, bool needs_gradient, int stride = 1) {
+        public Convolution_Layer(int I_channels, int F_num, int F_rows, int F_columns, bool needs_gradient, int pad_size = 0, int stride = 1, int dilation = 1) {
 
-            this.I_channels = input_channels;
+            this.I_channels = I_channels;
 
-            this.B_num = num_filters;
-
-            this.F_num = num_filters;
-            this.F_rows = filter_rows;
-            this.F_columns = filter_columns;
-            this.F_channels = input_channels;
+            this.B_num = F_num;
+            
+            this.F_num = F_num;
+            this.F_rows = (F_rows - 1) * dilation + 1;
+            this.F_columns = (F_columns - 1) * dilation + 1;
+            this.F_channels = I_channels;
 
             this.dB_num = this.B_num;
-
-            this.dF_num = this.F_num;
-            this.dF_rows = this.F_rows;
-            this.dF_columns = this.F_columns;
+            
+            this.dF_num = this.F_num; 
+            this.dF_rows = this.F_rows; 
+            this.dF_columns = this.F_columns; 
             this.dF_channels = this.F_channels;
 
             this.pad_size = pad_size;
             this.needs_gradient = needs_gradient;
             this.stride = stride;
+            this.dilation = dilation;
 
-            this.B = new Tensor(1, this.B_num, 1, 1, 1);
-            this.V_dB = new Tensor(1, this.dB_num, 1, 1, 1);
-            this.S_dB = new Tensor(1, this.dB_num, 1, 1, 1);
+            this.B = new Tensor(1, this.B_num);
+            this.V_dB = new Tensor(1, this.dB_num);
+            this.S_dB = new Tensor(1, this.dB_num);
 
             this.F = new Tensor(4, this.F_num, this.F_rows, this.F_columns, this.F_channels);
             this.V_dF = new Tensor(4, this.dF_num, this.dF_rows, this.dF_columns, this.dF_channels);
@@ -83,7 +84,8 @@ namespace Conv_Net {
         /// </summary>
         /// <returns></returns>
         public Tensor forward (Tensor I) {
-            this.I = I.pad(this.pad_size);
+            this.I = I;
+            if (this.pad_size != 0) { this.I = I.pad(this.pad_size); }
             this.I_samples = this.I.dim_1;
             this.I_rows = this.I.dim_2;
             this.I_columns = this.I.dim_3;

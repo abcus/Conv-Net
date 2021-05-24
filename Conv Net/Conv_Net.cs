@@ -40,12 +40,12 @@ namespace Conv_Net {
 
             Input = new Input_Layer();
 
-            Conv_1 = new Convolution_Layer(1, 16, 5, 5, 0, false); 
+            Conv_1 = new Convolution_Layer(1, 16, 5, 5, false); 
             Relu_1 = new Relu_Layer();
             Pool_1 = new Max_Pooling_Layer(2, 2, 2);
             Dropout_1 = new Dropout_Layer(0.2);
 
-            Conv_2 = new Convolution_Layer(16, 32, 5, 5, 0, true); 
+            Conv_2 = new Convolution_Layer(16, 32, 5, 5, true); 
             Relu_2 = new Relu_Layer();
             Pool_2 = new Max_Pooling_Layer(2, 2, 2);
             Dropout_2 = new Dropout_Layer(0.2);

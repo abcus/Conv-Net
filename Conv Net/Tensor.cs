@@ -31,6 +31,16 @@ namespace Conv_Net {
             values = new Double[this.dim_1 * this.dim_2];
         }
 
+        public Tensor (int dimensions, int dim_1, int dim_2, int dim_3) {
+            this.dimensions = dimensions;
+            this.dim_1 = dim_1;
+            this.dim_2 = dim_2;
+            this.dim_3 = dim_3;
+            this.dim_4 = 1;
+            this.dim_5 = 1;
+            values = new Double[this.dim_1 * this.dim_2 * this.dim_3];
+        }
+
         /// <summary>
         /// 4D tensor
         /// </summary>

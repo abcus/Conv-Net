@@ -113,11 +113,8 @@ namespace Conv_Net {
                                     }
                                 }
                             }
-                            // Add the bias to elementwise product
-                            elementwise_product += this.B.values[l];
-
-                            // Set the value of output
-                            O.values[O.index(i, j, k, l)] = elementwise_product;
+                            // Add the bias to the elementwise product, set the value of output
+                            O.values[O.index(i, j, k, l)] = (elementwise_product + this.B.values[l]);
 
                         }
                     }
@@ -135,19 +132,19 @@ namespace Conv_Net {
             // Initialize dL/dB and dL/dF (have to store these for gradient descent)
             // Input samples is stored as the highest dimension to allow for faster access when calculating the sum across all input dimensions
             // Don't have to set values to 0.0 after updating because a new gradient tensor is created during each backward pass
-            this.dB = new Tensor(2, this.dB_num, this.I_samples);
-            this.dF = new Tensor(5, this.dF_num, this.dF_rows, this.dF_columns, this.dF_channels, this.I_samples);
+            this.dB = new Tensor(2, this.I_samples, this.dB_num);
+            this.dF = new Tensor(5, this.I_samples, this.dF_num, this.dF_rows, this.dF_columns, this.dF_channels);
 
             this.dO_rows = dO.dim_2;
             this.dO_columns = dO.dim_3;
 
-            Tensor padded_rotated_filters;
-            Tensor rotated_filters;
-
+            Tensor rotated_F;
+            Tensor padded_rotated_F;
+            
             // Create zero padded, 180 degree rotated filters
             // During backpropagation, will convolve the gradient of output over the padded, rotated filters so pad the filters on each side by (gradient output size - 1)
-            rotated_filters = this.F.rotate_180();
-            padded_rotated_filters = rotated_filters.pad(this.dO_rows - 1);
+            rotated_F = this.F.rotate_180();
+            padded_rotated_F = rotated_F.pad(this.dO_rows - 1);
 
             // CALCULATE GRADIENTS------------------------------------------------------------------------------------
 
@@ -167,7 +164,7 @@ namespace Conv_Net {
                         }
                     }
                     // Set the value of the bias gradient 
-                    this.dB.values[j * this.I_samples + i] = sum;
+                    this.dB.values[i * this.dB_num + j] = sum;
                     sum = 0.0;
                 }
 
@@ -193,7 +190,7 @@ namespace Conv_Net {
                                     }
                                 }
                                 // Set the value of the filter gradient (5D tensor with input_sample as the highest dimension)
-                                this.dF.values[this.dF.index(j, l, m, k, i)] = elementwise_product;
+                                this.dF.values[this.dF.index(i, j, l, m, k)] = elementwise_product;
                                 elementwise_product = 0.0;
                             }
                         }
@@ -230,7 +227,7 @@ namespace Conv_Net {
                                     // Loop through each element of the output gradient and multiply by the corresponding element in the filter, add the products  
                                     for (int n = 0; n < this.dO_rows; n++) {
                                         for (int o = 0; o < this.dO_columns; o++) {
-                                            elementwise_product += dO.values[dO.index(i, n, o, k)] * padded_rotated_filters.values[padded_rotated_filters.index(k, (this.I_rows - l - 1 + n), (this.I_columns - m - 1 + o), j)];
+                                            elementwise_product += dO.values[dO.index(i, n, o, k)] * padded_rotated_F.values[padded_rotated_F.index(k, (this.I_rows - l - 1 + n), (this.I_columns - m - 1 + o), j)];
                                         }
                                     }
                                     // Increment the value of the input gradient (value is incremented each loop through num_filters)

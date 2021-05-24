@@ -66,7 +66,6 @@ namespace Conv_Net {
                         sum += input.values[i * previous_layer_size + k] * this.W.values[j * previous_layer_size + k];
                     }
                     output.values[i * this.layer_size + j] = (sum + this.B.values[j]);
-                    sum = 0.0;
                 }
             });
             return output;
@@ -77,19 +76,19 @@ namespace Conv_Net {
             // Initialize dL/dB and dL/dW (have to store these for gradient descent)
             // Input samples is stored as the highest dimension to allow for faster access when calculating the sum across all input samples
             // Don't have to set values to 0.0 after updating because a new gradient tensor is created during each backward pass
-            this.dB = new Tensor(2, this.layer_size, this.input_samples, 1, 1);
-            this.dW = new Tensor(3, this.layer_size, this.previous_layer_size, this.input_samples, 1);
+            this.dB = new Tensor(2, this.input_samples, this.layer_size);
+            this.dW = new Tensor(3, this.input_samples, this.layer_size, this.previous_layer_size);
 
             Parallel.For(0, this.input_samples, i => {
                 for (int j = 0; j < layer_size; j++) {
 
                     // dL/dB = dL/dO * dO/dB, stores it for gradient descent
-                    this.dB.values[j * this.input_samples + i] = gradient_output.values[i * layer_size + j]; // * 1
+                    this.dB.values[i * layer_size + j] = gradient_output.values[i * layer_size + j]; // * 1
 
                     for (int k = 0; k < previous_layer_size; k++) {
 
                         // dL/dW = dL/dO * dO/dW, stores it for gradient descent
-                        this.dW.values[j * this.previous_layer_size * this.input_samples + k * this.input_samples + i] = gradient_output.values[i * layer_size + j] * this.I.values[i * previous_layer_size + k];
+                        this.dW.values[i * this.layer_size * this.previous_layer_size + j * this.previous_layer_size + k] = gradient_output.values[i * layer_size + j] * this.I.values[i * previous_layer_size + k];
                     }
                 }
             });

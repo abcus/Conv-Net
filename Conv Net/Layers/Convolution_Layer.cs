@@ -85,9 +85,8 @@ namespace Conv_Net {
         /// <returns></returns>
         public Tensor forward (Tensor I) {
             this.I = I;
-            if (this.pad_size != 0) {
-                this.I = I.pad(this.pad_size); 
-            }
+            this.I = I.pad(this.pad_size); 
+            
             this.I_samples = this.I.dim_1;
             this.I_rows = this.I.dim_2;
             this.I_columns = this.I.dim_3;
@@ -142,15 +141,15 @@ namespace Conv_Net {
             this.dO_rows = dO.dim_2;
             this.dO_columns = dO.dim_3;
 
-            Tensor rotated_F;
-            Tensor padded_rotated_F;
-            Tensor padded_dO;
+            Tensor F_rotated;
+            Tensor dO_dilated;
+            Tensor dO_dilated_padded;
 
             // Create zero padded, 180 degree rotated filters
             // During backpropagation, will convolve the gradient of output over the padded, rotated filters so pad the filters on each side by (gradient output size - 1)
-            rotated_F = this.F.rotate_180();
-            padded_rotated_F = rotated_F.pad(this.dO_rows - 1);
-            padded_dO = dO.pad(this.F_rows - 1);
+            F_rotated = this.F.rotate_180();
+            dO_dilated = dO.dilate(this.stride);            
+            dO_dilated_padded = dO_dilated.pad(this.F_rows * this.dilation - this.dilation);
 
             // CALCULATE GRADIENTS------------------------------------------------------------------------------------
 
@@ -192,7 +191,7 @@ namespace Conv_Net {
                                 // Loop through each element of the output gradient and multiply by the corresponding element in the input, add the products
                                 for (int n = 0; n < this.dO_rows; n++) {
                                     for (int o = 0; o < this.dO_columns; o++) {
-                                        elementwise_product += dO.values[dO.index(i, n, o, j)] * this.I.values[this.I.index(i, (l + n), (m + o), k)];
+                                        elementwise_product += dO.values[dO.index(i, n, o, j)] * this.I.values[this.I.index(i, (l * this.dilation + n * this.stride), (m * this.dilation + o * this.stride), k)];
                                     }
                                 }
                                 // Set the value of the filter gradient (5D tensor with input_sample as the highest dimension)
@@ -232,7 +231,7 @@ namespace Conv_Net {
                                     // Loop through each element of the filter and multiply by the corresponding element in the output gradient, add the products
                                     for (int n=0; n < this.F_rows; n++) {
                                         for (int o=0; o < this.F_columns; o++) {
-                                            elementwise_product += rotated_F.values[rotated_F.index(k, n, o, j)] * padded_dO.values[padded_dO.index(i, l + n, m + o, k)];
+                                            elementwise_product += F_rotated.values[F_rotated.index(k, n, o, j)] * dO_dilated_padded.values[dO_dilated_padded.index(i, l + n * this.dilation, m + o * this.dilation, k)];
                                         }
                                     }
                                     // Increment the value of the input gradient (value is incremented each loop through num_filters)

@@ -15,11 +15,13 @@ namespace Conv_Net {
         public test_CNN() {
 
             // test input tensor
-            this.I = new Tensor(4, 1, 2, 2, 2);
-            for (int i = 0; i < 2; i++) {
-                for (int j = 0; j < 2; j++) {
-                    for (int k = 0; k < 2; k++) {
-                        this.I.values[i * 2 * 2 + j * 2 + k] = ((i + j + 1) * (k + 1) / 10.0);
+            this.I = new Tensor(4, 1, 6, 6, 2);
+            for (int i = 0; i < I.dim_1; i++) {
+                for (int j = 0; j < I.dim_2; j++) {
+                    for (int k = 0; k < I.dim_3; k++) {
+                        for (int l=0; l < I.dim_4; l++) {
+                            this.I.values[this.I.index(i, j, k, l)] = ((j + k + 1) * (l + 1) / 10.0);
+                        }
                     }
                 }
             }
@@ -35,16 +37,16 @@ namespace Conv_Net {
             T.values[6] = 3.1;
             T.values[7] = 5.4;
 
-            this.Conv = new Convolution_Layer(2, 2, 3, 3, true, 1);
+            this.Conv = new Convolution_Layer(2, 2, 3, 3, true, 1, 3, 2);
             this.MSE = new Mean_Squared_Loss();
 
             // test filter tensor
             Tensor F = new Tensor(4, 2, 3, 3, 2);
-            for (int i = 0; i < 2; i++) {
-                for (int j = 0; j < 3; j++) {
-                    for (int k = 0; k < 3; k++) {
-                        for (int l = 0; l < 2; l++) {
-                            F.values[i * 3 * 3 * 2 + j * 3 * 2 + k * 2 + l] = (j + k + 1) * (i + 1) * (l + 1) / 10.0;
+            for (int i = 0; i < F.dim_1; i++) {
+                for (int j = 0; j < F.dim_2; j++) {
+                    for (int k = 0; k < F.dim_3; k++) {
+                        for (int l = 0; l < F.dim_4; l++) {
+                            F.values[F.index(i, j, k, l)] = (j + k + 1) * (i + 1) * (l + 1) / 10.0;
                         }
                     }
                 }
@@ -90,7 +92,7 @@ namespace Conv_Net {
             Tensor numeric_dF;
 
             test_CNN test_CNN = new test_CNN();
-            
+
             test_CNN.forward();
             
             analytic_dI = test_CNN.backward();
@@ -101,11 +103,11 @@ namespace Conv_Net {
             numeric_dB = new Tensor(analytic_dB.dimensions, analytic_dB.dim_1);
             numeric_dF = new Tensor(analytic_dF.dimensions, analytic_dF.dim_1, analytic_dF.dim_2, analytic_dF.dim_3, analytic_dF.dim_4);
 
-            // Numerical gradient of loss with respect to bias
+            //Numerical gradient of loss with respect to bias
             for (int i = 0; i < test_CNN.Conv.B.dim_1; i++) {
                 loss_up = 0.0;
                 loss_down = 0.0;
-                
+
                 test_CNN.Conv.B.values[i] += h;
                 loss_up = test_CNN.forward().values[0];
                 test_CNN.Conv.B.values[i] -= 2 * h;
@@ -114,15 +116,15 @@ namespace Conv_Net {
 
                 numeric_dB.values[i] = (loss_up - loss_down) / (2 * h);
             }
-            Console.WriteLine(analytic_dB);
-            Console.WriteLine(numeric_dB);
-            Console.WriteLine(analytic_dB.difference(numeric_dB));
+            // Console.WriteLine(analytic_dB);
+            // Console.WriteLine(numeric_dB);
+            // Console.WriteLine(analytic_dB.difference(numeric_dB));
 
             // Numerical gradient of loss with respect to filters
             for (int i = 0; i < test_CNN.Conv.F.dim_1; i++) {
-                for (int j=0; j < test_CNN.Conv.F.dim_2; j++) {
-                    for (int k=0; k < test_CNN.Conv.F.dim_3; k++) {
-                        for (int l=0; l < test_CNN.Conv.F.dim_4; l++) {
+                for (int j = 0; j < test_CNN.Conv.F.dim_2; j++) {
+                    for (int k = 0; k < test_CNN.Conv.F.dim_3; k++) {
+                        for (int l = 0; l < test_CNN.Conv.F.dim_4; l++) {
                             loss_up = 0.0;
                             loss_down = 0.0;
 
@@ -137,15 +139,15 @@ namespace Conv_Net {
                     }
                 }
             }
-            Console.WriteLine(analytic_dF);
-            Console.WriteLine(numeric_dF);
-            Console.WriteLine(analytic_dF.difference(numeric_dF));
+            // Console.WriteLine(analytic_dF);
+            // Console.WriteLine(numeric_dF);
+            // Console.WriteLine(analytic_dF.difference(numeric_dF));
 
             // Numerical gradient of loss with respect to input
-            for (int i=0; i < test_CNN.I.dim_1; i++) {
-                for (int j=0; j < test_CNN.I.dim_2; j++) {
-                    for (int k=0; k < test_CNN.I.dim_3; k++) {
-                        for (int l=0; l < test_CNN.I.dim_4; l++) {
+            for (int i = 0; i < test_CNN.I.dim_1; i++) {
+                for (int j = 0; j < test_CNN.I.dim_2; j++) {
+                    for (int k = 0; k < test_CNN.I.dim_3; k++) {
+                        for (int l = 0; l < test_CNN.I.dim_4; l++) {
                             loss_up = 0.0;
                             loss_down = 0.0;
 

@@ -33,26 +33,26 @@ namespace Conv_Net {
 
         static void Main() {
 
-            Grad_Check.test();
-
             /*Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());*/
 
+            Grad_Check.test();
+
             //Tuple<Tensor, Tensor, Tensor, Tensor> data = Utils.load_MNIST(60000, 10000, 28, 28, 1, 10);
-            //training_images = data.Item1; 
+            //training_images = data.Item1;
             //training_labels = data.Item2;
             //testing_images = data.Item3;
             //testing_labels = data.Item4;
 
-            ////CNN.load_parameters();
-            // test_CNN(testing_sample_size);
+            //CNN.load_parameters();
+            //test_CNN(testing_sample_size);
             //for (int i = 0; i < epochs; i++) {
             //    Console.WriteLine("____________________________________________________________\nEPOCH: " + i);
             //    Utils.shuffle_training(training_images, training_labels);
             //    train_CNN(CNN_training_sample_size, batch_size);
             //    test_CNN(testing_sample_size);
-            //    // CNN.save_parameters(i);
+            //     CNN.save_parameters(i);
             //}
 
 

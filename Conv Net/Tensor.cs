@@ -107,6 +107,24 @@ namespace Conv_Net {
             return output;
         }
 
+        public Tensor dilate (int dilation) {
+            if (dilation == 1) {
+                return this;
+            } else {
+                Tensor output = new Tensor(this.dimensions, this.dim_1, (this.dim_2 - 1) * dilation + 1, (this.dim_3 - 1) * dilation + 1, this.dim_4);
+                for (int i = 0; i < this.dim_1; i++) {
+                    for (int j = 0; j < this.dim_2; j++) {
+                        for (int k = 0; k < this.dim_3; k++) {
+                            for (int l = 0; l < this.dim_4; l++) {
+                                output.values[output.index(i, j * dilation, k * dilation, l)] = this.values[this.index(i, j, k, l)];
+                            }
+                        }
+                    }
+                }
+                return output;
+            }
+        }
+
         /// <summary>
         /// Zero pads tensor at values [dim_1,__,__,dim_4] by pad_size
         /// Used during backpropagation of convolution layer to calculate dL/dI (also during forward propagation)
@@ -114,17 +132,21 @@ namespace Conv_Net {
         /// <param name="pad_size"></param>
         /// <returns></returns>
         public Tensor pad(int pad_size) {
-            Tensor output = new Tensor(this.dimensions, this.dim_1, (this.dim_2 + (2 * pad_size)), (this.dim_3 + (2 * pad_size)), this.dim_4);
-            Parallel.For(0, this.dim_1, i => {
-                for (int j = 0; j < this.dim_2; j++) {
-                    for (int k = 0; k < this.dim_3; k++) {
-                        for (int l = 0; l < this.dim_4; l++) {
-                            output.values[output.index(i, (j + pad_size), (k + pad_size), l)] = this.values[this.index(i, j, k, l)];
+            if (pad_size == 0) {
+                return this;
+            } else {
+                Tensor output = new Tensor(this.dimensions, this.dim_1, (this.dim_2 + (2 * pad_size)), (this.dim_3 + (2 * pad_size)), this.dim_4);
+                Parallel.For(0, this.dim_1, i => {
+                    for (int j = 0; j < this.dim_2; j++) {
+                        for (int k = 0; k < this.dim_3; k++) {
+                            for (int l = 0; l < this.dim_4; l++) {
+                                output.values[output.index(i, (j + pad_size), (k + pad_size), l)] = this.values[this.index(i, j, k, l)];
+                            }
                         }
                     }
-                }
-            });
-            return output;
+                });
+                return output;
+            }
         }
 
         public Tensor unpad(int pad_size) {
@@ -174,7 +196,7 @@ namespace Conv_Net {
                         if (this.dimensions == 4) {sb.Append("<");}
 
                         for (int l = 0; l < this.dim_4; l++) {
-                            sb.AppendFormat("{0:0.0000000000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
+                            sb.AppendFormat("{0:0.000000000000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
                             if (this.dimensions == 4 && l < this.dim_4 - 1) {sb.Append(", ");}
                             else if (this.dimensions == 3 && k < this.dim_3 - 1) {sb.Append(", ");}
                             else if (this.dimensions == 2 && j < this.dim_2 - 1) {sb.Append(", ");}

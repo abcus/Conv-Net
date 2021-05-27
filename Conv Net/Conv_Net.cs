@@ -40,18 +40,18 @@ namespace Conv_Net {
 
             Input = new Input_Layer();
 
-            Conv_1 = new Convolution_Layer(1, 16, 5, 5, false); 
+            Conv_1 = new Convolution_Layer(1, 32, 3, 3, false, 1, 1, 1); 
             Relu_1 = new Relu_Layer();
             Pool_1 = new Max_Pooling_Layer(2, 2, 2);
             Dropout_1 = new Dropout_Layer(0.2);
 
-            Conv_2 = new Convolution_Layer(16, 32, 5, 5, true); 
+            Conv_2 = new Convolution_Layer(32, 64, 4, 4, true, 1, 2, 3); 
             Relu_2 = new Relu_Layer();
             Pool_2 = new Max_Pooling_Layer(2, 2, 2);
             Dropout_2 = new Dropout_Layer(0.2);
 
             Flatten_3 = new Flatten_Layer(); 
-            FC_3 = new Fully_Connected_Layer(4 * 4 * 32, 10, true); 
+            FC_3 = new Fully_Connected_Layer(2 * 2 * 64, 10, true); 
             Softmax = new Softmax_Loss_Layer();
 
             Optim = new Optimizer();

@@ -178,11 +178,11 @@ namespace Conv_Net {
             //      For each F_num, calculate full convolution of (180 rotated F[F_num,__,__,dI_channel] dilated by D) over (dO[I_sample,__,__,F_num] dilated by S)
             //      Add all the full convolutions
            if (this.needs_gradient == true) {
-                this.dI_samples = this.I_samples; this.dI_rows = this.I_rows; this.dI_columns = this.I_columns; this.dI_channels = this.I_channels;
+                this.dI_samples = this.I_samples; this.dI_rows = this.I_rows - 2 * this.pad_size; this.dI_columns = this.I_columns - 2 * this.pad_size; this.dI_channels = this.I_channels;
                 Tensor dI = new Tensor(4, this.dI_samples, this.dI_rows, this.dI_columns, this.dI_channels);
                                 
                 Tensor F_rotated = this.F.rotate_180();
-                Tensor dO_dilated_padded = dO.dilate(this.stride).pad(this.F_rows * this.dilation - this.dilation);
+                Tensor dO_dilated_padded = dO.dilate(this.stride).pad(this.F_rows * this.dilation - this.dilation).unpad(this.pad_size);
 
                 // Select the sample of dI from the batch, dI_row, dI_column, and dI_channel to be calculated 
                 Parallel.For(0, this.dI_samples, i => {
@@ -208,7 +208,7 @@ namespace Conv_Net {
                         }
                     }
                 }); 
-                return dI.unpad(this.pad_size);
+                return dI;
             } else {
                 return null;
             }

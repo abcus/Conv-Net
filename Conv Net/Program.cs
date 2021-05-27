@@ -37,8 +37,9 @@ namespace Conv_Net {
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());*/
 
-            // Grad_Check.test();
+            Grad_Check.test();
 
+            /*
             Tuple<Tensor, Tensor, Tensor, Tensor> data = Utils.load_MNIST(60000, 10000, 28, 28, 1, 10);
             training_images = data.Item1;
             training_labels = data.Item2;
@@ -53,7 +54,7 @@ namespace Conv_Net {
                 train_CNN(CNN_training_sample_size, batch_size);
                 test_CNN(testing_sample_size);
                 //CNN.save_parameters(i);
-            }
+            }*/
 
 
 

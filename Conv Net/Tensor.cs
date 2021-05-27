@@ -150,17 +150,21 @@ namespace Conv_Net {
         }
 
         public Tensor unpad(int pad_size) {
-            Tensor output = new Tensor(this.dimensions, this.dim_1, (this.dim_2 - (2 * pad_size)), (this.dim_3 - (2 * pad_size)), this.dim_4);
-            Parallel.For(0, output.dim_1, i => {
-                for (int j = 0; j < output.dim_2; j++) {
-                    for (int k = 0; k < output.dim_3; k++) {
-                        for (int l = 0; l < output.dim_4; l++) {
-                            output.values[output.index(i, j, k, l)] = this.values[this.index(i, (j + pad_size), (k + pad_size), l)];
+            if (pad_size == 0) {
+                return this;
+            } else {
+                Tensor output = new Tensor(this.dimensions, this.dim_1, (this.dim_2 - (2 * pad_size)), (this.dim_3 - (2 * pad_size)), this.dim_4);
+                Parallel.For(0, output.dim_1, i => {
+                    for (int j = 0; j < output.dim_2; j++) {
+                        for (int k = 0; k < output.dim_3; k++) {
+                            for (int l = 0; l < output.dim_4; l++) {
+                                output.values[output.index(i, j, k, l)] = this.values[this.index(i, (j + pad_size), (k + pad_size), l)];
+                            }
                         }
                     }
-                }
-            });
-            return output;
+                });
+                return output;
+            }
         }
 
         public Tensor difference (Tensor X) {
@@ -196,7 +200,7 @@ namespace Conv_Net {
                         if (this.dimensions == 4) {sb.Append("<");}
 
                         for (int l = 0; l < this.dim_4; l++) {
-                            sb.AppendFormat("{0:0.000000000000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
+                            sb.AppendFormat("{0:0.00000000000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
                             if (this.dimensions == 4 && l < this.dim_4 - 1) {sb.Append(", ");}
                             else if (this.dimensions == 3 && k < this.dim_3 - 1) {sb.Append(", ");}
                             else if (this.dimensions == 2 && j < this.dim_2 - 1) {sb.Append(", ");}

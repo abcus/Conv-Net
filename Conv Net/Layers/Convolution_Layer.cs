@@ -130,6 +130,7 @@ namespace Conv_Net {
 
                 // dL/dB
                 // dB[I_sample, dB_num] is the sum of elements in dO[I_sample,__,__,dB_num]
+                
                 // Select the dB_num to be calculated
                 for (int j = 0; j < this.dB_num; j++) {
                     
@@ -157,7 +158,7 @@ namespace Conv_Net {
                                 
                                 Double elementwise_product = 0.0;
 
-                                // Loop through each element of the dO[I_sample,__,__,dF_num] and multiply by the corresponding element in I[I_sample,__,__,dF_channel], add the products
+                                // Calculate the dot product of dO[I_sample,__,__,dF_num] and corresponding elements of I[I_sample,__,__,dF_channel]
                                 for (int n = 0; n < this.dO_rows; n++) {
                                     for (int o = 0; o < this.dO_columns; o++) {
                                         elementwise_product += dO.values[dO.index(i, n, o, j)] * this.I.values[this.I.index(i, (k * this.dilation + n * this.stride), (l * this.dilation + o * this.stride), m)];
@@ -190,21 +191,19 @@ namespace Conv_Net {
                             for (int l = 0; l < this.dI_channels; l++) {
 
                                 // Select the F_num
-                                // Loop through each element of 180 rotated F[F_num,__,__,dI_channel] and multiply by corresponding element of dO[I_sample,__,__,F_num]
-
-                                // gradientInput[input_sample,__,__,input_gradient_channel] is the elementwise sum of those convolutions
+                                // Calculate the dot product of 180 rotated F[F_num,__,__,dI_channel] and corresponding elements of dO[I_sample,__,__,F_num]
+                                // Add the dot products across all F_num
+                                Double elementwise_product = 0.0;
+                                
                                 for (int m = 0; m < this.F_num; m++) {
-
-                                    Double elementwise_product = 0.0;
-                                    // Loop through each element of the filter and multiply by the corresponding element in the output gradient, add the products
                                     for (int n=0; n < this.F_rows; n++) {
                                         for (int o=0; o < this.F_columns; o++) {
                                             elementwise_product += F_rotated.values[F_rotated.index(m, n, o, l)] * dO_dilated_padded.values[dO_dilated_padded.index(i, j + n * this.dilation, k + o * this.dilation, m)];
                                         }
                                     }
-                                    // Increment the value of the input gradient (value is incremented each loop through num_filters)
-                                    dI.values[dI.index(i, j, k, l)] += elementwise_product;
                                 }
+                                // Set the value of dI to be the sum of the dot products across all F_num
+                                dI.values[dI.index(i, j, k, l)] = elementwise_product;
                             }
                         }
                     }

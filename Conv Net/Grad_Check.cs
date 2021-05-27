@@ -14,8 +14,15 @@ namespace Conv_Net {
 
         public test_CNN() {
 
+            // Input: 5 rows x 5 columns x 2 channels
+            // Padding: 4
+            // Filters: 2 num x 3 rows x 3 columns x 2 channels
+            // Dilation: 3
+            // Stride 2
+            // Output size: 4 rows x 4 columns x 2 channels
+
             // test input tensor
-            this.I = new Tensor(4, 1, 6, 6, 2);
+            this.I = new Tensor(4, 1, 5, 5, 2);
             for (int i = 0; i < I.dim_1; i++) {
                 for (int j = 0; j < I.dim_2; j++) {
                     for (int k = 0; k < I.dim_3; k++) {
@@ -27,37 +34,26 @@ namespace Conv_Net {
             }
 
             // test target tensor
-            this.T = new Tensor(4, 1, 2, 2, 2);
-            T.values[0] = 4.7;
-            T.values[1] = 8.4;
-            T.values[2] = 3.8;
-            T.values[3] = 7.2;
-            T.values[4] = 5.2;
-            T.values[5] = 9.3;
-            T.values[6] = 3.1;
-            T.values[7] = 5.4;
+            this.T = new Tensor(4, 1, 4, 4, 2);
+            T.values[0] = 4.7; T.values[1] = 8.4; 
+            T.values[2] = 3.8; T.values[3] = 7.2;
+            T.values[4] = 5.2; T.values[5] = 9.3;
+            T.values[6] = 3.1; T.values[7] = 5.4;
+            T.values[8] = 4.1; T.values[9] = 3.2;
+            T.values[10] = 4.4; T.values[11] = 6.2;
+            T.values[12] = 1.3; T.values[13] = 2.6;
+            T.values[14] = 5.7; T.values[15] = 3.2;
+            T.values[16] = 4.4; T.values[17] = 2.1;
+            T.values[18] = 1.2; T.values[19] = 1.8;
+            T.values[20] = 2.8; T.values[21] = 4.3;
+            T.values[22] = 2.5; T.values[23] = 5.7;
+            T.values[24] = 3.5; T.values[25] = 4.3;
+            T.values[26] = 5.5; T.values[27] = 7.3;
+            T.values[28] = 8.9; T.values[29] = 3.4;
+            T.values[30] = 1.0; T.values[31] = 0.4;
 
-            this.Conv = new Convolution_Layer(2, 2, 3, 3, true, 1, 3, 2);
+            this.Conv = new Convolution_Layer(2, 2, 3, 3, true, 4, 2, 3);
             this.MSE = new Mean_Squared_Loss();
-
-            // test filter tensor
-            Tensor F = new Tensor(4, 2, 3, 3, 2);
-            for (int i = 0; i < F.dim_1; i++) {
-                for (int j = 0; j < F.dim_2; j++) {
-                    for (int k = 0; k < F.dim_3; k++) {
-                        for (int l = 0; l < F.dim_4; l++) {
-                            F.values[F.index(i, j, k, l)] = (j + k + 1) * (i + 1) * (l + 1) / 10.0;
-                        }
-                    }
-                }
-            }
-            Conv.F = F;
-
-            // test bias tensor
-            Tensor B = new Tensor(1, 2);
-            B.values[0] = 0.77;
-            B.values[1] = 0.85;
-            Conv.B = B;
         }
 
         public Tensor forward() {
@@ -118,7 +114,7 @@ namespace Conv_Net {
             }
             // Console.WriteLine(analytic_dB);
             // Console.WriteLine(numeric_dB);
-            // Console.WriteLine(analytic_dB.difference(numeric_dB));
+            Console.WriteLine(analytic_dB.difference(numeric_dB));
 
             // Numerical gradient of loss with respect to filters
             for (int i = 0; i < test_CNN.Conv.F.dim_1; i++) {
@@ -141,7 +137,7 @@ namespace Conv_Net {
             }
             // Console.WriteLine(analytic_dF);
             // Console.WriteLine(numeric_dF);
-            // Console.WriteLine(analytic_dF.difference(numeric_dF));
+            Console.WriteLine(analytic_dF.difference(numeric_dF));
 
             // Numerical gradient of loss with respect to input
             for (int i = 0; i < test_CNN.I.dim_1; i++) {
@@ -162,8 +158,8 @@ namespace Conv_Net {
                     }
                 }
             }
-            Console.WriteLine(analytic_dI);
-            Console.WriteLine(numeric_dI);
+            //Console.WriteLine(analytic_dI);
+            //Console.WriteLine(numeric_dI);
             Console.WriteLine(analytic_dI.difference(numeric_dI));
         }
     }

@@ -10,7 +10,7 @@ namespace Conv_Net {
 
         private int I_samples, I_rows, I_columns, I_channels;
         private int B_num;
-        private int F_num, F_rows, F_columns, F_channels;
+        public int F_num, F_rows, F_columns, F_channels;
         private int O_samples, O_rows, O_columns, O_channels;
 
         private int dI_samples, dI_rows, dI_columns, dI_channels;

@@ -178,6 +178,59 @@ namespace Conv_Net {
             return D;
         }
 
+        public Tensor im_2_col(int F_rows, int F_columns, int F_channels) {
+
+            int X_rows = F_rows * F_columns * F_channels;
+
+            int I_rows = this.dim_2;
+            int I_cols = this.dim_3;
+            int O_rows = I_rows - F_rows + 1;
+            int O_columns = I_cols - F_columns + 1;
+            int X_columns = O_rows * O_columns;
+
+            Tensor X = new Tensor(2, X_rows, X_columns);
+            
+            for (int i = 0; i < F_rows; i++) {
+                for (int j = 0; j < F_columns; j++) {
+                    for (int k=0; k < F_channels; k++) {
+                        for (int l = 0; l < O_rows; l++) {
+                            for (int m = 0; m < O_columns; m++) {
+                                X.values[(i * F_columns * F_channels + j * F_channels + k) * X_columns + (l * O_columns + m)] = this.values[this.index(0, l + i, m + j, k)];
+                            }
+                        }
+                    }
+                }
+            }
+
+            return X;
+        }
+
+        public Tensor mm (Tensor B) {
+            int A_row = this.dim_1;
+            int A_col = this.dim_2;
+            int B_row = B.dim_1;
+            int B_col = B.dim_2;
+            Tensor C = new Tensor(2, A_row, B_col);
+            
+            for (int i=0; i < A_row; i++) {
+                for (int j=0; j < B_col; j++) {
+                    Double temp = 0.0;
+                    for (int k=0; k < A_col; k++) {
+                        temp += this.values[i * A_col + k] * B.values[k * B_col + j];
+                    }
+                    C.values[i * B_col + j] = temp;
+                }
+            }
+            
+            return C;
+        }
+
+        public Tensor F_2_col () {
+            Tensor X = new Tensor(2, this.dim_1, this.dim_2 * this.dim_3 * this.dim_4);
+            X.values = this.values;
+            return X;
+        }
+
         public override string ToString() {
             if (this.dimensions == 5) {
                 return "";
@@ -203,7 +256,7 @@ namespace Conv_Net {
                         if (this.dimensions == 4) {sb.Append("<");}
 
                         for (int l = 0; l < this.dim_4; l++) {
-                            sb.AppendFormat("{0:0.00000000000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
+                            sb.AppendFormat("{0:0.0000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
                             if (this.dimensions == 4 && l < this.dim_4 - 1) {sb.Append(", ");}
                             else if (this.dimensions == 3 && k < this.dim_3 - 1) {sb.Append(", ");}
                             else if (this.dimensions == 2 && j < this.dim_2 - 1) {sb.Append(", ");}

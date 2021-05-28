@@ -114,7 +114,7 @@ namespace Conv_Net {
             }
             // Console.WriteLine(analytic_dB);
             // Console.WriteLine(numeric_dB);
-            Console.WriteLine(analytic_dB.difference(numeric_dB));
+            // Console.WriteLine(analytic_dB.difference(numeric_dB));
 
             // Numerical gradient of loss with respect to filters
             for (int i = 0; i < test_CNN.Conv.F.dim_1; i++) {
@@ -137,7 +137,7 @@ namespace Conv_Net {
             }
             // Console.WriteLine(analytic_dF);
             // Console.WriteLine(numeric_dF);
-            Console.WriteLine(analytic_dF.difference(numeric_dF));
+            // Console.WriteLine(analytic_dF.difference(numeric_dF));
 
             // Numerical gradient of loss with respect to input
             for (int i = 0; i < test_CNN.I.dim_1; i++) {
@@ -160,7 +160,7 @@ namespace Conv_Net {
             }
             //Console.WriteLine(analytic_dI);
             //Console.WriteLine(numeric_dI);
-            Console.WriteLine(analytic_dI.difference(numeric_dI));
+            // Console.WriteLine(analytic_dI.difference(numeric_dI));
         }
     }
 }

@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Conv_Net {
     class Mean_Squared_Loss {
@@ -17,7 +13,6 @@ namespace Conv_Net {
         public Tensor I;
         public Tensor T;
         public Mean_Squared_Loss () {
-
         }
 
         public Tensor forward (Tensor I, Tensor T) {

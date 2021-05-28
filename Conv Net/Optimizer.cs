@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Conv_Net {
+﻿namespace Conv_Net {
     class Optimizer {
 
         public int t; //number of updates performed, used for bias correction

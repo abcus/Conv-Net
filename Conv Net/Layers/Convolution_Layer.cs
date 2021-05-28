@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Conv_Net;
-using System.Diagnostics;
 
 namespace Conv_Net {
     class Convolution_Layer {

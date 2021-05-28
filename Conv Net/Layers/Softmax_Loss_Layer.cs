@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Diagnostics;
 
 namespace Conv_Net {
     class Softmax_Loss_Layer {

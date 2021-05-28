@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
     class Fully_Connected_Layer {
 
-        private int I_samples, I_rows, I_columns, I_channels;
+        private int I_samples;
         private int previous_layer_size, layer_size;
         
         private bool needs_gradient;
@@ -25,13 +22,13 @@ namespace Conv_Net {
             this.layer_size = layer_size;
             this.needs_gradient = needs_gradient;
 
-            this.B = new Tensor(1, this.layer_size, 1, 1, 1);
-            this.V_dB = new Tensor(1, this.layer_size, 1, 1, 1);
-            this.S_dB = new Tensor(1, this.layer_size, 1, 1, 1);
+            this.B = new Tensor(1, this.layer_size);
+            this.V_dB = new Tensor(1, this.layer_size);
+            this.S_dB = new Tensor(1, this.layer_size);
 
-            this.W = new Tensor(2, this.layer_size, this.previous_layer_size, 1, 1);
-            this.V_dW = new Tensor(2, this.layer_size, this.previous_layer_size, 1, 1);
-            this.S_dW = new Tensor(2, this.layer_size, this.previous_layer_size, 1, 1);
+            this.W = new Tensor(2, this.layer_size, this.previous_layer_size);
+            this.V_dW = new Tensor(2, this.layer_size, this.previous_layer_size);
+            this.S_dW = new Tensor(2, this.layer_size, this.previous_layer_size);
 
             // Biases and weights initialization
             // Biases are set to 0
@@ -48,11 +45,8 @@ namespace Conv_Net {
         public Tensor forward(Tensor I) {
             this.I = I;
             this.I_samples = I.dim_1;
-            this.I_rows = I.dim_2;
-            this.I_columns = I.dim_3;
-            this.I_channels = I.dim_4;
 
-            Tensor O = new Tensor(2, I_samples, this.layer_size, 1, 1);
+            Tensor O = new Tensor(2, this.I_samples, this.layer_size);
 
             // Selects the input sample from the batch
             Parallel.For(0, this.I_samples, i => {
@@ -95,23 +89,22 @@ namespace Conv_Net {
             
             // If not first layer and dL/dI needs to be returned, calculate and return dL/dI = dL/dO * dO/dI; otherwise return null
             if (this.needs_gradient == true) {
-                Tensor gradient_input = new Tensor(2, this.I_samples, this.I_rows, this.I_columns, this.I_channels);
-                Tensor transposed_weights_tensor = this.W.transpose_2D();
+                Tensor dI = new Tensor(2, this.I_samples, this.previous_layer_size);
                 
                 Parallel.For(0, this.I_samples, i => {
-                    for (int j = 0; j < previous_layer_size; j++) {
+                    for (int j = 0; j < this.previous_layer_size; j++) {
                         
-                        Double sum = 0.0;
+                        Double dot_product = 0.0;
                         
-                        for (int k = 0; k < layer_size; k++) {
-                            Console.WriteLine(transposed_weights_tensor.values[j * layer_size + k] - W.values[k * previous_layer_size + j]);
-                            sum += (transposed_weights_tensor.values[j * layer_size + k] * dO.values[i * layer_size + k]);
+                        for (int k = 0; k < this.layer_size; k++) {
+                            
+                            // W_transposed[j * layer_size + k] = W[k * previous_layer_size + j];
+                            dot_product += (W.values[k * previous_layer_size + j] * dO.values[i * layer_size + k]);
                         }
-                        gradient_input.values[i * previous_layer_size + j] = sum;
-                        sum = 0;
+                        dI.values[i * previous_layer_size + j] = dot_product;
                     }
                 });
-                return gradient_input;
+                return dI;
             } else {
                 return null;
             }

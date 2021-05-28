@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Conv_Net {
     class Relu_Layer {
 
-        // dO/dI
+        // ∂O/∂I
         Tensor dLocal; 
         public Relu_Layer() {
         }
@@ -29,8 +29,8 @@ namespace Conv_Net {
 
         public Tensor backward (Tensor dO) {
             Parallel.For(0, this.dLocal.values.Count(), i => {
-                
-                // dL/dI = dL/dO * dO/dI
+
+                // ∂L/∂I = ∂L/∂O * ∂O/∂I
                 this.dLocal.values[i] *= dO.values[i];
             });
             // dI is calculated in-place from dLocal

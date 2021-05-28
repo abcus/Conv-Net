@@ -12,7 +12,7 @@ namespace Conv_Net {
         private int O_samples, O_rows, O_columns, O_channels;
         private int stride;
 
-        private Tensor dLocal; // dO/dI
+        private Tensor dLocal; // ∂O/∂I
 
         public Max_Pooling_Layer (int F_rows = 2, int F_columns = 2, int stride = 2) {
             this.F_rows = F_rows;
@@ -65,7 +65,7 @@ namespace Conv_Net {
                     for (int k=0; k < this.I_columns; k++) {
                         for (int l=0; l < this.I_channels; l++) {
 
-                            // dL/dI = dL/dO * dO/dI 
+                            // ∂L/∂I = ∂L/∂O * ∂O/∂I 
                             this.dLocal.values[this.dLocal.index(i, j, k, l)] *= dO.values[dO.index(i, j / this.stride, k / this.stride, l)];
                         }
                     }

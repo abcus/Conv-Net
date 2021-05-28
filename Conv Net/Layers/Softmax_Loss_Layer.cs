@@ -86,12 +86,12 @@ namespace Conv_Net {
 
             int batch_size = this.I_samples;
 
-            // dL/dI
+            // ∂L/∂I
             Tensor dI = new Tensor(2, this.dI_samples, this.dI_rows, this.dI_columns, this.dI_channels);
 
             Parallel.For(0, this.dI_samples, i => {
 
-                // dL/dI = (softmax output - target)
+                // ∂L/∂I = (softmax output - target)
                 for (int j = 0; j < this.dI_rows; j++) {
                     dI.values[i * this.dI_rows + j] = (this.O.values[i * this.dI_rows + j] - this.T.values[i * this.dI_rows + j]) / batch_size;
                 }

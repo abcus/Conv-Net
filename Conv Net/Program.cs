@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using System.Diagnostics;
-using MathNet.Numerics;
 
 namespace Conv_Net {
     static class Program {
@@ -13,7 +12,6 @@ namespace Conv_Net {
 
         public static Random rand = new Random(0);
         public static Random dropout_rand = new Random(0);
-        public static MathNet.Numerics.Distributions.Normal normalDist = new MathNet.Numerics.Distributions.Normal(0, 1, rand);
         public static Stopwatch stopwatch = new Stopwatch();
 
         // public static Net NN = new Net();

@@ -11,7 +11,7 @@ namespace Conv_Net {
         private Double p;
         private Double scaling_factor;
 
-        // dO/dI
+        // ∂O/∂I
         private Tensor dLocal;
 
         public Dropout_Layer(Double p) {
@@ -32,14 +32,14 @@ namespace Conv_Net {
                     dLocal.values[i] = this.scaling_factor;
                 }
             }
-            // O is calculated in-place
+            // O is calculated in-place from I
             return I;
         }
 
         public Tensor backward(Tensor dO) {
             Parallel.For(0, this.dLocal.values.Count(), i => {
 
-                // dL/dI = dL/dO * dO/dI
+                // ∂L/∂I = ∂L/∂O * ∂O/∂I
                 this.dLocal.values[i] *= dO.values[i];
             });
             // dI is calculated in-place from dLocal

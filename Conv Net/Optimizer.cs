@@ -18,9 +18,7 @@ namespace Conv_Net {
         /// Don't need to divide by batch size because this was done in softmax layer
         /// </summary>
         public void SGD_FC(Fully_Connected_Layer FC) {
-            int I_samples = FC.dW.dim_1;
-            int layer_size = FC.dW.dim_2;
-            int previous_layer_size = FC.dW.dim_3;
+            int I_samples = FC.dW.dim_1; int layer_size = FC.dW.dim_2; int previous_layer_size = FC.dW.dim_3;
 
             for (int i = 0; i < I_samples; i++) {
                 for (int j = 0; j < layer_size; j++) {    
@@ -35,11 +33,7 @@ namespace Conv_Net {
         }
 
         public void SGD_Conv(Convolution_Layer Conv) {
-            int I_samples = Conv.dF.dim_1;
-            int F_num = Conv.dF.dim_2;
-            int F_rows = Conv.dF.dim_3;
-            int F_columns = Conv.dF.dim_4;
-            int F_channels = Conv.dF.dim_5;
+            int I_samples = Conv.dF.dim_1; int F_num = Conv.dF.dim_2; int F_rows = Conv.dF.dim_3; int F_columns = Conv.dF.dim_4; int F_channels = Conv.dF.dim_5;
 
             for (int i = 0; i < I_samples; i++) {
                 for (int j = 0; j < F_num; j++) {

@@ -129,7 +129,34 @@ namespace Conv_Net {
                 }
             }
         }
-        
+        /// <summary>
+        /// Generates random numbers from normal distribution, copied from MathNet Numerics (Box-Muller algorithm)
+        /// </summary>
+        /// <param name="rand"></param>
+        /// <param name="mean"></param>
+        /// <param name="st_dev"></param>
+        /// <returns></returns>
+        public static double next_normal(System.Random rand, Double mean, Double st_dev) {
+            Double x;
+            while (!polar_transform(rand.NextDouble(), rand.NextDouble(), out x, out _)) {
+            }
+            return mean + (st_dev * x);
+        }
+
+        public static bool polar_transform(double a, double b, out double x, out double y) {
+            var v1 = (2.0 * a) - 1.0;
+            var v2 = (2.0 * b) - 1.0;
+            var r = (v1 * v1) + (v2 * v2);
+            if (r > 1.0 || r == 0.0) {
+                x = 0;
+                y = 0;
+                return false;
+            }
+            var fac = Math.Sqrt(-2.0 * Math.Log(r) / r);
+            x = v1 * fac;
+            y = v2 * fac;
+            return true;
+        }
         static public void print_images(Tensor image, int image_sample) {
             
             int image_rows = image.dim_2;

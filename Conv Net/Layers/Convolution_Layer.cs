@@ -26,7 +26,7 @@ namespace Conv_Net {
         // Input, bias, and filter tensors
         public Tensor I, B, F;
 
-        // Tensors to hold dL/dB and dL/dF
+        // Tensors to hold ∂L/∂B and ∂L/∂F
         // Separate entries for each input sample to allow for multi-threading
         public Tensor dB, dF;
         public Tensor V_dB, S_dB, V_dF, S_dF;
@@ -63,7 +63,7 @@ namespace Conv_Net {
                 for (int j = 0; j < this.F_rows; j++) {
                     for (int k = 0; k < this.F_columns; k++) {
                         for (int l = 0; l < this.F_channels; l++) {
-                            this.F.values[this.F.index(i, j, k, l)] = Program.normalDist.Sample() * Math.Sqrt(2 / ((Double)this.F_num * this.F_rows * this.F_columns));
+                            this.F.values[this.F.index(i, j, k, l)] = Utils.next_normal(Program.rand, 0, 1) * Math.Sqrt(2 / ((Double)this.F_num * this.F_rows * this.F_columns));
                         }
                     }
                 }
@@ -114,7 +114,7 @@ namespace Conv_Net {
         /// <returns name="dI"> if not first layer, returns derivative of loss with respect to input </returns>
         public Tensor backward(Tensor dO) {
 
-            // Initialize dL/dB and dL/dF (have to store these for gradient descent)
+            // Initialize ∂L/∂B and ∂L/∂F (have to store these for gradient descent)
             // Don't have to set values to 0.0 after gradient descent because a new gradient tensor is created during each backward pass
             this.dB = new Tensor(2, this.I_samples, this.dB_num);
             this.dF = new Tensor(5, this.I_samples, this.dF_num, this.dF_rows, this.dF_columns, this.dF_channels);
@@ -127,9 +127,9 @@ namespace Conv_Net {
             // Select the I_sample from the batch
             Parallel.For(0, this.I_samples, i => {
 
-                // dL/dB
+                // ∂L/∂B
                 // dB[I_sample, dB_num] is the sum of elements in dO[I_sample,__,__,dB_num]
-                
+
                 // Select the dB_num to be calculated
                 for (int j = 0; j < this.dB_num; j++) {
                     
@@ -145,8 +145,8 @@ namespace Conv_Net {
                     this.dB.values[i * this.dB_num + j] = sum;
                 }
 
-                // dL/dF
-                // dL/dF is the convolution of (dL/dO dilated by S) with stride D over I
+                // ∂L/∂F
+                // ∂L/∂F is the convolution of (∂L/∂O dilated by S) with stride D over I
                 // dF[I_sample, dF_num,__,__, dF_channel] is convolution of (dO[I_sample,__,__,dF_num] dilated by S) with stride D over (I[I_sample,__,__,dF_channel])
 
                 // Select the dF_num number, dF_row, dF_column, and dF_channel to be calculated
@@ -171,12 +171,12 @@ namespace Conv_Net {
                 }
             });
 
-            // dL/dI (if first layer, it is not needed and can return null)
-            // dL/dI is the full convolution of (180 rotated F dilated by D) over (dL/dO dilated by S and padded by [F_rows * D - D])
+            // ∂L/∂I (if first layer, it is not needed and can return null)
+            // ∂L/∂I is the full convolution of (180 rotated F dilated by D) over (∂L/∂O dilated by S and padded by [F_rows * D - D])
             // To calculate dI[I_sample,__,__, dI_channel]:
             //      For each F_num, calculate full convolution of (180 rotated F[F_num,__,__,dI_channel] dilated by D) over (dO[I_sample,__,__,F_num] dilated by S)
             //      Add all the full convolutions
-           if (this.needs_gradient == true) {
+            if (this.needs_gradient == true) {
                 
                 // Size of dI is the same as size of I (before padding in the forward pass)
                 this.dI_samples = this.I_samples; this.dI_rows = this.I_rows - 2 * this.pad_size; this.dI_columns = this.I_columns - 2 * this.pad_size; this.dI_channels = this.I_channels;

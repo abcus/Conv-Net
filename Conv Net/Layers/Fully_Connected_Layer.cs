@@ -14,7 +14,7 @@ namespace Conv_Net {
 
         public Tensor I, B, W;
 
-        // Tensors to hold dL/dB and dL/dW
+        // Tensors to hold ∂L/∂B and ∂L/∂W
         // Will have separate entries for each input sample
         public Tensor dB, dW;
 
@@ -41,7 +41,7 @@ namespace Conv_Net {
                 B.values[i] = 0.0;
                 
                 for (int j = 0; j < previous_layer_size; j++) {
-                    this.W.values[i * this.previous_layer_size + j] = Program.normalDist.Sample() * Math.Sqrt(2 / (Double)previous_layer_size);
+                    this.W.values[i * this.previous_layer_size + j] = Utils.next_normal(Program.rand, 0, 1) * Math.Sqrt(2 / (Double)previous_layer_size);
                 }
             }
         }
@@ -70,7 +70,7 @@ namespace Conv_Net {
 
         public Tensor backward (Tensor dO) {
 
-            // Initialize dL/dB and dL/dW (have to store these for gradient descent)
+            // Initialize ∂L/∂B and ∂L/∂W (have to store these for gradient descent)
             // Input samples is stored as the highest dimension to allow for faster access when calculating the sum across all input samples
             // Don't have to set values to 0.0 after updating because a new gradient tensor is created during each backward pass
             this.dB = new Tensor(2, this.I_samples, this.layer_size);
@@ -79,18 +79,18 @@ namespace Conv_Net {
             Parallel.For(0, this.I_samples, i => {
                 for (int j = 0; j < layer_size; j++) {
 
-                    // dL/dB = dL/dO * dO/dB, stores it for gradient descent
+                    // ∂L/∂B = ∂L/∂O * ∂O/∂B, stores it for gradient descent
                     this.dB.values[i * layer_size + j] = dO.values[i * layer_size + j]; // * 1
 
                     for (int k = 0; k < previous_layer_size; k++) {
 
-                        // dL/dW = dL/dO * dO/dW, stores it for gradient descent
+                        // ∂L/∂W = ∂L/∂O * ∂O/∂W, stores it for gradient descent
                         this.dW.values[i * this.layer_size * this.previous_layer_size + j * this.previous_layer_size + k] = dO.values[i * layer_size + j] * this.I.values[i * previous_layer_size + k];
                     }
                 }
             });
-            
-            // If not first layer and dL/dI needs to be returned, calculate and return dL/dI = dL/dO * dO/dI; otherwise return null
+
+            // If not first layer and ∂L/∂I needs to be returned, calculate and return ∂L/∂I = ∂L/∂O * ∂O/∂I; otherwise return null
             if (this.needs_gradient == true) {
                 Tensor dI = new Tensor(2, this.I_samples, this.previous_layer_size);
                 

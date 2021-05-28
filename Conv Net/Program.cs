@@ -14,7 +14,6 @@ namespace Conv_Net {
         public static Random dropout_rand = new Random(0);
         public static Stopwatch stopwatch = new Stopwatch();
 
-        // public static Net NN = new Net();
         public static Conv_Net CNN = new Conv_Net();
 
         public static Tensor training_images, training_labels, testing_images, testing_labels;

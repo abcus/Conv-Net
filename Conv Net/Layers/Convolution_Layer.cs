@@ -209,9 +209,11 @@ namespace Conv_Net {
                             }
                         }
                     }
-                }); 
+                });
+                this.I = null;
                 return dI;
             } else {
+                this.I = null;
                 return null;
             }
         }

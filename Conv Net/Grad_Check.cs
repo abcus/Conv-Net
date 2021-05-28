@@ -59,7 +59,7 @@ namespace Conv_Net {
         public Tensor forward() {
             Tensor A; 
             A = this.Conv.forward(this.I);
-            A = this.MSE.forward(A, this.T);
+            A = this.MSE.loss(A, this.T);
             return A;
         }
 

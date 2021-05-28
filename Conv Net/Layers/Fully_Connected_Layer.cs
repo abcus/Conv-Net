@@ -107,8 +107,10 @@ namespace Conv_Net {
                         dI.values[i * previous_layer_size + j] = dot_product;
                     }
                 });
+                this.I = null;
                 return dI;
             } else {
+                this.I = null;
                 return null;
             }
         }

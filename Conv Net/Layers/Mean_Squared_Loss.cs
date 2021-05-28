@@ -9,12 +9,11 @@ namespace Conv_Net {
 
         private int I_dimensions, I_samples, I_rows, I_columns, I_channels, I_elements;
 
-        private Tensor I;
-        private Tensor T;
+        private Tensor I, T;
         public Mean_Squared_Loss () {
         }
 
-        public Tensor forward (Tensor I, Tensor T) {
+        public Tensor loss (Tensor I, Tensor T) {
             this.I = I;
             this.T = T;
             
@@ -43,6 +42,8 @@ namespace Conv_Net {
                     dI.values[i * I_elements + j] = (I.values[i * I_elements + j] - T.values[i * I_elements + j]) / (this.I_elements * batch_size);
                 }
             }
+            this.I = null;
+            this.T = null;
             return dI;
         }
     }

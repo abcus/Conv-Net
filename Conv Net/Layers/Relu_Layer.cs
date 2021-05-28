@@ -8,33 +8,34 @@ namespace Conv_Net {
     class Relu_Layer {
 
         // ∂O/∂I
-        Tensor dLocal; 
+        Tensor d_local; 
         public Relu_Layer() {
         }
 
         public Tensor forward(Tensor I) {
-            this.dLocal = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4, I.dim_5);
+            this.d_local = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4, I.dim_5);
 
             Parallel.For(0, I.values.Count(), i => {
                 if (I.values[i] > 0) {
-                    this.dLocal.values[i] = 1;
+                    this.d_local.values[i] = 1;
                 } else {
                     I.values[i] = 0;
-                    this.dLocal.values[i] = 0;
+                    this.d_local.values[i] = 0;
                 }
             });
-            // O is calculated in-place 
+            // O is calculated in-place from I
             return I; 
         }
 
         public Tensor backward (Tensor dO) {
-            Parallel.For(0, this.dLocal.values.Count(), i => {
+            Parallel.For(0, this.d_local.values.Count(), i => {
 
                 // ∂L/∂I = ∂L/∂O * ∂O/∂I
-                this.dLocal.values[i] *= dO.values[i];
+                dO.values[i] *= this.d_local.values[i];
             });
-            // dI is calculated in-place from dLocal
-            return this.dLocal;
+            this.d_local = null;
+            // dI is calculated in-place from dO
+            return dO;
         }
     }
 }

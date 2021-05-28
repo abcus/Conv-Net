@@ -12,7 +12,7 @@ namespace Conv_Net {
         private Double scaling_factor;
 
         // ∂O/∂I
-        private Tensor dLocal;
+        private Tensor d_local;
 
         public Dropout_Layer(Double p) {
             this.p = p;
@@ -20,16 +20,16 @@ namespace Conv_Net {
         }
 
         public Tensor forward(Tensor I) {
-            this.dLocal = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4, I.dim_5);
+            this.d_local = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4, I.dim_5);
             
             // Do not parallelize because of random number generation
             for (int i=0; i < I.values.Count(); i++) {
                 if (Program.dropout_rand.NextDouble() < this.p) {
                     I.values[i] = 0;
-                    dLocal.values[i] = 0;
+                    d_local.values[i] = 0;
                 } else {
                     I.values[i] = I.values[i] * this.scaling_factor;
-                    dLocal.values[i] = this.scaling_factor;
+                    d_local.values[i] = this.scaling_factor;
                 }
             }
             // O is calculated in-place from I
@@ -37,13 +37,14 @@ namespace Conv_Net {
         }
 
         public Tensor backward(Tensor dO) {
-            Parallel.For(0, this.dLocal.values.Count(), i => {
+            Parallel.For(0, this.d_local.values.Count(), i => {
 
                 // ∂L/∂I = ∂L/∂O * ∂O/∂I
-                this.dLocal.values[i] *= dO.values[i];
+                dO.values[i] *= this.d_local.values[i];
             });
-            // dI is calculated in-place from dLocal
-            return this.dLocal;
+            // dI is calculated in-place from dO
+            this.d_local = null;
+            return dO;
         }
     }
 }

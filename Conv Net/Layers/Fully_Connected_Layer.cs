@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Conv_Net {
     class Fully_Connected_Layer {
 
-        private int input_samples, input_rows, input_columns, input_channels;
+        private int I_samples, I_rows, I_columns, I_channels;
         private int previous_layer_size, layer_size;
         
         private bool needs_gradient;
@@ -45,66 +45,67 @@ namespace Conv_Net {
                 }
             }
         }
-        public Tensor forward(Tensor input) {
-            this.I = input;
-            this.input_samples = input.dim_1;
-            this.input_rows = input.dim_2;
-            this.input_columns = input.dim_3;
-            this.input_channels = input.dim_4;
+        public Tensor forward(Tensor I) {
+            this.I = I;
+            this.I_samples = I.dim_1;
+            this.I_rows = I.dim_2;
+            this.I_columns = I.dim_3;
+            this.I_channels = I.dim_4;
 
-            Tensor output = new Tensor(2, input_samples, this.layer_size, 1, 1);
+            Tensor O = new Tensor(2, I_samples, this.layer_size, 1, 1);
 
             // Selects the input sample from the batch
-            Parallel.For(0, this.input_samples, i => {
+            Parallel.For(0, this.I_samples, i => {
 
                 // Output is (dot product of input and corresponding weights) + bias
                 for (int j = 0; j < this.layer_size; j++) {
 
-                    Double sum = 0.0;
+                    Double dot_product = 0.0;
                     
                     for (int k = 0; k < this.previous_layer_size; k++) {
-                        sum += input.values[i * previous_layer_size + k] * this.W.values[j * previous_layer_size + k];
+                        dot_product += I.values[i * previous_layer_size + k] * this.W.values[j * previous_layer_size + k];
                     }
-                    output.values[i * this.layer_size + j] = (sum + this.B.values[j]);
+                    O.values[i * this.layer_size + j] = (dot_product + this.B.values[j]);
                 }
             });
-            return output;
+            return O;
         }
 
-        public Tensor backward (Tensor gradient_output) {
+        public Tensor backward (Tensor dO) {
 
             // Initialize dL/dB and dL/dW (have to store these for gradient descent)
             // Input samples is stored as the highest dimension to allow for faster access when calculating the sum across all input samples
             // Don't have to set values to 0.0 after updating because a new gradient tensor is created during each backward pass
-            this.dB = new Tensor(2, this.input_samples, this.layer_size);
-            this.dW = new Tensor(3, this.input_samples, this.layer_size, this.previous_layer_size);
+            this.dB = new Tensor(2, this.I_samples, this.layer_size);
+            this.dW = new Tensor(3, this.I_samples, this.layer_size, this.previous_layer_size);
 
-            Parallel.For(0, this.input_samples, i => {
+            Parallel.For(0, this.I_samples, i => {
                 for (int j = 0; j < layer_size; j++) {
 
                     // dL/dB = dL/dO * dO/dB, stores it for gradient descent
-                    this.dB.values[i * layer_size + j] = gradient_output.values[i * layer_size + j]; // * 1
+                    this.dB.values[i * layer_size + j] = dO.values[i * layer_size + j]; // * 1
 
                     for (int k = 0; k < previous_layer_size; k++) {
 
                         // dL/dW = dL/dO * dO/dW, stores it for gradient descent
-                        this.dW.values[i * this.layer_size * this.previous_layer_size + j * this.previous_layer_size + k] = gradient_output.values[i * layer_size + j] * this.I.values[i * previous_layer_size + k];
+                        this.dW.values[i * this.layer_size * this.previous_layer_size + j * this.previous_layer_size + k] = dO.values[i * layer_size + j] * this.I.values[i * previous_layer_size + k];
                     }
                 }
             });
             
             // If not first layer and dL/dI needs to be returned, calculate and return dL/dI = dL/dO * dO/dI; otherwise return null
             if (this.needs_gradient == true) {
-                Tensor gradient_input = new Tensor(2, this.input_samples, this.input_rows, this.input_columns, this.input_channels);
+                Tensor gradient_input = new Tensor(2, this.I_samples, this.I_rows, this.I_columns, this.I_channels);
                 Tensor transposed_weights_tensor = this.W.transpose_2D();
                 
-                Parallel.For(0, this.input_samples, i => {
+                Parallel.For(0, this.I_samples, i => {
                     for (int j = 0; j < previous_layer_size; j++) {
                         
                         Double sum = 0.0;
                         
                         for (int k = 0; k < layer_size; k++) {
-                            sum += (transposed_weights_tensor.values[j * layer_size + k] * gradient_output.values[i * layer_size + k]);
+                            Console.WriteLine(transposed_weights_tensor.values[j * layer_size + k] - W.values[k * previous_layer_size + j]);
+                            sum += (transposed_weights_tensor.values[j * layer_size + k] * dO.values[i * layer_size + k]);
                         }
                         gradient_input.values[i * previous_layer_size + j] = sum;
                         sum = 0;

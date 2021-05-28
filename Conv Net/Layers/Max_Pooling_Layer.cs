@@ -7,15 +7,12 @@ using System.Threading.Tasks;
 namespace Conv_Net {
     class Max_Pooling_Layer {
 
-        int I_samples, I_rows, I_columns, I_channels;
-        int F_rows, F_columns;
+        private int I_samples, I_rows, I_columns, I_channels;
+        private int F_rows, F_columns;
         private int O_samples, O_rows, O_columns, O_channels;
+        private int stride;
 
-        private int dI_samples, dI_rows, dI_columns, dI_channels;
-
-        int stride;
-
-        Tensor dLocal; // dO/dI
+        private Tensor dLocal; // dO/dI
 
         public Max_Pooling_Layer (int F_rows = 2, int F_columns = 2, int stride = 2) {
             this.F_rows = F_rows;
@@ -45,9 +42,8 @@ namespace Conv_Net {
 
                             for (int m = 0; m < this.F_rows; m++) {
                                 for (int n = 0; n < this.F_columns; n++) {
-                                    Double temp = I.values[I.index(i, (j * stride + m), (k * stride + n), l)];
-                                    if (temp > max_value) {
-                                        max_value = temp;
+                                    if (I.values[I.index(i, (j * stride + m), (k * stride + n), l)] > max_value) {
+                                        max_value = I.values[I.index(i, (j * stride + m), (k * stride + n), l)];
                                         max_row = j * stride + m;
                                         max_column = k * stride + n;
                                     }
@@ -64,26 +60,19 @@ namespace Conv_Net {
 
         public Tensor backward(Tensor dO) {
 
-            this.dI_samples = this.I_samples; this.dI_rows = this.I_rows; this.dI_columns = this.I_columns; this.dI_channels = this.I_channels;
-            Tensor dI = new Tensor(4, this.dI_samples, this.dI_rows, this.dI_columns, this.dI_channels);
-
             Parallel.For(0, this.I_samples, i => {
-                for (int j=0; j < dI_rows; j ++) {
-                    for (int k=0; k < dI_columns; k++) {
-                        for (int l=0; l < dI_channels; l++) {
-                            Double temp = this.dLocal.values[this.dLocal.index(i, j, k, l)];
-                            
-                            // If dO/dI (dLocal) > 0, dL/dI = dL/dO * dO/dI , otherwise dL/dI = 0
-                            if (temp > 0) {
-                                dI.values[dI.index(i, j, k, l)] = dO.values[dO.index(i, j / this.stride, k / this.stride, l)] * temp;
-                            } else {
-                                dI.values[dI.index(i, j, k, l)] = 0;
-                            }
+                for (int j=0; j < this.I_rows; j ++) {
+                    for (int k=0; k < this.I_columns; k++) {
+                        for (int l=0; l < this.I_channels; l++) {
+
+                            // dL/dI = dL/dO * dO/dI 
+                            this.dLocal.values[this.dLocal.index(i, j, k, l)] *= dO.values[dO.index(i, j / this.stride, k / this.stride, l)];
                         }
                     }
                 }
             });
-            return dI;
+            // dI is calculated in-place from dLocal
+            return this.dLocal;
         }
     }
 }

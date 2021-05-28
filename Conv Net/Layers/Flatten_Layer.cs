@@ -1,4 +1,10 @@
-﻿namespace Conv_Net {
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Conv_Net {
     class Flatten_Layer {
 
         private int I_dimensions, I_samples, I_rows, I_columns, I_channels;

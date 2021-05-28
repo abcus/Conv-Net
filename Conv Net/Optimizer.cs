@@ -20,14 +20,21 @@ namespace Conv_Net {
         public void SGD_FC(Fully_Connected_Layer FC) {
             int I_samples = FC.dW.dim_1; int layer_size = FC.dW.dim_2; int previous_layer_size = FC.dW.dim_3;
 
-            for (int i = 0; i < I_samples; i++) {
-                for (int j = 0; j < layer_size; j++) {    
-                    
-                    FC.B.values[j] -= (FC.dB.values[i * layer_size + j] * Program.ALPHA);
+            for (int i = 0; i < layer_size; i++) {
 
-                    for (int k = 0; k < previous_layer_size; k++) {
-                        FC.W.values[j * previous_layer_size + k] -= (FC.dW.values[i * layer_size * previous_layer_size + j * previous_layer_size + k] * Program.ALPHA);
+                Double dB_sum = 0;
+
+                for (int s = 0; s < I_samples; s++) {
+                    dB_sum += FC.dB.values[s * layer_size + i];
+                }
+                FC.B.values[i] -= Program.ALPHA * dB_sum;
+
+                for (int j = 0; j < previous_layer_size; j++) {
+                    Double dW_sum = 0.0;
+                    for (int s = 0; s < I_samples; s++) {
+                        dW_sum += FC.dW.values[s * layer_size * previous_layer_size + i * previous_layer_size + j];
                     }
+                    FC.W.values[i * previous_layer_size + j] -= (Program.ALPHA * dW_sum);
                 }
             }
         }
@@ -35,24 +42,86 @@ namespace Conv_Net {
         public void SGD_Conv(Convolution_Layer Conv) {
             int I_samples = Conv.dF.dim_1; int F_num = Conv.dF.dim_2; int F_rows = Conv.dF.dim_3; int F_columns = Conv.dF.dim_4; int F_channels = Conv.dF.dim_5;
 
-            for (int i = 0; i < I_samples; i++) {
-                for (int j = 0; j < F_num; j++) {
-                    
-                    Conv.B.values[j] -= Conv.dB.values[i * F_num + j] * Program.ALPHA;
+            for (int i = 0; i < F_num; i++) {
 
-                    for (int k = 0; k < F_rows; k++) {
-                        for (int l = 0; l < F_columns; l++) {
-                            for (int m = 0; m < F_channels; m++) {
-                                Conv.F.values[Conv.F.index(j, k, l, m)] -= Conv.dF.values[Conv.dF.index(i, j, k, l, m)] * Program.ALPHA;
+                Double dB_sum = 0;
+
+                for (int s = 0; s < I_samples; s++) {
+                    dB_sum += Conv.dB.values[s * F_num + i];
+                }
+                Conv.B.values[i] -= Program.ALPHA * dB_sum;
+
+                for (int j = 0; j < F_rows; j++) {
+                    for (int k = 0; k < F_columns; k++) {
+                        for (int l = 0; l < F_channels; l++) {
+                            Double dF_sum = 0;
+                            for (int s=0; s < I_samples; s++) {
+                                dF_sum += Conv.dF.values[Conv.dF.index(s, i, j, k, l)];
                             }
+                            Conv.F.values[Conv.F.index(i, j, k, l)] -= Program.ALPHA * dF_sum;
                         }
                     }
                 }
             }
         }
+        public void Momentum_FC(Fully_Connected_Layer FC) {
+            int I_samples = FC.dW.dim_1; int layer_size = FC.dW.dim_2; int previous_layer_size = FC.dW.dim_3;
+            Double V_bias_correction = (1 - Math.Pow(Program.BETA_1, this.t));
 
+            for (int i = 0; i < layer_size; i++) {
+
+                Double dB_sum = 0;
+
+                for (int s = 0; s < I_samples; s++) {
+                    dB_sum += FC.dB.values[s * layer_size + i];
+                }
+                FC.V_dB.values[i] = Program.BETA_1 * FC.V_dB.values[i] + (1 - Program.BETA_1) * dB_sum;
+                FC.B.values[i] -= Program.ALPHA * FC.V_dB.values[i] / V_bias_correction;
+
+                for (int j = 0; j < previous_layer_size; j++) {
+                    
+                    Double dW_sum = 0.0;
+                    
+                    for (int s = 0; s < I_samples; s++) {
+                        dW_sum += FC.dW.values[s * layer_size * previous_layer_size + i * previous_layer_size + j];
+                    }
+                    FC.V_dW.values[i * previous_layer_size + j] = Program.BETA_1 * FC.V_dW.values[i * previous_layer_size + j] + (1 - Program.BETA_1) * dW_sum;
+                    FC.W.values[i * previous_layer_size + j] -= Program.ALPHA * FC.V_dW.values[i * previous_layer_size + j]/V_bias_correction;
+                }
+            }
+        }
+
+        public void Momentum_Conv(Convolution_Layer Conv) {
+            int I_samples = Conv.dF.dim_1; int F_num = Conv.dF.dim_2; int F_rows = Conv.dF.dim_3; int F_columns = Conv.dF.dim_4; int F_channels = Conv.dF.dim_5;
+            Double V_bias_correction = (1 - Math.Pow(Program.BETA_1, this.t));
+
+            for (int i = 0; i < F_num; i++) {
+
+                Double dB_sum = 0;
+
+                for (int s = 0; s < I_samples; s++) {
+                    dB_sum += Conv.dB.values[s * F_num + i];
+                }
+                Conv.V_dB.values[i] = Program.BETA_1 * Conv.V_dB.values[i] + (1 - Program.BETA_1) * dB_sum;
+                Conv.B.values[i] -= Program.ALPHA * (Conv.V_dB.values[i] / V_bias_correction);
+
+                for (int j = 0; j < F_rows; j++) {
+                    for (int k = 0; k < F_columns; k++) {
+                        for (int l = 0; l < F_channels; l++) {
+                            
+                            Double dF_sum = 0;
+                            
+                            for (int s = 0; s < I_samples; s++) {
+                                dF_sum += Conv.dF.values[Conv.dF.index(s, i, j, k, l)];
+                            }
+                            Conv.V_dF.values[Conv.V_dF.index(i, j, k, l)] = Program.BETA_1 * Conv.V_dF.values[Conv.V_dF.index(i, j, k, l)] + (1 - Program.BETA_1) * dF_sum;
+                            Conv.F.values[Conv.F.index(i, j, k, l)] -= Program.ALPHA * (Conv.V_dF.values[Conv.V_dF.index(i, j, k, l)] /V_bias_correction);
+                        }
+                    }
+                }
+            }
+        }
         
-
         ///// <summary>   
         ///// Update biases and filters
         ///// </summary>

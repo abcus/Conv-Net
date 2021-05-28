@@ -7,97 +7,83 @@ using System.Threading.Tasks;
 namespace Conv_Net {
     class Max_Pooling_Layer {
 
-        int input_samples, input_rows, input_columns, input_channels;
-        int filter_rows, filter_columns;
-        private int output_samples, output_rows, output_columns, output_channels;
+        int I_samples, I_rows, I_columns, I_channels;
+        int F_rows, F_columns;
+        private int O_samples, O_rows, O_columns, O_channels;
 
-        private int input_gradient_samples, input_gradient_rows, input_gradient_columns, input_gradient_channels;
+        private int dI_samples, dI_rows, dI_columns, dI_channels;
 
         int stride;
 
-        Tensor input;
+        Tensor dLocal; // dO/dI
 
-        public Max_Pooling_Layer (int filter_rows = 2, int filter_columns = 2, int stride = 2) {
-            this.filter_rows = filter_rows;
-            this.filter_columns = filter_columns;
+        public Max_Pooling_Layer (int F_rows = 2, int F_columns = 2, int stride = 2) {
+            this.F_rows = F_rows;
+            this.F_columns = F_columns;
             this.stride = stride;
         }
         
-        public Tensor forward(Tensor input) {
-            this.input = input;
-            this.input_samples = input.dim_1;
-            this.input_rows = input.dim_2;
-            this.input_columns = input.dim_3;
-            this.input_channels = input.dim_4;
+        public Tensor forward(Tensor I) {
+            this.I_samples = I.dim_1; this.I_rows = I.dim_2; this.I_columns = I.dim_3; this.I_channels = I.dim_4;
+            this.dLocal = new Tensor(4, this.I_samples, this.I_rows, this.I_columns, this.I_channels);
 
-            this.output_samples = this.input_samples;
-            this.output_rows = ((this.input_rows - this.filter_rows) / this.stride) + 1;
-            this.output_columns = ((this.input_columns - this.filter_columns) / this.stride + 1);
-            this.output_channels = this.input_channels;
+            this.O_samples = this.I_samples;
+            this.O_rows = ((this.I_rows - this.F_rows) / this.stride) + 1;
+            this.O_columns = ((this.I_columns - this.F_columns) / this.stride + 1);
+            this.O_channels = this.I_channels;
 
-            Tensor output = new Tensor(4, this.output_samples, this.output_rows, this.output_columns, this.output_channels);
+            Tensor O = new Tensor(4, this.O_samples, this.O_rows, this.O_columns, this.O_channels);
 
-            Parallel.For(0, this.input_samples, i => {
-                
-                for (int j = 0; j < this.output_rows; j++) {
-                    for (int k = 0; k < this.output_columns; k++) {
-                        for (int l = 0; l < this.output_channels; l++) {
+            Parallel.For(0, this.O_samples, i => {
+                for (int j = 0; j < this.O_rows; j++) {
+                    for (int k = 0; k < this.O_columns; k++) {
+                        for (int l = 0; l < this.O_channels; l++) {
 
-                            Double max = Double.MinValue;
-                            
-                            for (int m = 0; m < this.filter_rows; m++) {
-                                for (int n = 0; n < this.filter_columns; n++) {
-                                    if (this.input.values[this.input.index(i, (j * stride + m), (k * stride + n), l)] > max) {
-                                        max = this.input.values[this.input.index(i, (j * stride + m), (k * stride + n), l)];
+                            Double max_value = Double.MinValue;
+                            int max_row = -1; 
+                            int max_column = -1;
+
+                            for (int m = 0; m < this.F_rows; m++) {
+                                for (int n = 0; n < this.F_columns; n++) {
+                                    Double temp = I.values[I.index(i, (j * stride + m), (k * stride + n), l)];
+                                    if (temp > max_value) {
+                                        max_value = temp;
+                                        max_row = j * stride + m;
+                                        max_column = k * stride + n;
                                     }
                                 }
                             }
-                            output.values[output.index(i, j, k,l)] = max;
-                            max = Double.MinValue;
+                            O.values[O.index(i, j, k,l)] = max_value;
+                            this.dLocal.values[this.dLocal.index(i, max_row, max_column, l)] = 1;
                         }
                     }
                 }
             });
-            return output;
+            return O;
         }
 
-        public Tensor backward(Tensor gradient_output) {
+        public Tensor backward(Tensor dO) {
 
-            this.input_gradient_samples = this.input_samples;
-            this.input_gradient_rows = this.input_rows;
-            this.input_gradient_columns = this.input_columns;
-            this.input_gradient_channels = this.input_channels;
+            this.dI_samples = this.I_samples; this.dI_rows = this.I_rows; this.dI_columns = this.I_columns; this.dI_channels = this.I_channels;
+            Tensor dI = new Tensor(4, this.dI_samples, this.dI_rows, this.dI_columns, this.dI_channels);
 
-            // dL/dI
-            Tensor gradient_input = new Tensor(4, this.input_gradient_samples, this.input_gradient_rows, this.input_gradient_columns, this.input_gradient_channels);
-
-            Parallel.For(0, this.input_samples, i => {
-                for (int j = 0; j <= this.input_rows - this.filter_rows; j += this.stride) {
-                    for (int k = 0; k <= this.input_columns - this.filter_columns; k += this.stride) {
-                        for (int l = 0; l < this.input_channels; l++) {
-
-                            Double max = Double.MinValue;
-                            int maxRow = -1;
-                            int maxColumn = -1;
-                            for (int m = 0; m < this.filter_rows; m++) {
-                                for (int n = 0; n < this.filter_columns; n++) {
-                                    if (this.input.values[this.input.index(i, (j + m), (k + n), l)] > max) {
-                                        max = this.input.values[this.input.index(i, (j + m), (k + n), l)];
-                                        maxRow = j + m;
-                                        maxColumn = k + n;
-                                    }
-                                }
+            Parallel.For(0, this.I_samples, i => {
+                for (int j=0; j < dI_rows; j ++) {
+                    for (int k=0; k < dI_columns; k++) {
+                        for (int l=0; l < dI_channels; l++) {
+                            Double temp = this.dLocal.values[this.dLocal.index(i, j, k, l)];
+                            
+                            // If dO/dI (dLocal) > 0, dL/dI = dL/dO * dO/dI , otherwise dL/dI = 0
+                            if (temp > 0) {
+                                dI.values[dI.index(i, j, k, l)] = dO.values[dO.index(i, j / this.stride, k / this.stride, l)] * temp;
+                            } else {
+                                dI.values[dI.index(i, j, k, l)] = 0;
                             }
-                            gradient_input.values[gradient_input.index(i, maxRow, maxColumn, l)] = gradient_output.values[gradient_output.index(i, (j / this.stride), (k / this.stride), l)];
-
-                            max = Double.MinValue;
-                            maxRow = -1;
-                            maxColumn = -1;
                         }
                     }
                 }
             });
-            return gradient_input;
+            return dI;
         }
     }
 }

@@ -10,24 +10,28 @@ namespace Conv_Net {
         public int dim_1 = 1; public int dim_2 = 1; public int dim_3 = 1; public int dim_4 = 1; public int dim_5 = 1; 
         public Double[] values;
 
+        // 1D tensor constructor
         public Tensor (int dimensions, int dim_1) {
             this.dimensions = dimensions;
             this.dim_1 = dim_1;
             values = new Double[this.dim_1];
         }
 
+        // 2D tensor constructor
         public Tensor (int dimensions, int dim_1, int dim_2) {
             this.dimensions = dimensions;
             this.dim_1 = dim_1; this.dim_2 = dim_2;
             values = new Double[this.dim_1 * this.dim_2];
         }
 
+        // 3D tensor constructor
         public Tensor (int dimensions, int dim_1, int dim_2, int dim_3) {
             this.dimensions = dimensions;
             this.dim_1 = dim_1; this.dim_2 = dim_2; this.dim_3 = dim_3;
             values = new Double[this.dim_1 * this.dim_2 * this.dim_3];
         }
 
+        // 4D tensor constructor
         public Tensor (int dimensions, int dim_1, int dim_2, int dim_3, int dim_4) {
             this.dimensions = dimensions;
             this.dim_1 = dim_1; this.dim_2 = dim_2; this.dim_3 = dim_3; this.dim_4 = dim_4;
@@ -58,7 +62,6 @@ namespace Conv_Net {
         public int index(int i, int j, int k, int l, int m) {
             return ((i * this.dim_2 * this.dim_3 * this.dim_4 * this.dim_5) + (j * this.dim_3 * this.dim_4 * this.dim_5) + (k * this.dim_4 * this.dim_5) + (l * this.dim_5) + m);
         }
-
 
         /// <summary>
         /// Transposes a 2D tensor

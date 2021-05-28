@@ -156,16 +156,16 @@ namespace Conv_Net {
                         for (int l = 0; l < this.dF_columns; l++) {
                             for (int m = 0; m < this.dF_channels; m++) {
                                 
-                                Double elementwise_product = 0.0;
+                                Double dot_product = 0.0;
 
                                 // Calculate the dot product of dO[I_sample,__,__,dF_num] and corresponding elements of I[I_sample,__,__,dF_channel]
                                 for (int n = 0; n < this.dO_rows; n++) {
                                     for (int o = 0; o < this.dO_columns; o++) {
-                                        elementwise_product += dO.values[dO.index(i, n, o, j)] * this.I.values[this.I.index(i, (k * this.dilation + n * this.stride), (l * this.dilation + o * this.stride), m)];
+                                        dot_product += dO.values[dO.index(i, n, o, j)] * this.I.values[this.I.index(i, (k * this.dilation + n * this.stride), (l * this.dilation + o * this.stride), m)];
                                     }
                                 }
                                 // Set the value of the dF 
-                                this.dF.values[this.dF.index(i, j, k, l, m)] = elementwise_product;
+                                this.dF.values[this.dF.index(i, j, k, l, m)] = dot_product;
                             }
                         }
                     }
@@ -178,12 +178,15 @@ namespace Conv_Net {
             //      For each F_num, calculate full convolution of (180 rotated F[F_num,__,__,dI_channel] dilated by D) over (dO[I_sample,__,__,F_num] dilated by S)
             //      Add all the full convolutions
            if (this.needs_gradient == true) {
+                
+                // Size of dI is the same as size of I (before padding in the forward pass)
                 this.dI_samples = this.I_samples; this.dI_rows = this.I_rows - 2 * this.pad_size; this.dI_columns = this.I_columns - 2 * this.pad_size; this.dI_channels = this.I_channels;
                 Tensor dI = new Tensor(4, this.dI_samples, this.dI_rows, this.dI_columns, this.dI_channels);
-                                
-                Tensor F_rotated = this.F.rotate_180();
-                Tensor dO_dilated_padded = dO.dilate(this.stride).pad(this.F_rows * this.dilation - this.dilation).unpad(this.pad_size);
 
+                // Dilate and pad dO, then unpad by pad_size to avoid performing extra calculations
+                Tensor dO_dilated_padded = dO.dilate(this.stride).pad(this.F_rows * this.dilation - this.dilation).unpad(this.pad_size);
+                Tensor F_rotated = this.F.rotate_180();
+                
                 // Select the sample of dI from the batch, dI_row, dI_column, and dI_channel to be calculated 
                 Parallel.For(0, this.dI_samples, i => {
                     for (int j = 0; j < this.dI_rows; j++) {
@@ -193,17 +196,17 @@ namespace Conv_Net {
                                 // Select the F_num
                                 // Calculate the dot product of 180 rotated F[F_num,__,__,dI_channel] and corresponding elements of dO[I_sample,__,__,F_num]
                                 // Add the dot products across all F_num
-                                Double elementwise_product = 0.0;
+                                Double dot_product = 0.0;
                                 
                                 for (int m = 0; m < this.F_num; m++) {
                                     for (int n=0; n < this.F_rows; n++) {
                                         for (int o=0; o < this.F_columns; o++) {
-                                            elementwise_product += F_rotated.values[F_rotated.index(m, n, o, l)] * dO_dilated_padded.values[dO_dilated_padded.index(i, j + n * this.dilation, k + o * this.dilation, m)];
+                                            dot_product += F_rotated.values[F_rotated.index(m, n, o, l)] * dO_dilated_padded.values[dO_dilated_padded.index(i, j + n * this.dilation, k + o * this.dilation, m)];
                                         }
                                     }
                                 }
                                 // Set the value of dI to be the sum of the dot products across all F_num
-                                dI.values[dI.index(i, j, k, l)] = elementwise_product;
+                                dI.values[dI.index(i, j, k, l)] = dot_product;
                             }
                         }
                     }

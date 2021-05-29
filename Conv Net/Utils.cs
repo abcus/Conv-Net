@@ -303,7 +303,7 @@ namespace Conv_Net {
             }
             return dO_2d;
         }
-        public static Tensor I_2_col_backprop(Tensor I, int dO_rows, int dO_columns, int F_rows, int F_columns, int F_channels) {
+        public static Tensor I_2_col_backprop(Tensor I, int dO_rows, int dO_columns, int F_rows, int F_columns, int F_channels, int stride, int dilation) {
 
             int I_2d_columns = F_rows * F_columns * F_channels;
             Tensor I_2d = new Tensor(2, dO_rows * dO_columns, F_rows * F_columns * F_channels);
@@ -313,13 +313,29 @@ namespace Conv_Net {
                     for (int i=0; i < F_rows; i++) {
                         for (int j=0; j < F_columns; j++) {
                             for (int k=0; k < F_channels; k++) {
-                                I_2d.values[(l * dO_columns + m) * (I_2d_columns) + (i * F_columns * F_channels + j * F_channels + k)] = I.values[I.index(0, i + l, j + m, k)];
+                                I_2d.values[(l * dO_columns + m) * (I_2d_columns) + (i * F_columns * F_channels + j * F_channels + k)] = I.values[I.index(0, i * stride + l * dilation, j * stride + m * dilation, k)];
                             }
                         }
                     }
                 }
             }
             return I_2d;
+        }
+        public static Tensor col_2_dF(Tensor dF_2d, int F_num, int F_rows, int F_columns, int F_channels) {
+            Tensor dF = new Tensor(4, F_num, F_rows, F_columns, F_channels);
+            dF.values = dF_2d.values;
+
+            //for (int i=0; i < F_num; i++) {
+            //    for (int j=0; j < F_rows; j++) {
+            //        for (int k=0; k < F_columns; k++) {
+            //            for (int l=0;l < F_channels; l++) {
+            //                dF.values[dF.index(i, j, k, l)] = dF_2d.values[];
+            //            }
+            //        }
+            //    }
+            //}
+
+            return dF;
         }
 
         public static Tensor F_rotated_2_col(Tensor F_rotated) {

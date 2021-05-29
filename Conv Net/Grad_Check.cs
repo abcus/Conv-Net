@@ -13,21 +13,42 @@ namespace Conv_Net {
         public Mean_Squared_Loss MSE;
         public Tensor I, T;
 
+        public int I_samples, I_rows, I_columns, I_channels;
+        public int F_num, F_rows, F_columns, F_channels;
+        int pad_size;
+        int stride;
+        int dilation;
+        int O_samples, O_rows, O_columns, O_channels;
+
         public test_CNN() {
 
-            // Input: 2 samples x 5 rows x 5 columns x 2 channels
+            // Input: 1 samples x 5 rows x 5 columns x 2 channels
+            // Filters: 3 num x 3 rows x 3 columns x 2 channels
+            
             // Padding: 4
-            // Filters: 2 num x 3 rows x 3 columns x 2 channels
-            // Dilation: 3
             // Stride 2
-            // Output size: 2 samples x 4 rows x 4 columns x 2 channels
+            // Dilation: 3
+
+            // Output size: 1 sample x 5 rows x 5 columns x 3 channels
+
+            I_samples = 1; I_rows = 5; I_columns = 5; I_channels = 2;
+            F_num = 3; F_rows = 3; F_columns = 3; F_channels = 2;
+            
+            pad_size = 4;
+            stride = 2;
+            dilation = 3;
+
+            O_samples = I_samples;
+            O_rows = (I_rows + 2 * pad_size - F_rows * dilation + dilation - 1) / stride + 1;
+            O_columns = (I_columns + 2 * pad_size - F_columns * dilation + dilation - 1) / stride + 1;
+            O_channels = F_num;
 
             // test input tensor
-            this.I = new Tensor(4, 1, 4, 4, 3);
-            for (int i = 0; i < I.dim_1; i++) {
-                for (int j=0; j < I.dim_2; j++) {
-                    for (int k=0; k < I.dim_3; k++) {
-                        for (int l=0; l < I.dim_4; l++) {
+            this.I = new Tensor(4, I_samples, I_rows, I_columns, I_channels);
+            for (int i = 0; i < I_samples; i++) {
+                for (int j=0; j < I_rows; j++) {
+                    for (int k=0; k < I_columns; k++) {
+                        for (int l=0; l < I_channels; l++) {
                             I.values[I.index(i, j, k, l)] = l * I.dim_2 * I.dim_3 + j * I.dim_3 + k + 1;
                         }
                     }
@@ -35,27 +56,27 @@ namespace Conv_Net {
             } 
 
             // test target tensor
-            this.T = new Tensor(4, 1, 3, 3, 5);
-            for (int i = 0; i < T.dim_1; i++) {
-                for (int j = 0; j < T.dim_2; j++) {
-                    for (int k = 0; k < T.dim_3; k++) {
-                        for (int l = 0; l < T.dim_4; l++) {
+            this.T = new Tensor(4, O_samples, O_rows, O_columns, O_channels);
+            for (int i = 0; i < O_samples; i++) {
+                for (int j = 0; j < O_rows; j++) {
+                    for (int k = 0; k < O_columns; k++) {
+                        for (int l = 0; l < O_channels; l++) {
                             T.values[T.index(i, j, k, l)] = i * T.dim_2 * T.dim_3 * T.dim_4 + l * T.dim_2 * T.dim_3 + j * T.dim_3 + k + 1;
                         }
                     }
                 }
             }
 
-            this.Conv = new Convolution_Layer(3, 5, 2, 2, true);
+            this.Conv = new Convolution_Layer(I_channels, F_num, F_rows, F_columns, true, pad_size, stride, dilation);
             this.MSE = new Mean_Squared_Loss();
 
             // Set filters
             // test target tensor
-            for (int i = 0; i < this.Conv.F_num; i++) {
-                for (int j = 0; j < this.Conv.F_rows; j++) {
-                    for (int k = 0; k < this.Conv.F_columns; k++) {
-                        for (int l = 0; l < this.Conv.F_channels; l++) {
-                            this.Conv.F.values[this.Conv.F.index(i, j, k, l)] = i * this.Conv.F_rows * this.Conv.F_columns * this.Conv.F_channels + l * this.Conv.F_rows * this.Conv.F_columns + j * this.Conv.F_columns + k + 1;
+            for (int i = 0; i < F_num; i++) {
+                for (int j = 0; j < F_rows; j++) {
+                    for (int k = 0; k < F_columns; k++) {
+                        for (int l = 0; l < F_channels; l++) {
+                            this.Conv.F.values[this.Conv.F.index(i, j, k, l)] = i * F_rows * F_columns * F_channels + l * F_rows * F_columns + j * F_columns + k + 1;
                         }
                     }
                 }
@@ -63,7 +84,7 @@ namespace Conv_Net {
 
 
             // Set biases
-            for (int i=0; i < this.Conv.F_num; i++) {
+            for (int i=0; i < F_num; i++) {
                 this.Conv.B.values[i] = (i + 1);
             }
         }
@@ -78,28 +99,25 @@ namespace Conv_Net {
         public Tensor backward() {
             Tensor Z;
             Z = this.MSE.backward();
-            //Tensor dO_2d = Utils.dO_2_col(Z);
-            //Tensor I_2d = Utils.I_2_col_backprop(I, Z.dim_2, Z.dim_3, this.Conv.F_rows, this.Conv.F_columns, this.Conv.F_channels);
-            //Tensor dF_2d = new Tensor(2, 5, 12);
-            //dF_2d = Utils.dgemm_cs(dO_2d, I_2d, dF_2d);
-            //Console.WriteLine(dF_2d);
+            
+            Tensor dO_2d = Utils.dO_2_col(Z);
 
-            Tensor F_rotated_2d = Utils.F_rotated_2_col(Conv.F.rotate_180());
-            // Console.WriteLine(F_rotated_2d);
-            Tensor dO_padded_2d = Utils.dO_padded_2_col(Z.pad(Conv.F_rows - 1).unpad(Conv.pad_size), Conv.F_rows, Conv.F_columns, Conv.F_num, Conv.I_rows - 2 * Conv.pad_size, Conv.I_columns - 2 * Conv.pad_size);;
-            // Console.WriteLine(dO_padded_2d);
-            Tensor dI_2d = new Tensor(2, 3, 16);
-            dI_2d = Utils.dgemm_cs(F_rotated_2d, dO_padded_2d, dI_2d);
-            Console.WriteLine(dI_2d);
+            // stride of filter dO (2nd last parameter) is equal to dilation of F
+            // dilation of filter dO (last parameter) is equal to stride of F
+            Tensor I_2d = Utils.I_2_col_backprop(Conv.I, Z.dim_2, Z.dim_3, F_rows, F_columns, F_channels, dilation, stride);
+            Tensor dF_2d = new Tensor(2, F_num, F_rows * F_columns * F_channels);
+            dF_2d = Utils.dgemm_cs(dO_2d, I_2d, dF_2d);
+            dF_2d = Utils.col_2_dF(dF_2d, F_num, F_rows, F_columns, F_channels);
+            Console.WriteLine(dF_2d);
+
+            //Tensor F_rotated_2d = Utils.F_rotated_2_col(Conv.F.rotate_180());
+            //Tensor dO_padded_2d = Utils.dO_padded_2_col(Z.pad(Conv.F_rows - 1).unpad(Conv.pad_size), Conv.F_rows, Conv.F_columns, Conv.F_num, Conv.I_rows - 2 * Conv.pad_size, Conv.I_columns - 2 * Conv.pad_size);;
+            //Tensor dI_2d = new Tensor(2, 3, 16);
+            //dI_2d = Utils.dgemm_cs(F_rotated_2d, dO_padded_2d, dI_2d);
+            //dI_2d = Utils.col_2_O(dI_2d, 1, 4, 4, 3);
+            //Console.WriteLine(dI_2d);
 
             Z = Conv.backward(Z);
-
-            
-            
-            
-
-
-            //Tensor dO_dilated_padded = dO.dilate(this.stride).pad(this.F_rows * this.dilation - this.dilation).unpad(this.pad_size);
 
             return Z;
         }
@@ -202,7 +220,9 @@ namespace Conv_Net {
                     }
                 }
             }
-            // Console.WriteLine(analytic_dF);
+            Console.WriteLine("--------------------------------------");
+            Console.WriteLine("ANALYTIC DF");
+            Console.WriteLine(analytic_dF);
             // Console.WriteLine(numeric_dF);
             // Console.WriteLine(analytic_dF.difference(numeric_dF));
 
@@ -225,9 +245,11 @@ namespace Conv_Net {
                     }
                 }
             }
-            // Console.WriteLine(analytic_dI);
-            // Console.WriteLine(numeric_dI);
-            // Console.WriteLine(analytic_dI.difference(numeric_dI));
+            Console.WriteLine("--------------------------------------");
+            Console.WriteLine("ANALYTIC DI");
+            Console.WriteLine(analytic_dI);
+            Console.WriteLine(numeric_dI);
+            Console.WriteLine(analytic_dI.difference(numeric_dI));
         }
     }
 }

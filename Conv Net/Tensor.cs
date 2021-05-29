@@ -178,24 +178,24 @@ namespace Conv_Net {
             return D;
         }
 
-        public Tensor im_2_col(int F_rows, int F_columns, int F_channels) {
+        public Tensor im_2_col(int F_rows, int F_columns, int F_channels, int dilation, int stride) {
 
             int X_rows = F_rows * F_columns * F_channels;
 
             int I_rows = this.dim_2;
             int I_cols = this.dim_3;
-            int O_rows = I_rows - F_rows + 1;
-            int O_columns = I_cols - F_columns + 1;
+            int O_rows = (I_rows - F_rows * dilation + dilation - 1)/ stride + 1;
+            int O_columns = (I_cols - F_columns * dilation + dilation - 1)/ stride + 1;
             int X_columns = O_rows * O_columns;
 
             Tensor X = new Tensor(2, X_rows, X_columns);
-            
+
             for (int i = 0; i < F_rows; i++) {
                 for (int j = 0; j < F_columns; j++) {
-                    for (int k=0; k < F_channels; k++) {
+                    for (int k = 0; k < F_channels; k++) {
                         for (int l = 0; l < O_rows; l++) {
                             for (int m = 0; m < O_columns; m++) {
-                                X.values[(i * F_columns * F_channels + j * F_channels + k) * X_columns + (l * O_columns + m)] = this.values[this.index(0, l + i, m + j, k)];
+                                X.values[(i * F_columns * F_channels + j * F_channels + k) * X_columns + (l * O_columns + m)] = this.values[this.index(0, l * stride + i * dilation, m * stride + j * dilation, k)];
                             }
                         }
                     }

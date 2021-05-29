@@ -219,6 +219,68 @@ namespace Conv_Net {
             return C;
         }
 
+        public static Tensor F_2_col(Tensor F) {
+            Tensor F_2d = new Tensor(2, F.dim_1, F.dim_2 * F.dim_3 * F.dim_4);
+            F_2d.values = F.values;
+            return F_2d;
+        }
+        public static Tensor I_2_col(Tensor I, int F_rows, int F_columns, int F_channels, int stride, int dilation) {
+
+            int I_2d_rows = F_rows * F_columns * F_channels;
+            int I_samples = I.dim_1;
+            int I_rows = I.dim_2;
+            int I_cols = I.dim_3;
+            int O_rows = (I_rows - F_rows * dilation + dilation - 1) / stride + 1;
+            int O_columns = (I_cols - F_columns * dilation + dilation - 1) / stride + 1;
+            int I_2d_columns = O_rows * O_columns * I_samples;
+
+            Tensor I_2d = new Tensor(2, I_2d_rows, I_2d_columns);
+
+            for (int i = 0; i < F_rows; i++) {
+                for (int j = 0; j < F_columns; j++) {
+                    for (int k = 0; k < F_channels; k++) {
+                        for (int l = 0; l < I_samples; l++) {
+                            for (int m = 0; m < O_rows; m++) {
+                                for (int n = 0; n < O_columns; n++) {
+                                    I_2d.values[(i * F_columns * F_channels + j * F_channels + k) * I_2d_columns + (l * O_rows * O_columns + m * O_columns + n)] = I.values[I.index(l, m * stride + i * dilation, n * stride + j * dilation, k)];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return I_2d;
+        }
+
+        public static Tensor B_2_col(Tensor B, int I_samples, int I_rows, int I_columns, int F_rows, int F_columns, int pad_size, int stride, int dilation) {
+            int B_2d_rows = B.dim_1;
+            int O_rows = (I_rows + 2 * pad_size - F_rows * dilation + dilation - 1) / stride + 1;
+            int O_columns = (I_columns + 2 * pad_size - F_columns * dilation + dilation - 1) / stride + 1;
+            int B_2dcolumns = O_rows * O_columns * I_samples;
+
+            Tensor B_2d = new Tensor(2, B_2d_rows, B_2dcolumns);
+            for (int i = 0; i < B_2d_rows; i++) {
+                for (int j = 0; j < B_2dcolumns; j++) {
+                    B_2d.values[i * B_2dcolumns + j] = B.values[i];
+                }
+            }
+            return B_2d;
+        }
+
+        public static Tensor col_2_O(Tensor O_2d, int O_sample, int O_rows, int O_columns, int O_channels) {
+            Tensor O = new Tensor(4, O_sample, O_rows, O_columns, O_channels);
+            for (int i = 0; i < O_sample; i++) {
+                for (int j = 0; j < O_rows; j++) {
+                    for (int k = 0; k < O_columns; k++) {
+                        for (int l = 0; l < O_channels; l++) {
+                            O.values[O.index(i, j, k, l)] = O_2d.values[l * O_sample * O_columns * O_rows + i * O_columns * O_rows + j * O_columns + k];
+                        }
+                    }
+                }
+            }
+            return O;
+        }
+
         static public void print_labels(Tensor label, Tensor output, int label_sample) {
 
             int label_rows = label.dim_2;

@@ -14,18 +14,17 @@ namespace Conv_Net {
 
         public gemm_Check() {
 
-            int image_samples = 2;
-            int image_rows = 5;
-            int image_cols = 5;
-
-            int bias_nums = 2;
-            int filter_nums = 2;
-            int filter_rows = 3;
-            int filter_columns = 3;
-            int filter_channels = 2;
-            int padding = 4;
+            int I_samples = 2; int I_rows = 5; int I_columns = 5;
+            int B_nums = 2;
+            int F_nums = 2; int F_rows = 3; int F_columns = 3; int F_channels = 2;
+            int pad_size = 4;
             int dilation = 3;
             int stride = 2;
+            int O_samples = I_samples;
+            int O_rows = (I_rows + 2 * pad_size - F_rows * dilation + dilation - 1) / stride + 1;
+            int O_columns = (I_columns + 2 * pad_size - F_columns * dilation + dilation - 1) / stride + 1;
+            int O_channels = F_nums;
+            
 
             // Input: 2 samples x 5 rows x 5 columns x 2 channels
             // Padding: 4
@@ -48,8 +47,7 @@ namespace Conv_Net {
 
 
             
-
-            this.Conv = new Convolution_Layer(filter_channels, filter_nums, filter_rows, filter_columns, true, padding, stride, dilation);
+            this.Conv = new Convolution_Layer(F_channels, F_nums, F_rows, F_columns, true, pad_size, stride, dilation);
             this.MSE = new Mean_Squared_Loss();
 
             // Set filters
@@ -62,18 +60,14 @@ namespace Conv_Net {
                 this.Conv.B.values[i] = (i + 1);
             }
 
-            Tensor FF = Conv.F.F_2_col();
-            Tensor BB = Conv.B.bias_2_col(bias_nums, image_samples, image_rows, image_cols, filter_rows, filter_columns, padding, dilation, stride);
+
+            Tensor F_2d = Utils.F_2_col(Conv.F);
+            Tensor I_2d = Utils.I_2_col(I.pad(pad_size), F_rows, F_columns, F_channels, stride, dilation);
+            Tensor B_2d = Utils.B_2_col(Conv.B, I_samples, I_rows, I_columns, F_rows, F_columns, pad_size, stride, dilation);
             
-            I = I.pad(padding);
-            I = I.im_2_col(filter_rows, filter_columns, filter_channels, dilation, stride, image_samples);
-
-
-
-
-            Tensor Result = Utils.dgemm_cs(FF, I, BB);
-            Result = Result.col_2_im(image_samples, 4, 4, 2);
-            Console.WriteLine(Result);
+            Tensor O_2d = Utils.dgemm_cs(F_2d, I_2d, B_2d);
+            Tensor O = Utils.col_2_O(O_2d, O_samples, O_rows, O_columns, O_channels);
+            Console.WriteLine(O);
         }
 
         public Tensor forward() {

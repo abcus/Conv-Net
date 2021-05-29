@@ -178,69 +178,15 @@ namespace Conv_Net {
             return D;
         }
 
-        public Tensor im_2_col(int F_rows, int F_columns, int F_channels, int dilation, int stride, int I_samples) {
-
-            int X_rows = F_rows * F_columns * F_channels;
-
-            int I_rows = this.dim_2;
-            int I_cols = this.dim_3;
-            int O_rows = (I_rows - F_rows * dilation + dilation - 1)/ stride + 1;
-            int O_columns = (I_cols - F_columns * dilation + dilation - 1)/ stride + 1;
-            int X_columns = O_rows * O_columns * I_samples;
-
-            Tensor X = new Tensor(2, X_rows, X_columns);
-
-            for (int i = 0; i < F_rows; i++) {
-                for (int j = 0; j < F_columns; j++) {
-                    for (int k = 0; k < F_channels; k++) {
-                        for (int l = 0; l < I_samples; l++) {
-                            for (int m = 0; m < O_rows; m++) {
-                                for (int n = 0; n < O_columns; n++) {
-                                    X.values[(i * F_columns * F_channels + j * F_channels + k) * X_columns + (l * O_rows * O_columns + m * O_columns + n)] = this.values[this.index(l, m * stride + i * dilation, n * stride + j * dilation, k)];
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            return X;
-        }
-
-        public Tensor bias_2_col (int B_num, int I_samples, int I_rows, int I_cols, int F_rows, int F_cols, int padding, int dilation, int stride) {
-            int O_rows = (I_rows + 2 * padding - F_rows * dilation + dilation - 1) / stride + 1;
-            int O_columns = (I_cols + 2 * padding - F_cols * dilation + dilation - 1) / stride + 1;
-            int X_columns = O_rows * O_columns * I_samples;
-
-            Tensor X = new Tensor(2, B_num, X_columns);
-            for (int i=0; i < B_num; i++) {
-                for (int j=0; j < X_columns; j++) {
-                    X.values[i * X_columns + j] = this.values[i];
-                }
-            }
-            return X;
-        }
-
-        public Tensor col_2_im(int I_sample, int I_rows, int I_columns, int I_channels) {
-            Tensor X = new Tensor(4, I_sample, I_rows, I_columns, I_channels);
-            for (int i=0; i < I_sample; i++) {
-                for (int j=0; j < I_rows; j++) {
-                    for (int k=0; k < I_columns; k++) {
-                        for (int l =0; l < I_channels; l++) {
-                            X.values[X.index(i, j, k, l)] = this.values[l * I_sample * I_columns * I_rows + i * I_columns * I_rows + j * I_columns + k];
-                        }
-                    }
-                }
-            }
-            return X;
-        }
+        
 
         
 
-        public Tensor F_2_col () {
-            Tensor X = new Tensor(2, this.dim_1, this.dim_2 * this.dim_3 * this.dim_4);
-            X.values = this.values;
-            return X;
-        }
+        
+
+        
+
+        
 
         public override string ToString() {
             if (this.dimensions == 5) {

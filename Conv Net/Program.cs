@@ -18,7 +18,7 @@ namespace Conv_Net {
 
         public static Tensor training_images, training_labels, testing_images, testing_labels;
        
-        public static int testing_sample_size = 10000;
+        public static int testing_sample_size = 1000;
         public static int epochs = 20;
         public static int CNN_training_sample_size = 600;
         public static int batch_size = 32;
@@ -36,23 +36,23 @@ namespace Conv_Net {
 
 
             // Grad_Check.test();
-            // Gemm_Check.test();
+            Gemm_Check.test();
 
-            Tuple<Tensor, Tensor, Tensor, Tensor> data = Utils.load_MNIST(60000, 10000, 28, 28, 1, 10);
-            training_images = data.Item1;
-            training_labels = data.Item2;
-            testing_images = data.Item3;
-            testing_labels = data.Item4;
+            //Tuple<Tensor, Tensor, Tensor, Tensor> data = Utils.load_MNIST(60000, 10000, 28, 28, 1, 10);
+            //training_images = data.Item1;
+            //training_labels = data.Item2;
+            //testing_images = data.Item3;
+            //testing_labels = data.Item4;
 
-            // CNN.load_parameters();
-            test_CNN(testing_sample_size);
-            for (int i = 0; i < epochs; i++) {
-                Console.WriteLine("____________________________________________________________\nEPOCH: " + i);
-                Utils.shuffle_training(training_images, training_labels);
-                train_CNN(CNN_training_sample_size, batch_size);
-                test_CNN(testing_sample_size);
-                //CNN.save_parameters(i);
-            }
+            //// CNN.load_parameters();
+            //test_CNN(testing_sample_size);
+            //for (int i = 0; i < epochs; i++) {
+            //    Console.WriteLine("____________________________________________________________\nEPOCH: " + i);
+            //    Utils.shuffle_training(training_images, training_labels);
+            //    train_CNN(CNN_training_sample_size, batch_size);
+            //    test_CNN(testing_sample_size);
+            //    //CNN.save_parameters(i);
+            //}
 
 
 

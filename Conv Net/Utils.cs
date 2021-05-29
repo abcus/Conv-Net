@@ -219,22 +219,29 @@ namespace Conv_Net {
             return C;
         }
 
-        public static Tensor F_2_col(Tensor F) {
+        /// <summary>
+        /// Convolution forward propagation, converts filter tensor into 2D matrix
+        /// </summary>
+        public static Tensor F_2_mat(Tensor F) {
             Tensor F_2d = new Tensor(2, F.dim_1, F.dim_2 * F.dim_3 * F.dim_4);
             F_2d.values = F.values;
             return F_2d;
         }
-        public static Tensor I_2_col(Tensor I, int F_rows, int F_columns, int F_channels, int stride, int dilation) {
-
-            int I_2d_rows = F_rows * F_columns * F_channels;
+        /// <summary>
+        /// Convolution forward propagation, converts padded input tensor into 2D matrix
+        /// </summary>
+        /// <param name="I"> padded input tensor</param>
+        public static Tensor I_to_matrix(Tensor I, int F_rows, int F_columns, int F_channels, int stride, int dilation) {          
             int I_samples = I.dim_1;
             int I_rows = I.dim_2;
             int I_cols = I.dim_3;
             int O_rows = (I_rows - F_rows * dilation + dilation - 1) / stride + 1;
             int O_columns = (I_cols - F_columns * dilation + dilation - 1) / stride + 1;
-            int I_2d_columns = O_rows * O_columns * I_samples;
+            
+            int I_matrix_rows = F_rows * F_columns * F_channels;
+            int I_matrix_columns = I_samples * O_rows * O_columns;
 
-            Tensor I_2d = new Tensor(2, I_2d_rows, I_2d_columns);
+            Tensor I_matrix = new Tensor(2, I_matrix_rows, I_matrix_columns);
 
             for (int i = 0; i < F_rows; i++) {
                 for (int j = 0; j < F_columns; j++) {
@@ -242,73 +249,85 @@ namespace Conv_Net {
                         for (int l = 0; l < I_samples; l++) {
                             for (int m = 0; m < O_rows; m++) {
                                 for (int n = 0; n < O_columns; n++) {
-                                    I_2d.values[(i * F_columns * F_channels + j * F_channels + k) * I_2d_columns + (l * O_rows * O_columns + m * O_columns + n)] = I.values[I.index(l, m * stride + i * dilation, n * stride + j * dilation, k)];
+                                    I_matrix.values[(i * F_columns * F_channels + j * F_channels + k) * I_matrix_columns + (l * O_rows * O_columns + m * O_columns + n)] = I.values[I.index(l, m * stride + i * dilation, n * stride + j * dilation, k)];
                                 }
                             }
                         }
                     }
                 }
             }
-            return I_2d;
+            return I_matrix;
         }
 
-        public static Tensor B_2_col(Tensor B, int I_samples, int I_rows, int I_columns, int F_rows, int F_columns, int stride, int dilation) {
-            int B_2d_rows = B.dim_1;
+        /// <summary>
+        /// Convolution forward propagation, converts bias tensor into 2D matrix with same dimensions as output (to perform elementwise sum with output)
+        /// </summary>
+        public static Tensor B_to_matrix(Tensor B, int I_samples, int I_rows, int I_columns, int F_rows, int F_columns, int stride, int dilation) {
             int O_rows = (I_rows - F_rows * dilation + dilation - 1) / stride + 1;
             int O_columns = (I_columns - F_columns * dilation + dilation - 1) / stride + 1;
-            int B_2dcolumns = O_rows * O_columns * I_samples;
 
-            Tensor B_2d = new Tensor(2, B_2d_rows, B_2dcolumns);
-            for (int i = 0; i < B_2d_rows; i++) {
-                for (int j = 0; j < B_2dcolumns; j++) {
-                    B_2d.values[i * B_2dcolumns + j] = B.values[i];
+            int B_matrix_rows = B.dim_1;
+            int B_matrix_columns = I_samples * O_rows * O_columns;
+
+            Tensor B_matrix = new Tensor(2, B_matrix_rows, B_matrix_columns);
+            for (int i = 0; i < B_matrix_rows; i++) {
+                for (int j = 0; j < B_matrix_columns; j++) {
+                    B_matrix.values[i * B_matrix_columns + j] = B.values[i];
                 }
             }
-            return B_2d;
+            return B_matrix;
         }
 
-        public static Tensor col_2_O(Tensor O_2d, int O_sample, int O_rows, int O_columns, int O_channels) {
-            Tensor O = new Tensor(4, O_sample, O_rows, O_columns, O_channels);
-            for (int i = 0; i < O_sample; i++) {
-                for (int j = 0; j < O_rows; j++) {
-                    for (int k = 0; k < O_columns; k++) {
-                        for (int l = 0; l < O_channels; l++) {
-                            O.values[O.index(i, j, k, l)] = O_2d.values[l * O_sample * O_columns * O_rows + i * O_columns * O_rows + j * O_columns + k];
+        /// <summary>
+        /// Convolution forward and backward propagation, converts 2D output matrix or 2D gradient input matrix into tensor
+        /// </summary>
+        public static Tensor matrix_to_tensor(Tensor X_matrix, int X_sample, int X_rows, int X_columns, int X_channels) {
+            Tensor X = new Tensor(4, X_sample, X_rows, X_columns, X_channels);
+            for (int i = 0; i < X_sample; i++) {
+                for (int j = 0; j < X_rows; j++) {
+                    for (int k = 0; k < X_columns; k++) {
+                        for (int l = 0; l < X_channels; l++) {
+                            X.values[X.index(i, j, k, l)] = X_matrix.values[l * X_sample * X_columns * X_rows + i * X_columns * X_rows + j * X_columns + k];
                         }
                     }
                 }
             }
-            return O;
+            return X;
         }
-
-        public static Tensor dO_2_col(Tensor dO) {
+        /// <summary>
+        /// Convolution backward propagation to calculate ∂L/∂F, converts ∂L/∂O tensor into 2D matrix
+        /// </summary>
+        public static Tensor dO_to_matrix(Tensor dO) {
             int dO_sample = dO.dim_1;
             int dO_rows = dO.dim_2;
             int dO_columns = dO.dim_3;
             int dO_channels = dO.dim_4;
 
-            int dO_2d_rows = dO_channels;
-            int dO_2d_columns = dO_sample * dO_rows * dO_columns;
+            int dO_matrix_rows = dO_channels;
+            int dO_matrix_columns = dO_sample * dO_rows * dO_columns;
 
-            // dimensions are: (dO_sample * dO_channel) x (dO_row * dO_column)
-            Tensor dO_2d = new Tensor(2, dO_2d_rows, dO_2d_columns);
+            Tensor dO_matrix = new Tensor(2, dO_matrix_rows, dO_matrix_columns);
             for (int i = 0; i < dO_channels; i++) {
                 for (int j=0; j < dO_sample; j++) {
                     for (int k=0; k < dO_rows; k++) {
                         for (int l=0; l < dO_columns; l++) {
-                            dO_2d.values[i * dO_2d_columns + (j * dO_rows * dO_columns + k * dO_columns + l)] = dO.values[dO.index(j, k, l, i)];
+                            dO_matrix.values[i * dO_matrix_columns + (j * dO_rows * dO_columns + k * dO_columns + l)] = dO.values[dO.index(j, k, l, i)];
                         }
                     }
                 }
             }
-            return dO_2d;
+            return dO_matrix;
         }
-        public static Tensor I_2_col_backprop(Tensor I, int dO_rows, int dO_columns, int F_rows, int F_columns, int F_channels, int stride, int dilation) {
+
+        /// <summary>
+        /// Convolution backward propagation to calculate ∂L/∂F, converts I tensor into 2D matrix
+        /// </summary>
+        public static Tensor I_to_matrix_backprop(Tensor I, int dO_rows, int dO_columns, int F_rows, int F_columns, int F_channels, int stride, int dilation) {
             int I_samples = I.dim_1;
 
-            int I_2d_rows = I_samples * dO_rows * dO_columns;
-            int I_2d_columns = F_rows * F_columns * F_channels;
-            Tensor I_2d = new Tensor(2, I_2d_rows, I_2d_columns);
+            int I_matrix_rows = I_samples * dO_rows * dO_columns;
+            int I_matrix_columns = F_rows * F_columns * F_channels;
+            Tensor I_matrix = new Tensor(2, I_matrix_rows, I_matrix_columns);
 
             for (int i = 0; i < I_samples; i++) {
                 for (int j = 0; j < dO_rows; j++) {
@@ -316,58 +335,59 @@ namespace Conv_Net {
                         for (int l = 0; l < F_rows; l++) {
                             for (int m = 0; m < F_columns; m++) {
                                 for (int n = 0; n < F_channels; n++) {
-                                    I_2d.values[(i * dO_rows * dO_columns + j * dO_columns + k) * (I_2d_columns) + (l * F_columns * F_channels + m * F_channels + n)] = I.values[I.index(i, l * stride + j * dilation, m * stride + k * dilation, n)];
+                                    I_matrix.values[(i * dO_rows * dO_columns + j * dO_columns + k) * (I_matrix_columns) + (l * F_columns * F_channels + m * F_channels + n)] = I.values[I.index(i, l * stride + j * dilation, m * stride + k * dilation, n)];
                                 }
                             }
                         }
                     }
                 }
             }
-            return I_2d;
+            return I_matrix;
         }
-        public static Tensor col_2_dF(Tensor dF_2d, int F_num, int F_rows, int F_columns, int F_channels) {
+
+        /// <summary>
+        /// Convolution backward propagation to calculate ∂L/∂F, converts 2D ∂L/∂F matrix into tensor
+        /// </summary>
+        public static Tensor dF_matrix_to_tensor(Tensor dF_matrix, int F_num, int F_rows, int F_columns, int F_channels) {
             Tensor dF = new Tensor(4, F_num, F_rows, F_columns, F_channels);
-            dF.values = dF_2d.values;
-
-            //for (int i=0; i < F_num; i++) {
-            //    for (int j=0; j < F_rows; j++) {
-            //        for (int k=0; k < F_columns; k++) {
-            //            for (int l=0;l < F_channels; l++) {
-            //                dF.values[dF.index(i, j, k, l)] = dF_2d.values[];
-            //            }
-            //        }
-            //    }
-            //}
-
+            dF.values = dF_matrix.values;
             return dF;
         }
 
+        /// <summary>
+        /// Convolution backward propagation to calculate ∂L/∂I, converts 180 rotated F tensor into 2D matrix
+        /// </summary>
         public static Tensor F_rotated_2_col(Tensor F_rotated) {
             int F_rotated_num = F_rotated.dim_1;
             int F_rotated_rows = F_rotated.dim_2;
             int F_rotated_columns = F_rotated.dim_3;
             int F_rotated_channels = F_rotated.dim_4;
-            int F_rotated_2d_columns = F_rotated_rows * F_rotated_columns * F_rotated_num;
+
+            int F_rotated_matrix_rows = F_rotated_channels;
+            int F_rotated_matrix_columns = F_rotated_num * F_rotated_rows * F_rotated_columns;
 
 
-            Tensor F_rotated_2d = new Tensor(2, F_rotated_channels, F_rotated_rows * F_rotated_columns * F_rotated_num);
+            Tensor F_rotated_matrix = new Tensor(2, F_rotated_matrix_rows, F_rotated_matrix_columns);
             for (int i=0; i < F_rotated_channels; i++) {
                 for (int j = 0; j < F_rotated_num; j++) {
                     for (int k=0; k < F_rotated_rows; k++) {
                         for (int l = 0; l < F_rotated_columns; l++) {
-                            F_rotated_2d.values[(i) * (F_rotated_2d_columns) + (j * F_rotated_rows * F_rotated_columns + k * F_rotated_columns + l)] = F_rotated.values[F_rotated.index(j, k, l, i)];
+                            F_rotated_matrix.values[(i) * (F_rotated_matrix_columns) + (j * F_rotated_rows * F_rotated_columns + k * F_rotated_columns + l)] = F_rotated.values[F_rotated.index(j, k, l, i)];
                         }
                     }
                 }
             }
-            
-            return F_rotated_2d;
+            return F_rotated_matrix;
         }
-        public static Tensor dO_padded_2_col(Tensor dO_padded, int F_rows, int F_columns, int F_num, int I_samples, int I_rows, int I_columns, int dilation) {
-            int dO_padded_2d_rows = F_num * F_rows * F_columns;
-            int dO_padded_2d_columns = I_samples * I_rows * I_columns;
 
-            Tensor dO_padded_2d = new Tensor(2, dO_padded_2d_rows, dO_padded_2d_columns);
+        /// <summary>
+        /// Convolution backward propagation to calculate ∂L/∂I, converts dilated, padded ∂L/∂O tensor into 2D matrix
+        /// </summary>
+        public static Tensor dO_dilated_padded_to_matrix(Tensor dO_dilated_padded, int F_num, int F_rows, int F_columns, int I_samples, int I_rows, int I_columns, int dilation) {
+            int dO_dilated_padded_matrix_rows = F_num * F_rows * F_columns;
+            int dO_dilated_padded_matrix_columns = I_samples * I_rows * I_columns;
+
+            Tensor dO_dilated_padded_matrix = new Tensor(2, dO_dilated_padded_matrix_rows, dO_dilated_padded_matrix_columns);
 
             for (int i = 0; i < F_num; i++) {
                 for (int j=0; j < F_rows; j++) {
@@ -375,14 +395,14 @@ namespace Conv_Net {
                         for (int l=0; l < I_samples; l++) {
                             for (int m = 0; m < I_rows; m++) {
                                 for (int n = 0; n < I_columns; n++) {
-                                    dO_padded_2d.values[(i * F_rows * F_columns + j * F_columns + k) * dO_padded_2d_columns + (l * I_rows * I_columns + m * I_columns + n)] = dO_padded.values[dO_padded.index(l, m + j * dilation, n + k * dilation, i)];
+                                    dO_dilated_padded_matrix.values[(i * F_rows * F_columns + j * F_columns + k) * dO_dilated_padded_matrix_columns + (l * I_rows * I_columns + m * I_columns + n)] = dO_dilated_padded.values[dO_dilated_padded.index(l, m + j * dilation, n + k * dilation, i)];
                                 }
                             }
                         }
                     }
                 }
             }
-            return dO_padded_2d;
+            return dO_dilated_padded_matrix;
         }
 
         static public void print_labels(Tensor label, Tensor output, int label_sample) {

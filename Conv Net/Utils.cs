@@ -363,19 +363,20 @@ namespace Conv_Net {
             
             return F_rotated_2d;
         }
-        public static Tensor dO_padded_2_col(Tensor dO_padded, int F_rows, int F_columns, int F_num, int I_rows, int I_columns, int dilation) {
-            int dO_padded_2d_columns = I_rows * I_columns;
+        public static Tensor dO_padded_2_col(Tensor dO_padded, int F_rows, int F_columns, int F_num, int I_samples, int I_rows, int I_columns, int dilation) {
+            int dO_padded_2d_rows = F_num * F_rows * F_columns;
+            int dO_padded_2d_columns = I_samples * I_rows * I_columns;
 
+            Tensor dO_padded_2d = new Tensor(2, dO_padded_2d_rows, dO_padded_2d_columns);
 
-            Tensor dO_padded_2d = new Tensor(2, F_rows * F_columns * F_num, I_rows * I_columns);
-
-            for (int i=0; i < F_rows; i++) {
-                for (int j=0; j < F_columns; j++) {
-                    for (int k=0; k < I_rows; k++) {
-                        for (int l=0; l < I_columns; l++) {
-                            for (int m = 0; m < F_num; m++) {
-                                dO_padded_2d.values[(m * F_rows * F_columns + i * F_columns + j) * dO_padded_2d_columns + (k * I_columns + l)] = dO_padded.values[dO_padded.index(0, k + i * dilation, l + j * dilation, m)];
-                                //Console.WriteLine(dO_padded.values[dO_padded.index(0, k + i, l + j, m)]);
+            for (int i = 0; i < F_num; i++) {
+                for (int j=0; j < F_rows; j++) {
+                    for (int k=0; k < F_columns; k++) {
+                        for (int l=0; l < I_samples; l++) {
+                            for (int m = 0; m < I_rows; m++) {
+                                for (int n = 0; n < I_columns; n++) {
+                                    dO_padded_2d.values[(i * F_rows * F_columns + j * F_columns + k) * dO_padded_2d_columns + (l * I_rows * I_columns + m * I_columns + n)] = dO_padded.values[dO_padded.index(l, m + j * dilation, n + k * dilation, i)];
+                                }
                             }
                         }
                     }

@@ -75,6 +75,7 @@
     <Compile Include="gemm.cs" />
     <Compile Include="Grad_Check.cs" />
     <Compile Include="Layers\Batch Normalization.cs" />
+    <Compile Include="Layers\Convolution_Gemm_Layer.cs" />
     <Compile Include="Layers\Mean_Squared_Loss.cs" />
     <Compile Include="Optimizer.cs" />
     <Compile Include="Layers\Convolution_Layer.cs" />

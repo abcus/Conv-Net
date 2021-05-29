@@ -35,8 +35,8 @@ namespace Conv_Net {
             Application.Run(new Form1());*/
 
 
-            // Grad_Check.test();
-            Gemm_Check.test();
+            Grad_Check.test();
+            // Gemm_Check.test();
             
             //Tuple<Tensor, Tensor, Tensor, Tensor> data = Utils.load_MNIST(60000, 10000, 28, 28, 1, 10);
             //training_images = data.Item1;

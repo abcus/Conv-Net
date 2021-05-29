@@ -210,17 +210,26 @@ namespace Conv_Net {
             int A_col = this.dim_2;
             int B_row = B.dim_1;
             int B_col = B.dim_2;
+            int B_transposed_row = B_col;
+            int B_transposed_col = B_row;
+            Tensor B_transposed = new Tensor(2, B_transposed_row, B_transposed_col);
             Tensor C = new Tensor(2, A_row, B_col);
-            
-            for (int i=0; i < A_row; i++) {
-                for (int j=0; j < B_col; j++) {
+
+            Parallel.For(0, B_transposed_row, i => { 
+                for (int j=0; j < B_transposed_col; j++) {
+                    B_transposed.values[i * B_transposed_col + j] = B.values[j * B_col + i];
+                }
+            });
+
+            Parallel.For(0, A_row, i => {
+                for (int j = 0; j < B_transposed_row; j++) {
                     Double temp = 0.0;
-                    for (int k=0; k < A_col; k++) {
-                        temp += this.values[i * A_col + k] * B.values[k * B_col + j];
+                    for (int k = 0; k < A_col; k++) {
+                        temp += this.values[i * A_col + k] * B_transposed.values[j * B_transposed_col + k];
                     }
                     C.values[i * B_col + j] = temp;
                 }
-            }
+            });
             
             return C;
         }
@@ -256,7 +265,7 @@ namespace Conv_Net {
                         if (this.dimensions == 4) {sb.Append("<");}
 
                         for (int l = 0; l < this.dim_4; l++) {
-                            sb.AppendFormat("{0:0.0000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
+                            sb.AppendFormat("{0:0.000000000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
                             if (this.dimensions == 4 && l < this.dim_4 - 1) {sb.Append(", ");}
                             else if (this.dimensions == 3 && k < this.dim_3 - 1) {sb.Append(", ");}
                             else if (this.dimensions == 2 && j < this.dim_2 - 1) {sb.Append(", ");}

@@ -14,15 +14,15 @@ namespace Conv_Net {
 
         public test_CNN() {
 
-            // Input: 5 rows x 5 columns x 2 channels
+            // Input: 2 samples x 5 rows x 5 columns x 2 channels
             // Padding: 4
             // Filters: 2 num x 3 rows x 3 columns x 2 channels
             // Dilation: 3
             // Stride 2
-            // Output size: 4 rows x 4 columns x 2 channels
+            // Output size: 2 samples x 4 rows x 4 columns x 2 channels
 
             // test input tensor
-            this.I = new Tensor(4, 1, 5, 5, 2);
+            this.I = new Tensor(4, 2, 5, 5, 2);
             for (int i = 0; i < I.dim_1; i++) {
                 for (int j = 0; j < I.dim_2; j++) {
                     for (int k = 0; k < I.dim_3; k++) {
@@ -34,7 +34,7 @@ namespace Conv_Net {
             }
 
             // test target tensor
-            this.T = new Tensor(4, 1, 4, 4, 2);
+            this.T = new Tensor(4, 2, 4, 4, 2);
             T.values[0] = 4.7; T.values[1] = 8.4; 
             T.values[2] = 3.8; T.values[3] = 7.2;
             T.values[4] = 5.2; T.values[5] = 9.3;
@@ -52,6 +52,23 @@ namespace Conv_Net {
             T.values[28] = 8.9; T.values[29] = 3.4;
             T.values[30] = 1.0; T.values[31] = 0.4;
 
+            T.values[32] = 4.1; T.values[33] = 8.1;
+            T.values[34] = 3.2; T.values[35] = 7.2;
+            T.values[36] = 5.3; T.values[37] = 9.4;
+            T.values[38] = 3.4; T.values[39] = 5.3;
+            T.values[40] = 4.5; T.values[41] = 3.4;
+            T.values[42] = 4.6; T.values[43] = 6.5;
+            T.values[44] = 1.7; T.values[45] = 2.7;
+            T.values[46] = 5.8; T.values[47] = 3.6;
+            T.values[48] = 4.9; T.values[49] = 2.7;
+            T.values[50] = 1.1; T.values[51] = 1.9;
+            T.values[52] = 2.2; T.values[53] = 4.0;
+            T.values[54] = 2.3; T.values[55] = 5.1;
+            T.values[56] = 3.4; T.values[57] = 4.2;
+            T.values[58] = 5.5; T.values[59] = 7.5;
+            T.values[60] = 8.6; T.values[61] = 3.7;
+            T.values[62] = 1.7; T.values[63] = 0.9;
+
             this.Conv = new Convolution_Layer(2, 2, 3, 3, true, 4, 2, 3);
             this.MSE = new Mean_Squared_Loss();
         }
@@ -60,6 +77,7 @@ namespace Conv_Net {
             Tensor A; 
             A = this.Conv.forward(this.I);
             A = this.MSE.loss(A, this.T);
+            
             return A;
         }
 
@@ -92,31 +110,61 @@ namespace Conv_Net {
             test_CNN.forward();
             
             analytic_dI = test_CNN.backward();
-            analytic_dB = test_CNN.Conv.dB; analytic_dB.dimensions = 1; analytic_dB.dim_1 = analytic_dB.dim_2; analytic_dB.dim_2 = 1;
-            analytic_dF = test_CNN.Conv.dF; analytic_dF.dimensions = 4; analytic_dF.dim_1 = analytic_dF.dim_2; analytic_dF.dim_2 = analytic_dF.dim_3; analytic_dF.dim_3 = analytic_dF.dim_4; analytic_dF.dim_4 = analytic_dF.dim_5; analytic_dF.dim_5 = 1;
+            analytic_dB = new Tensor(1, test_CNN.Conv.dB.dim_2);
+            analytic_dF = new Tensor(4, test_CNN.Conv.dF.dim_2, test_CNN.Conv.dF.dim_3, test_CNN.Conv.dF.dim_4, test_CNN.Conv.dF.dim_5);
 
             numeric_dI = new Tensor(analytic_dI.dimensions, analytic_dI.dim_1, analytic_dI.dim_2, analytic_dI.dim_3, analytic_dI.dim_4);
             numeric_dB = new Tensor(analytic_dB.dimensions, analytic_dB.dim_1);
             numeric_dF = new Tensor(analytic_dF.dimensions, analytic_dF.dim_1, analytic_dF.dim_2, analytic_dF.dim_3, analytic_dF.dim_4);
 
+            int I_samples = test_CNN.I.dim_1;
+            int B_num = test_CNN.Conv.B.dim_1;
+            int F_num = test_CNN.Conv.F.dim_1; int F_rows = test_CNN.Conv.F.dim_2; int F_columns = test_CNN.Conv.F.dim_3; int F_channels = test_CNN.Conv.F.dim_4;
+
+            // Analytic gradient of loss with respect to bias
+            // For each bias, sum contribution from each sample (which has already been divided by batch size)
+            for (int i=0; i < B_num; i++) {
+                for (int s=0; s < I_samples; s++) {
+                    analytic_dB.values[i] += test_CNN.Conv.dB.values[s * test_CNN.Conv.B.dim_1 + i];
+                }
+            }
+
             //Numerical gradient of loss with respect to bias
-            for (int i = 0; i < test_CNN.Conv.B.dim_1; i++) {
+            // For each bias, sum contribution from each sample (divide by batch size at the end)
+            for (int i = 0; i < B_num; i++) {
                 loss_up = 0.0;
                 loss_down = 0.0;
 
                 test_CNN.Conv.B.values[i] += h;
-                loss_up = test_CNN.forward().values[0];
+                for (int s=0; s < I_samples; s++) {
+                    loss_up += test_CNN.forward().values[s];
+                }
                 test_CNN.Conv.B.values[i] -= 2 * h;
-                loss_down = test_CNN.forward().values[0];
+                for (int s=0; s < I_samples; s++) {
+                    loss_down += test_CNN.forward().values[s];
+                }
                 test_CNN.Conv.B.values[i] += h;
-
-                numeric_dB.values[i] = (loss_up - loss_down) / (2 * h);
+                numeric_dB.values[i] = (loss_up - loss_down) / (2 * h * I_samples);
             }
             // Console.WriteLine(analytic_dB);
             // Console.WriteLine(numeric_dB);
-            // Console.WriteLine(analytic_dB.difference(numeric_dB));
+            Console.WriteLine(analytic_dB.difference(numeric_dB));
 
+            // Analytic gradient of loss with respect to filters
+            // For each filter, sum contributions from each sample (which has already been divided by batch size)
+            for (int i=0; i < F_num; i++) {
+                for (int j=0; j < F_rows; j++) {
+                    for (int k=0; k < F_columns; k++) {
+                        for (int l=0; l < F_channels; l++) {
+                            for (int s = 0; s < I_samples; s++) {
+                                analytic_dF.values[analytic_dF.index(i, j, k, l)] += test_CNN.Conv.dF.values[test_CNN.Conv.dF.index(s, i, j, k, l)];
+                            }
+                        }
+                    }
+                }
+            }
             // Numerical gradient of loss with respect to filters
+            // For each bias, sum contribution from each sample (divide by batch size at the end)
             for (int i = 0; i < test_CNN.Conv.F.dim_1; i++) {
                 for (int j = 0; j < test_CNN.Conv.F.dim_2; j++) {
                     for (int k = 0; k < test_CNN.Conv.F.dim_3; k++) {
@@ -125,19 +173,22 @@ namespace Conv_Net {
                             loss_down = 0.0;
 
                             test_CNN.Conv.F.values[test_CNN.Conv.F.index(i, j, k, l)] += h;
-                            loss_up = test_CNN.forward().values[0];
+                            for (int s = 0; s < I_samples; s++) {
+                                loss_up += test_CNN.forward().values[s];
+                            }
                             test_CNN.Conv.F.values[test_CNN.Conv.F.index(i, j, k, l)] -= 2 * h;
-                            loss_down = test_CNN.forward().values[0];
+                            for (int s = 0; s < I_samples; s++) {
+                                loss_down += test_CNN.forward().values[s];
+                            }
                             test_CNN.Conv.F.values[test_CNN.Conv.F.index(i, j, k, l)] += h;
-
-                            numeric_dF.values[numeric_dF.index(i, j, k, l)] = (loss_up - loss_down) / (2 * h);
+                            numeric_dF.values[numeric_dF.index(i, j, k, l)] = (loss_up - loss_down) / (2 * h * test_CNN.I.dim_1);
                         }
                     }
                 }
             }
             // Console.WriteLine(analytic_dF);
             // Console.WriteLine(numeric_dF);
-            // Console.WriteLine(analytic_dF.difference(numeric_dF));
+            Console.WriteLine(analytic_dF.difference(numeric_dF));
 
             // Numerical gradient of loss with respect to input
             for (int i = 0; i < test_CNN.I.dim_1; i++) {
@@ -148,19 +199,19 @@ namespace Conv_Net {
                             loss_down = 0.0;
 
                             test_CNN.I.values[test_CNN.I.index(i, j, k, l)] += h;
-                            loss_up = test_CNN.forward().values[0];
+                            loss_up = test_CNN.forward().values[i];
                             test_CNN.I.values[test_CNN.I.index(i, j, k, l)] -= 2 * h;
-                            loss_down = test_CNN.forward().values[0];
+                            loss_down = test_CNN.forward().values[i];
                             test_CNN.I.values[test_CNN.I.index(i, j, k, l)] += h;
 
-                            numeric_dI.values[numeric_dI.index(i, j, k, l)] = (loss_up - loss_down) / (2 * h);
+                            numeric_dI.values[numeric_dI.index(i, j, k, l)] = (loss_up - loss_down) / (2 * h * test_CNN.I.dim_1);
                         }
                     }
                 }
             }
-            //Console.WriteLine(analytic_dI);
-            //Console.WriteLine(numeric_dI);
-            // Console.WriteLine(analytic_dI.difference(numeric_dI));
+            // Console.WriteLine(analytic_dI);
+            // Console.WriteLine(numeric_dI);
+            Console.WriteLine(analytic_dI.difference(numeric_dI));
         }
     }
 }

@@ -213,7 +213,7 @@ namespace Conv_Net {
                         if (this.dimensions == 4) {sb.Append("<");}
 
                         for (int l = 0; l < this.dim_4; l++) {
-                            sb.AppendFormat("{0:0.00}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
+                            sb.AppendFormat("{0:0.0000000000000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
                             if (this.dimensions == 4 && l < this.dim_4 - 1) {sb.Append(", ");}
                             else if (this.dimensions == 3 && k < this.dim_3 - 1) {sb.Append(", ");}
                             else if (this.dimensions == 2 && j < this.dim_2 - 1) {sb.Append(", ");}
@@ -267,7 +267,7 @@ namespace Conv_Net {
                 return false;
             }
             for (int i = 0; i < this.dim_1 * this.dim_2 * this.dim_3 * this.dim_4; i++) {
-                if (this.values[i] != t.values[i]) {
+                if ((float)this.values[i] != (float)t.values[i]) {
                     return false;
                 }
             }

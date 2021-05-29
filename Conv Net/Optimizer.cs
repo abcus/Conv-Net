@@ -40,7 +40,7 @@ namespace Conv_Net {
         }
 
         public void SGD_Conv(Convolution_Layer Conv) {
-            int I_samples = Conv.dF.dim_1; int F_num = Conv.dF.dim_2; int F_rows = Conv.dF.dim_3; int F_columns = Conv.dF.dim_4; int F_channels = Conv.dF.dim_5;
+            int I_samples = Conv.dB.dim_1; int F_num = Conv.dF.dim_1; int F_rows = Conv.dF.dim_2; int F_columns = Conv.dF.dim_3; int F_channels = Conv.dF.dim_4;
 
             for (int i = 0; i < F_num; i++) {
 
@@ -54,11 +54,7 @@ namespace Conv_Net {
                 for (int j = 0; j < F_rows; j++) {
                     for (int k = 0; k < F_columns; k++) {
                         for (int l = 0; l < F_channels; l++) {
-                            Double dF_sum = 0;
-                            for (int s=0; s < I_samples; s++) {
-                                dF_sum += Conv.dF.values[Conv.dF.index(s, i, j, k, l)];
-                            }
-                            Conv.F.values[Conv.F.index(i, j, k, l)] -= Program.ALPHA * dF_sum;
+                            Conv.F.values[Conv.F.index(i, j, k, l)] -= Program.ALPHA * Conv.dF.values[Conv.dF.index(i, j, k, l)];//dF_sum;
                         }
                     }
                 }
@@ -92,7 +88,7 @@ namespace Conv_Net {
         }
 
         public void Momentum_Conv(Convolution_Layer Conv) {
-            int I_samples = Conv.dF.dim_1; int F_num = Conv.dF.dim_2; int F_rows = Conv.dF.dim_3; int F_columns = Conv.dF.dim_4; int F_channels = Conv.dF.dim_5;
+            int I_samples = Conv.dB.dim_1; int F_num = Conv.dF.dim_1; int F_rows = Conv.dF.dim_2; int F_columns = Conv.dF.dim_3; int F_channels = Conv.dF.dim_4;
             Double V_bias_correction = (1 - Math.Pow(Program.BETA_1, this.t));
 
             for (int i = 0; i < F_num; i++) {
@@ -108,13 +104,7 @@ namespace Conv_Net {
                 for (int j = 0; j < F_rows; j++) {
                     for (int k = 0; k < F_columns; k++) {
                         for (int l = 0; l < F_channels; l++) {
-                            
-                            Double dF_sum = 0;
-                            
-                            for (int s = 0; s < I_samples; s++) {
-                                dF_sum += Conv.dF.values[Conv.dF.index(s, i, j, k, l)];
-                            }
-                            Conv.V_dF.values[Conv.V_dF.index(i, j, k, l)] = Program.BETA_1 * Conv.V_dF.values[Conv.V_dF.index(i, j, k, l)] + (1 - Program.BETA_1) * dF_sum;
+                            Conv.V_dF.values[Conv.V_dF.index(i, j, k, l)] = Program.BETA_1 * Conv.V_dF.values[Conv.V_dF.index(i, j, k, l)] + (1 - Program.BETA_1) * Conv.dF.values[Conv.dF.index(i, j, k, l)];
                             Conv.F.values[Conv.F.index(i, j, k, l)] -= Program.ALPHA * (Conv.V_dF.values[Conv.V_dF.index(i, j, k, l)] /V_bias_correction);
                         }
                     }

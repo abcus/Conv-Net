@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Conv_Net {
     class Convolution_Layer {
@@ -101,7 +102,6 @@ namespace Conv_Net {
             // Initialize ∂L/∂B and ∂L/∂F (have to store these for gradient descent)
             // Don't have to set values to 0.0 after gradient descent because a new gradient tensor is created during each backward pass
             this.dB = new Tensor(2, this.I_samples, this.dB_num);
-            this.dF = new Tensor(5, this.I_samples, this.dF_num, this.dF_rows, this.dF_columns, this.dF_channels);
 
             this.dO_rows = dO.dim_2;
             this.dO_columns = dO.dim_3;
@@ -128,32 +128,19 @@ namespace Conv_Net {
                     // Set the value of the bias gradient 
                     this.dB.values[i * this.dB_num + j] = sum;
                 }
-
-                // ∂L/∂F
-                // ∂L/∂F is the convolution of (∂L/∂O dilated by S) with stride D over I
-                // dF[I_sample, dF_num,__,__, dF_channel] is convolution of (dO[I_sample,__,__,dF_num] dilated by S) with stride D over (I[I_sample,__,__,dF_channel])
-
-                // Select the dF_num number, dF_row, dF_column, and dF_channel to be calculated
-                for (int j = 0; j < this.dF_num; j++) {
-                    for (int k = 0; k < this.dF_rows; k++) {
-                        for (int l = 0; l < this.dF_columns; l++) {
-                            for (int m = 0; m < this.dF_channels; m++) {
-                                
-                                Double dot_product = 0.0;
-
-                                // Calculate the dot product of dO[I_sample,__,__,dF_num] and corresponding elements of I[I_sample,__,__,dF_channel]
-                                for (int n = 0; n < this.dO_rows; n++) {
-                                    for (int o = 0; o < this.dO_columns; o++) {
-                                        dot_product += dO.values[dO.index(i, n, o, j)] * this.I.values[this.I.index(i, (k * this.dilation + n * this.stride), (l * this.dilation + o * this.stride), m)];
-                                    }
-                                }
-                                // Set the value of the dF 
-                                this.dF.values[this.dF.index(i, j, k, l, m)] = dot_product;
-                            }
-                        }
-                    }
-                }
             });
+
+            // Calculate ∂L/∂F
+            // ∂L/∂F is the convolution of (∂L/∂O dilated by S) with stride D over I
+            
+            // dF_matrix = dO_matrix * I_matrix
+            Tensor dO_matrix = Utils.dO_to_matrix(dO);
+            // 2nd last parameter (stride of filter dO) is equal to dilation of F
+            // last parameter (dilation of filter dO) is equal to stride of F
+            Tensor I_matrix = Utils.I_to_matrix_backprop(this.I, dO.dim_2, dO.dim_3, F_rows, F_columns, F_channels, dilation, stride);        
+            Tensor dF_matrix = new Tensor(2, F_num, F_rows * F_columns * F_channels);
+            dF_matrix = Utils.dgemm_cs(dO_matrix, I_matrix, dF_matrix);
+            dF = Utils.dF_matrix_to_tensor(dF_matrix, F_num, F_rows, F_columns, F_channels);
 
             // Calculate ∂L/∂I (if first layer, it is not needed and can return null)
             // ∂L/∂I is the full convolution of (180 rotated F dilated by D) over (∂L/∂O dilated by S and padded by (F_rows * D - D))

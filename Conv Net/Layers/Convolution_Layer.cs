@@ -81,31 +81,15 @@ namespace Conv_Net {
             this.O_rows = (this.I_rows - this.F_rows * this.dilation + this.dilation - 1) / this.stride + 1;
             this.O_columns = (this.I_columns - this.F_columns * this.dilation + this.dilation - 1) / this.stride + 1;
             this.O_channels = this.F_num;
-            Tensor O = new Tensor(4, this.O_samples, this.O_rows, this.O_columns, this.O_channels);
-
-            // Select the O_sample from the batch, O_row, O_column, and O_channel (same as filter number)
-            Parallel.For(0, this.O_samples, i => {    
-                for (int j = 0; j < this.O_rows; j ++) {
-                    for (int k = 0; k < this.O_columns; k ++) {
-                        for (int l = 0; l < this.O_channels; l++) {
-
-                            Double elementwise_product = 0.0;
-
-                            // Loop through each element of the filter and multiply by the corresponding element of the input, add the products
-                            for (int m = 0; m < this.F_rows; m++) {
-                                for (int n = 0; n < this.F_columns; n++) {
-                                    for (int o = 0; o < this.F_channels; o++) {
-                                        elementwise_product += this.F.values[this.F.index(l, m, n, o)] * this.I.values[this.I.index(i, (j * stride + m * dilation), (k * stride + n * dilation), o)];
-                                    }
-                                }
-                            }
-                            // Add the bias to the elementwise product, set the value of output
-                            O.values[O.index(i, j, k, l)] = (elementwise_product + this.B.values[l]);
-                        }
-                    }
-                }
-            });
+            
+            // O_2d = F_2d * I_2d + B_2d
+            Tensor F_2d = Utils.F_2_col(this.F);
+            Tensor I_2d = Utils.I_2_col(this.I, this.F_rows, this.F_columns, this.F_channels, this.stride, this.dilation);
+            Tensor B_2d = Utils.B_2_col(this.B, this.I_samples, this.I_rows, this.I_columns, this.F_rows, this.F_columns, this.stride, this.dilation);
+            Tensor O_2d = Utils.dgemm_cs(F_2d, I_2d, B_2d);
+            Tensor O = Utils.col_2_O(O_2d, O_samples, O_rows, O_columns, O_channels);
             return O;
+
         }
         /// <summary>
         /// Backpropagation for convolutional layer

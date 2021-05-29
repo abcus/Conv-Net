@@ -252,10 +252,10 @@ namespace Conv_Net {
             return I_2d;
         }
 
-        public static Tensor B_2_col(Tensor B, int I_samples, int I_rows, int I_columns, int F_rows, int F_columns, int pad_size, int stride, int dilation) {
+        public static Tensor B_2_col(Tensor B, int I_samples, int I_rows, int I_columns, int F_rows, int F_columns, int stride, int dilation) {
             int B_2d_rows = B.dim_1;
-            int O_rows = (I_rows + 2 * pad_size - F_rows * dilation + dilation - 1) / stride + 1;
-            int O_columns = (I_columns + 2 * pad_size - F_columns * dilation + dilation - 1) / stride + 1;
+            int O_rows = (I_rows - F_rows * dilation + dilation - 1) / stride + 1;
+            int O_columns = (I_columns - F_columns * dilation + dilation - 1) / stride + 1;
             int B_2dcolumns = O_rows * O_columns * I_samples;
 
             Tensor B_2d = new Tensor(2, B_2d_rows, B_2dcolumns);

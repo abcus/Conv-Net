@@ -63,7 +63,7 @@ namespace Conv_Net {
 
             Tensor F_2d = Utils.F_2_col(Conv.F);
             Tensor I_2d = Utils.I_2_col(I.pad(pad_size), F_rows, F_columns, F_channels, stride, dilation);
-            Tensor B_2d = Utils.B_2_col(Conv.B, I_samples, I_rows, I_columns, F_rows, F_columns, pad_size, stride, dilation);
+            Tensor B_2d = Utils.B_2_col(Conv.B, I_samples, I_rows + 2 * pad_size, I_columns + 2 * pad_size, F_rows, F_columns, stride, dilation);
             
             Tensor O_2d = Utils.dgemm_cs(F_2d, I_2d, B_2d);
             Tensor O = Utils.col_2_O(O_2d, O_samples, O_rows, O_columns, O_channels);

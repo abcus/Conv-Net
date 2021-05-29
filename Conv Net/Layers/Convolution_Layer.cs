@@ -155,45 +155,21 @@ namespace Conv_Net {
                 }
             });
 
-            // ∂L/∂I (if first layer, it is not needed and can return null)
-            // ∂L/∂I is the full convolution of (180 rotated F dilated by D) over (∂L/∂O dilated by S and padded by [F_rows * D - D])
-            // To calculate dI[I_sample,__,__, dI_channel]:
-            //      For each F_num, calculate full convolution of (180 rotated F[F_num,__,__,dI_channel] dilated by D) over (dO[I_sample,__,__,F_num] dilated by S)
-            //      Add all the full convolutions
+            // Calculate ∂L/∂I (if first layer, it is not needed and can return null)
+            // ∂L/∂I is the full convolution of (180 rotated F dilated by D) over (∂L/∂O dilated by S and padded by (F_rows * D - D))
             if (this.needs_gradient == true) {
                 
                 // Size of dI is the same as size of I (before padding in the forward pass)
                 this.dI_samples = this.I_samples; this.dI_rows = this.I_rows - 2 * this.pad_size; this.dI_columns = this.I_columns - 2 * this.pad_size; this.dI_channels = this.I_channels;
-                Tensor dI = new Tensor(4, this.dI_samples, this.dI_rows, this.dI_columns, this.dI_channels);
 
-                // Dilate and pad dO, then unpad by pad_size to avoid performing extra calculations
-                Tensor dO_dilated_padded = dO.dilate(this.stride).pad(this.F_rows * this.dilation - this.dilation).unpad(this.pad_size);
-                Tensor F_rotated = this.F.rotate_180();
-                
-                // Select the sample of dI from the batch, dI_row, dI_column, and dI_channel to be calculated 
-                Parallel.For(0, this.dI_samples, i => {
-                    for (int j = 0; j < this.dI_rows; j++) {
-                        for (int k = 0; k < this.dI_columns; k++) {
-                            for (int l = 0; l < this.dI_channels; l++) {
+                // dI_matrix = F_rotated_matrix * dO_dilated_padded_matrix
+                // For dO, dilate by S and pad for full convolution, then unpad by pad_size to avoid performing extra calculations, then convert to matrix
+                Tensor F_rotated_matrix = Utils.F_rotated_to_matrix(this.F.rotate_180());
+                Tensor dO_dilated_padded_matrix = Utils.dO_dilated_padded_to_matrix(dO.dilate(this.stride).pad(this.F_rows * this.dilation - this.dilation).unpad(this.pad_size), this.F_num, this.F_rows, this.F_columns, this.dI_samples, this.dI_rows, this.dI_columns, this.dilation);
+                Tensor dI_matrix = new Tensor(2, this.dI_channels, this.dI_samples * (this.dI_rows) * (this.dI_columns));
+                dI_matrix = Utils.dgemm_cs(F_rotated_matrix, dO_dilated_padded_matrix, dI_matrix);
+                Tensor dI = Utils.matrix_to_tensor(dI_matrix, dI_samples, (dI_rows), (dI_columns), dI_channels);
 
-                                // Select the F_num
-                                // Calculate the dot product of 180 rotated F[F_num,__,__,dI_channel] and corresponding elements of dO[I_sample,__,__,F_num]
-                                // Add the dot products across all F_num
-                                Double dot_product = 0.0;
-                                
-                                for (int m = 0; m < this.F_num; m++) {
-                                    for (int n=0; n < this.F_rows; n++) {
-                                        for (int o=0; o < this.F_columns; o++) {
-                                            dot_product += F_rotated.values[F_rotated.index(m, n, o, l)] * dO_dilated_padded.values[dO_dilated_padded.index(i, j + n * this.dilation, k + o * this.dilation, m)];
-                                        }
-                                    }
-                                }
-                                // Set the value of dI to be the sum of the dot products across all F_num
-                                dI.values[dI.index(i, j, k, l)] = dot_product;
-                            }
-                        }
-                    }
-                });
                 this.I = null;
                 return dI;
             } else {

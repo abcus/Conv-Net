@@ -357,7 +357,7 @@ namespace Conv_Net {
         /// <summary>
         /// Convolution backward propagation to calculate ∂L/∂I, converts 180 rotated F tensor into 2D matrix
         /// </summary>
-        public static Tensor F_rotated_2_col(Tensor F_rotated) {
+        public static Tensor F_rotated_to_matrix(Tensor F_rotated) {
             int F_rotated_num = F_rotated.dim_1;
             int F_rotated_rows = F_rotated.dim_2;
             int F_rotated_columns = F_rotated.dim_3;
@@ -380,22 +380,26 @@ namespace Conv_Net {
             return F_rotated_matrix;
         }
 
+
         /// <summary>
         /// Convolution backward propagation to calculate ∂L/∂I, converts dilated, padded ∂L/∂O tensor into 2D matrix
         /// </summary>
-        public static Tensor dO_dilated_padded_to_matrix(Tensor dO_dilated_padded, int F_num, int F_rows, int F_columns, int I_samples, int I_rows, int I_columns, int dilation) {
+        /// <param name="dI_rows"> rows of input gradient after padding is removed </param>
+        /// <param name="dI_columns"> columns of input gradient after padding is removed </param>
+        /// <returns></returns>
+        public static Tensor dO_dilated_padded_to_matrix(Tensor dO_dilated_padded, int F_num, int F_rows, int F_columns, int dI_samples, int dI_rows, int dI_columns, int dilation) {
             int dO_dilated_padded_matrix_rows = F_num * F_rows * F_columns;
-            int dO_dilated_padded_matrix_columns = I_samples * I_rows * I_columns;
+            int dO_dilated_padded_matrix_columns = dI_samples * dI_rows * dI_columns;
 
             Tensor dO_dilated_padded_matrix = new Tensor(2, dO_dilated_padded_matrix_rows, dO_dilated_padded_matrix_columns);
 
             for (int i = 0; i < F_num; i++) {
                 for (int j=0; j < F_rows; j++) {
                     for (int k=0; k < F_columns; k++) {
-                        for (int l=0; l < I_samples; l++) {
-                            for (int m = 0; m < I_rows; m++) {
-                                for (int n = 0; n < I_columns; n++) {
-                                    dO_dilated_padded_matrix.values[(i * F_rows * F_columns + j * F_columns + k) * dO_dilated_padded_matrix_columns + (l * I_rows * I_columns + m * I_columns + n)] = dO_dilated_padded.values[dO_dilated_padded.index(l, m + j * dilation, n + k * dilation, i)];
+                        for (int l=0; l < dI_samples; l++) {
+                            for (int m = 0; m < dI_rows; m++) {
+                                for (int n = 0; n < dI_columns; n++) {
+                                    dO_dilated_padded_matrix.values[(i * F_rows * F_columns + j * F_columns + k) * dO_dilated_padded_matrix_columns + (l * dI_rows * dI_columns + m * dI_columns + n)] = dO_dilated_padded.values[dO_dilated_padded.index(l, m + j * dilation, n + k * dilation, i)];
                                 }
                             }
                         }

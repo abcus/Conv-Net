@@ -56,6 +56,7 @@ namespace Conv_Net {
             I = I.im_2_col(filter_rows, filter_columns, filter_channels, dilation, stride, image_samples);
             // Console.WriteLine(I);
             Tensor Result = FF.mm(I);
+            Result = Result.col_2_im(image_samples, 4, 4, 2);
             Console.WriteLine(Result);
         }
 

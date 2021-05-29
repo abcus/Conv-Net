@@ -206,6 +206,20 @@ namespace Conv_Net {
             return X;
         }
 
+        public Tensor col_2_im(int I_sample, int I_rows, int I_columns, int I_channels) {
+            Tensor X = new Tensor(4, I_sample, I_rows, I_columns, I_channels);
+            for (int i=0; i < I_sample; i++) {
+                for (int j=0; j < I_rows; j++) {
+                    for (int k=0; k < I_columns; k++) {
+                        for (int l =0; l < I_channels; l++) {
+                            X.values[X.index(i, j, k, l)] = this.values[l * I_sample * I_columns * I_rows + i * I_columns * I_rows + j * I_columns + k];
+                        }
+                    }
+                }
+            }
+            return X;
+        }
+
         public Tensor mm (Tensor B) {
             int A_row = this.dim_1;
             int A_col = this.dim_2;

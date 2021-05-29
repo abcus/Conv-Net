@@ -185,6 +185,40 @@ namespace Conv_Net {
             Console.WriteLine("\t\t\t\t   ╚════════════════════════════╝");
         }
 
+        /// <summary>
+        /// Returns A * B + C
+        /// </summary>
+        /// <param name="A"></param>
+        /// <param name="B"></param>
+        /// <param name="C"></param>
+        /// <returns></returns>
+        static public Tensor dgemm_cs(Tensor A, Tensor B, Tensor C) {
+            int A_row = A.dim_1;
+            int A_col = A.dim_2;
+            int B_row = B.dim_1;
+            int B_col = B.dim_2;
+            int B_transposed_row = B_col;
+            int B_transposed_col = B_row;
+            Tensor B_transposed = new Tensor(2, B_transposed_row, B_transposed_col);
+            
+            Parallel.For(0, B_transposed_row, i => {
+                for (int j = 0; j < B_transposed_col; j++) {
+                    B_transposed.values[i * B_transposed_col + j] = B.values[j * B_col + i];
+                }
+            });
+
+            Parallel.For(0, A_row, i => {
+                for (int j = 0; j < B_transposed_row; j++) {
+                    Double temp = 0.0;
+                    for (int k = 0; k < A_col; k++) {
+                        temp += A.values[i * A_col + k] * B_transposed.values[j * B_transposed_col + k];
+                    }
+                    C.values[i * B_col + j] += temp;
+                }
+            });
+            return C;
+        }
+
         static public void print_labels(Tensor label, Tensor output, int label_sample) {
 
             int label_rows = label.dim_2;

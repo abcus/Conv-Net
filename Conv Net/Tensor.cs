@@ -206,6 +206,20 @@ namespace Conv_Net {
             return X;
         }
 
+        public Tensor bias_2_col (int B_num, int I_samples, int I_rows, int I_cols, int F_rows, int F_cols, int padding, int dilation, int stride) {
+            int O_rows = (I_rows + 2 * padding - F_rows * dilation + dilation - 1) / stride + 1;
+            int O_columns = (I_cols + 2 * padding - F_cols * dilation + dilation - 1) / stride + 1;
+            int X_columns = O_rows * O_columns * I_samples;
+
+            Tensor X = new Tensor(2, B_num, X_columns);
+            for (int i=0; i < B_num; i++) {
+                for (int j=0; j < X_columns; j++) {
+                    X.values[i * X_columns + j] = this.values[i];
+                }
+            }
+            return X;
+        }
+
         public Tensor col_2_im(int I_sample, int I_rows, int I_columns, int I_channels) {
             Tensor X = new Tensor(4, I_sample, I_rows, I_columns, I_channels);
             for (int i=0; i < I_sample; i++) {
@@ -220,34 +234,7 @@ namespace Conv_Net {
             return X;
         }
 
-        public Tensor mm (Tensor B) {
-            int A_row = this.dim_1;
-            int A_col = this.dim_2;
-            int B_row = B.dim_1;
-            int B_col = B.dim_2;
-            int B_transposed_row = B_col;
-            int B_transposed_col = B_row;
-            Tensor B_transposed = new Tensor(2, B_transposed_row, B_transposed_col);
-            Tensor C = new Tensor(2, A_row, B_col);
-
-            Parallel.For(0, B_transposed_row, i => { 
-                for (int j=0; j < B_transposed_col; j++) {
-                    B_transposed.values[i * B_transposed_col + j] = B.values[j * B_col + i];
-                }
-            });
-
-            Parallel.For(0, A_row, i => {
-                for (int j = 0; j < B_transposed_row; j++) {
-                    Double temp = 0.0;
-                    for (int k = 0; k < A_col; k++) {
-                        temp += this.values[i * A_col + k] * B_transposed.values[j * B_transposed_col + k];
-                    }
-                    C.values[i * B_col + j] = temp;
-                }
-            });
-            
-            return C;
-        }
+        
 
         public Tensor F_2_col () {
             Tensor X = new Tensor(2, this.dim_1, this.dim_2 * this.dim_3 * this.dim_4);

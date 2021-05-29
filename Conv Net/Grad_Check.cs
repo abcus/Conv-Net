@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace Conv_Net {
 
@@ -36,14 +37,23 @@ namespace Conv_Net {
             this.Conv = new Convolution_Layer(2, 2, 3, 3, true, 4, 2, 3);
             this.MSE = new Mean_Squared_Loss();
 
+            // Set filters
             for (int i=0; i < this.Conv.F_num * this.Conv.F_rows * this.Conv.F_columns * this.Conv.F_channels; i++) {
                 this.Conv.F.values[i] = i / 100.0;
+            }
+
+            // Set biases
+            for (int i=0; i < this.Conv.F_num; i++) {
+                this.Conv.B.values[i] = (i + 1);
             }
         }
 
         public Tensor forward() {
             Tensor A; 
             A = this.Conv.forward(this.I);
+            Console.WriteLine(A);
+            Thread.Sleep(5000);
+
             A = this.MSE.loss(A, this.T);
             
             return A;
@@ -116,7 +126,7 @@ namespace Conv_Net {
             }
             // Console.WriteLine(analytic_dB);
             // Console.WriteLine(numeric_dB);
-            Console.WriteLine(analytic_dB.difference(numeric_dB));
+            // Console.WriteLine(analytic_dB.difference(numeric_dB));
 
             // Analytic gradient of loss with respect to filters
             // For each filter, sum contributions from each sample (which has already been divided by batch size)
@@ -156,7 +166,7 @@ namespace Conv_Net {
             }
             // Console.WriteLine(analytic_dF);
             // Console.WriteLine(numeric_dF);
-            Console.WriteLine(analytic_dF.difference(numeric_dF));
+            // Console.WriteLine(analytic_dF.difference(numeric_dF));
 
             // Numerical gradient of loss with respect to input
             for (int i = 0; i < test_CNN.I.dim_1; i++) {
@@ -179,7 +189,7 @@ namespace Conv_Net {
             }
             // Console.WriteLine(analytic_dI);
             // Console.WriteLine(numeric_dI);
-            Console.WriteLine(analytic_dI.difference(numeric_dI));
+            // Console.WriteLine(analytic_dI.difference(numeric_dI));
         }
     }
 }

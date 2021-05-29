@@ -6,13 +6,26 @@ using System.Threading.Tasks;
 
 namespace Conv_Net {
 
-    class test_gemm {
+    class gemm_Check {
 
         public Convolution_Layer Conv;
         public Mean_Squared_Loss MSE;
         public Tensor I, T;
 
-        public test_gemm() {
+        public gemm_Check() {
+
+            int image_samples = 2;
+            int image_rows = 5;
+            int image_cols = 5;
+
+            int bias_nums = 2;
+            int filter_nums = 2;
+            int filter_rows = 3;
+            int filter_columns = 3;
+            int filter_channels = 2;
+            int padding = 4;
+            int dilation = 3;
+            int stride = 2;
 
             // Input: 2 samples x 5 rows x 5 columns x 2 channels
             // Padding: 4
@@ -33,29 +46,32 @@ namespace Conv_Net {
                 this.T.values[i] = i / 20.0;
             }
 
-            int image_samples = 2;
-            int filter_nums = 2;
-            int filter_rows = 3;
-            int filter_columns = 3;
-            int filter_channels = 2;
-            int padding = 4;
-            int dilation = 3;
-            int stride = 2;
+
+            
 
             this.Conv = new Convolution_Layer(filter_channels, filter_nums, filter_rows, filter_columns, true, padding, stride, dilation);
             this.MSE = new Mean_Squared_Loss();
 
+            // Set filters
             for (int i = 0; i < this.Conv.F_num * this.Conv.F_rows * this.Conv.F_columns * this.Conv.F_channels; i++) {
                 this.Conv.F.values[i] = i / 100.0;
             }
 
+            // Set biases
+            for (int i = 0; i < this.Conv.F_num; i++) {
+                this.Conv.B.values[i] = (i + 1);
+            }
+
             Tensor FF = Conv.F.F_2_col();
-            // Console.WriteLine(FF);
+            Tensor BB = Conv.B.bias_2_col(bias_nums, image_samples, image_rows, image_cols, filter_rows, filter_columns, padding, dilation, stride);
+            
             I = I.pad(padding);
-            //Console.WriteLine(I);
             I = I.im_2_col(filter_rows, filter_columns, filter_channels, dilation, stride, image_samples);
-            // Console.WriteLine(I);
-            Tensor Result = FF.mm(I);
+
+
+
+
+            Tensor Result = Utils.dgemm_cs(FF, I, BB);
             Result = Result.col_2_im(image_samples, 4, 4, 2);
             Console.WriteLine(Result);
         }
@@ -91,7 +107,7 @@ namespace Conv_Net {
             Tensor numeric_dB;
             Tensor numeric_dF;
 
-            test_gemm test_net = new test_gemm();
+            gemm_Check test_net = new gemm_Check();
 
 
 

@@ -14,61 +14,26 @@ namespace Conv_Net {
 
         public test_gemm() {
 
-            // Input: 1 sample x 5 rows x 5 columns x 2 channels
+            // Input: 2 samples x 5 rows x 5 columns x 2 channels
             // Padding: 4
             // Filters: 2 num x 3 rows x 3 columns x 2 channels
             // Dilation: 3
             // Stride 2
-            // Output size: 1 sample x 4 rows x 4 columns x 2 channels
+            // Output size: 2 samples x 4 rows x 4 columns x 2 channels
 
             // test input tensor
-            this.I = new Tensor(4, 1, 5, 5, 2);
-            for (int i = 0; i < I.dim_1; i++) {
-                for (int j = 0; j < I.dim_2; j++) {
-                    for (int k = 0; k < I.dim_3; k++) {
-                        for (int l = 0; l < I.dim_4; l++) {
-                            this.I.values[this.I.index(i, j, k, l)] = ((j + k + 1) * (l + 1) / 10.0);
-                        }
-                    }
-                }
+            this.I = new Tensor(4, 2, 5, 5, 2);
+            for (int i = 0; i < I.dim_1 * I.dim_2 * I.dim_3 * I.dim_4; i++) {
+                this.I.values[i] = i / 100.0;
             }
 
             // test target tensor
             this.T = new Tensor(4, 2, 4, 4, 2);
-            T.values[0] = 4.7; T.values[1] = 8.4;
-            T.values[2] = 3.8; T.values[3] = 7.2;
-            T.values[4] = 5.2; T.values[5] = 9.3;
-            T.values[6] = 3.1; T.values[7] = 5.4;
-            T.values[8] = 4.1; T.values[9] = 3.2;
-            T.values[10] = 4.4; T.values[11] = 6.2;
-            T.values[12] = 1.3; T.values[13] = 2.6;
-            T.values[14] = 5.7; T.values[15] = 3.2;
-            T.values[16] = 4.4; T.values[17] = 2.1;
-            T.values[18] = 1.2; T.values[19] = 1.8;
-            T.values[20] = 2.8; T.values[21] = 4.3;
-            T.values[22] = 2.5; T.values[23] = 5.7;
-            T.values[24] = 3.5; T.values[25] = 4.3;
-            T.values[26] = 5.5; T.values[27] = 7.3;
-            T.values[28] = 8.9; T.values[29] = 3.4;
-            T.values[30] = 1.0; T.values[31] = 0.4;
+            for (int i = 0; i < T.dim_1 * T.dim_2 * T.dim_3 * T.dim_4; i++) {
+                this.T.values[i] = i / 20.0;
+            }
 
-            T.values[32] = 4.1; T.values[33] = 8.1;
-            T.values[34] = 3.2; T.values[35] = 7.2;
-            T.values[36] = 5.3; T.values[37] = 9.4;
-            T.values[38] = 3.4; T.values[39] = 5.3;
-            T.values[40] = 4.5; T.values[41] = 3.4;
-            T.values[42] = 4.6; T.values[43] = 6.5;
-            T.values[44] = 1.7; T.values[45] = 2.7;
-            T.values[46] = 5.8; T.values[47] = 3.6;
-            T.values[48] = 4.9; T.values[49] = 2.7;
-            T.values[50] = 1.1; T.values[51] = 1.9;
-            T.values[52] = 2.2; T.values[53] = 4.0;
-            T.values[54] = 2.3; T.values[55] = 5.1;
-            T.values[56] = 3.4; T.values[57] = 4.2;
-            T.values[58] = 5.5; T.values[59] = 7.5;
-            T.values[60] = 8.6; T.values[61] = 3.7;
-            T.values[62] = 1.7; T.values[63] = 0.9;
-
+            int image_samples = 2;
             int filter_nums = 2;
             int filter_rows = 3;
             int filter_columns = 3;
@@ -80,11 +45,15 @@ namespace Conv_Net {
             this.Conv = new Convolution_Layer(filter_channels, filter_nums, filter_rows, filter_columns, true, padding, stride, dilation);
             this.MSE = new Mean_Squared_Loss();
 
-           Tensor FF = Conv.F.F_2_col();
+            for (int i = 0; i < this.Conv.F_num * this.Conv.F_rows * this.Conv.F_columns * this.Conv.F_channels; i++) {
+                this.Conv.F.values[i] = i / 100.0;
+            }
+
+            Tensor FF = Conv.F.F_2_col();
             // Console.WriteLine(FF);
             I = I.pad(padding);
             //Console.WriteLine(I);
-            I = I.im_2_col(filter_rows, filter_columns, filter_channels, dilation, stride);
+            I = I.im_2_col(filter_rows, filter_columns, filter_channels, dilation, stride, image_samples);
             // Console.WriteLine(I);
             Tensor Result = FF.mm(I);
             Console.WriteLine(Result);

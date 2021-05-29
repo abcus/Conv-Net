@@ -359,7 +359,7 @@ namespace Conv_Net {
             
             return F_rotated_2d;
         }
-        public static Tensor dO_padded_2_col(Tensor dO_padded, int F_rows, int F_columns, int F_num, int I_rows, int I_columns) {
+        public static Tensor dO_padded_2_col(Tensor dO_padded, int F_rows, int F_columns, int F_num, int I_rows, int I_columns, int dilation) {
             int dO_padded_2d_columns = I_rows * I_columns;
 
 
@@ -370,7 +370,7 @@ namespace Conv_Net {
                     for (int k=0; k < I_rows; k++) {
                         for (int l=0; l < I_columns; l++) {
                             for (int m = 0; m < F_num; m++) {
-                                dO_padded_2d.values[(m * F_rows * F_columns + i * F_columns + j) * dO_padded_2d_columns + (k * I_columns + l)] = dO_padded.values[dO_padded.index(0, k + i, l + j, m)];
+                                dO_padded_2d.values[(m * F_rows * F_columns + i * F_columns + j) * dO_padded_2d_columns + (k * I_columns + l)] = dO_padded.values[dO_padded.index(0, k + i * dilation, l + j * dilation, m)];
                                 //Console.WriteLine(dO_padded.values[dO_padded.index(0, k + i, l + j, m)]);
                             }
                         }

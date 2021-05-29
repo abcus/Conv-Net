@@ -104,21 +104,20 @@ namespace Conv_Net {
 
             // stride of filter dO (2nd last parameter) is equal to dilation of F
             // dilation of filter dO (last parameter) is equal to stride of F
-            Tensor I_2d = Utils.I_2_col_backprop(Conv.I, Z.dim_2, Z.dim_3, F_rows, F_columns, F_channels, dilation, stride);
-            Tensor dF_2d = new Tensor(2, F_num, F_rows * F_columns * F_channels);
-            dF_2d = Utils.dgemm_cs(dO_2d, I_2d, dF_2d);
-            dF_2d = Utils.col_2_dF(dF_2d, F_num, F_rows, F_columns, F_channels);
-            Console.WriteLine(dF_2d);
+            //Tensor I_2d = Utils.I_2_col_backprop(Conv.I, Z.dim_2, Z.dim_3, F_rows, F_columns, F_channels, dilation, stride);
+            //Tensor dF_2d = new Tensor(2, F_num, F_rows * F_columns * F_channels);
+            //dF_2d = Utils.dgemm_cs(dO_2d, I_2d, dF_2d);
+            //dF_2d = Utils.col_2_dF(dF_2d, F_num, F_rows, F_columns, F_channels);
+            //Console.WriteLine(dF_2d);
 
-            //Tensor F_rotated_2d = Utils.F_rotated_2_col(Conv.F.rotate_180());
-            //Tensor dO_padded_2d = Utils.dO_padded_2_col(Z.pad(Conv.F_rows - 1).unpad(Conv.pad_size), Conv.F_rows, Conv.F_columns, Conv.F_num, Conv.I_rows - 2 * Conv.pad_size, Conv.I_columns - 2 * Conv.pad_size);;
-            //Tensor dI_2d = new Tensor(2, 3, 16);
-            //dI_2d = Utils.dgemm_cs(F_rotated_2d, dO_padded_2d, dI_2d);
-            //dI_2d = Utils.col_2_O(dI_2d, 1, 4, 4, 3);
-            //Console.WriteLine(dI_2d);
+            Tensor F_rotated_2d = Utils.F_rotated_2_col(Conv.F.rotate_180());          
+            Tensor dO_padded_2d = Utils.dO_padded_2_col(Z.dilate(stride).pad(F_rows * dilation - dilation).unpad(pad_size), F_rows, F_columns, F_num, I_rows, I_columns, dilation); 
+            Tensor dI_2d = new Tensor(2, I_channels, I_rows * I_columns);
+            dI_2d = Utils.dgemm_cs(F_rotated_2d, dO_padded_2d, dI_2d);
+            dI_2d = Utils.col_2_O(dI_2d, 1, I_rows, I_columns, I_channels);
+            Console.WriteLine(dI_2d);
 
             Z = Conv.backward(Z);
-
             return Z;
         }
     }
@@ -220,9 +219,9 @@ namespace Conv_Net {
                     }
                 }
             }
-            Console.WriteLine("--------------------------------------");
-            Console.WriteLine("ANALYTIC DF");
-            Console.WriteLine(analytic_dF);
+            //Console.WriteLine("--------------------------------------");
+            //Console.WriteLine("ANALYTIC DF");
+            //Console.WriteLine(analytic_dF);
             // Console.WriteLine(numeric_dF);
             // Console.WriteLine(analytic_dF.difference(numeric_dF));
 
@@ -249,7 +248,7 @@ namespace Conv_Net {
             Console.WriteLine("ANALYTIC DI");
             Console.WriteLine(analytic_dI);
             Console.WriteLine(numeric_dI);
-            Console.WriteLine(analytic_dI.difference(numeric_dI));
+            // Console.WriteLine(analytic_dI.difference(numeric_dI));
         }
     }
 }

@@ -22,8 +22,8 @@ namespace Conv_Net {
 
         public test_CNN() {
 
-            // Input: 1 samples x 5 rows x 5 columns x 2 channels
-            // Filters: 3 num x 3 rows x 3 columns x 2 channels
+            // Input: 1 samples x 5 rows x 5 columns x 4 channels
+            // Filters: 3 num x 3 rows x 3 columns x 4 channels
             
             // Padding: 4
             // Stride 2
@@ -31,8 +31,8 @@ namespace Conv_Net {
 
             // Output size: 1 sample x 5 rows x 5 columns x 3 channels
 
-            I_samples = 1; I_rows = 5; I_columns = 5; I_channels = 2;
-            F_num = 3; F_rows = 3; F_columns = 3; F_channels = 2;
+            I_samples = 2; I_rows = 5; I_columns = 5; I_channels = 4;
+            F_num = 3; F_rows = 3; F_columns = 3; F_channels = 4;
             
             pad_size = 4;
             stride = 2;
@@ -49,7 +49,7 @@ namespace Conv_Net {
                 for (int j=0; j < I_rows; j++) {
                     for (int k=0; k < I_columns; k++) {
                         for (int l=0; l < I_channels; l++) {
-                            I.values[I.index(i, j, k, l)] = l * I.dim_2 * I.dim_3 + j * I.dim_3 + k + 1;
+                            I.values[I.index(i, j, k, l)] = i + l * I.dim_2 * I.dim_3 + j * I.dim_3 + k + 1;
                         }
                     }
                 }
@@ -101,21 +101,25 @@ namespace Conv_Net {
             Z = this.MSE.backward();
             
             Tensor dO_2d = Utils.dO_2_col(Z);
-
+            // Console.WriteLine(dO_2d);
+            
             // stride of filter dO (2nd last parameter) is equal to dilation of F
             // dilation of filter dO (last parameter) is equal to stride of F
-            //Tensor I_2d = Utils.I_2_col_backprop(Conv.I, Z.dim_2, Z.dim_3, F_rows, F_columns, F_channels, dilation, stride);
-            //Tensor dF_2d = new Tensor(2, F_num, F_rows * F_columns * F_channels);
-            //dF_2d = Utils.dgemm_cs(dO_2d, I_2d, dF_2d);
-            //dF_2d = Utils.col_2_dF(dF_2d, F_num, F_rows, F_columns, F_channels);
-            //Console.WriteLine(dF_2d);
+            
+            Tensor I_2d = Utils.I_2_col_backprop(Conv.I, Z.dim_2, Z.dim_3, F_rows, F_columns, F_channels, dilation, stride);
+            // Console.WriteLine(I_2d);
+            
+            Tensor dF_2d = new Tensor(2, F_num, F_rows * F_columns * F_channels);
+            dF_2d = Utils.dgemm_cs(dO_2d, I_2d, dF_2d);
+            dF_2d = Utils.col_2_dF(dF_2d, F_num, F_rows, F_columns, F_channels);
+            Console.WriteLine(dF_2d);
 
-            Tensor F_rotated_2d = Utils.F_rotated_2_col(Conv.F.rotate_180());          
-            Tensor dO_padded_2d = Utils.dO_padded_2_col(Z.dilate(stride).pad(F_rows * dilation - dilation).unpad(pad_size), F_rows, F_columns, F_num, I_rows, I_columns, dilation); 
-            Tensor dI_2d = new Tensor(2, I_channels, I_rows * I_columns);
-            dI_2d = Utils.dgemm_cs(F_rotated_2d, dO_padded_2d, dI_2d);
-            dI_2d = Utils.col_2_O(dI_2d, 1, I_rows, I_columns, I_channels);
-            Console.WriteLine(dI_2d);
+            //Tensor F_rotated_2d = Utils.F_rotated_2_col(Conv.F.rotate_180());          
+            //Tensor dO_padded_2d = Utils.dO_padded_2_col(Z.dilate(stride).pad(F_rows * dilation - dilation).unpad(pad_size), F_rows, F_columns, F_num, I_rows, I_columns, dilation); 
+            //Tensor dI_2d = new Tensor(2, I_channels, I_rows * I_columns);
+            //dI_2d = Utils.dgemm_cs(F_rotated_2d, dO_padded_2d, dI_2d);
+            //dI_2d = Utils.col_2_O(dI_2d, 1, I_rows, I_columns, I_channels);
+            //Console.WriteLine(dI_2d);
 
             Z = Conv.backward(Z);
             return Z;
@@ -220,9 +224,9 @@ namespace Conv_Net {
                 }
             }
             //Console.WriteLine("--------------------------------------");
-            //Console.WriteLine("ANALYTIC DF");
-            //Console.WriteLine(analytic_dF);
-            // Console.WriteLine(numeric_dF);
+            Console.WriteLine("ANALYTIC DF");
+            Console.WriteLine(analytic_dF);
+            Console.WriteLine(numeric_dF);
             // Console.WriteLine(analytic_dF.difference(numeric_dF));
 
             // Numerical gradient of loss with respect to input
@@ -244,10 +248,10 @@ namespace Conv_Net {
                     }
                 }
             }
-            Console.WriteLine("--------------------------------------");
-            Console.WriteLine("ANALYTIC DI");
-            Console.WriteLine(analytic_dI);
-            Console.WriteLine(numeric_dI);
+            //Console.WriteLine("--------------------------------------");
+            //Console.WriteLine("ANALYTIC DI");
+            //Console.WriteLine(analytic_dI);
+            // Console.WriteLine(numeric_dI);
             // Console.WriteLine(analytic_dI.difference(numeric_dI));
         }
     }

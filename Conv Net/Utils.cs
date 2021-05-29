@@ -287,16 +287,16 @@ namespace Conv_Net {
             int dO_columns = dO.dim_3;
             int dO_channels = dO.dim_4;
 
-            int dO_2d_rows = dO_sample * dO_channels;
-            int dO_2d_columns = dO_rows * dO_columns;
+            int dO_2d_rows = dO_channels;
+            int dO_2d_columns = dO_sample * dO_rows * dO_columns;
 
             // dimensions are: (dO_sample * dO_channel) x (dO_row * dO_column)
-            Tensor dO_2d = new Tensor(2, dO_sample * dO_channels, dO_rows * dO_columns);
-            for (int i=0; i < dO_sample; i++) {
-                for (int j=0; j < dO_rows; j++) {
-                    for (int k=0; k < dO_columns; k++) {
-                        for (int l=0; l < dO_channels; l++) {
-                            dO_2d.values[(i * dO_channels + l) * dO_2d_columns + (j * dO_columns + k)] = dO.values[dO.index(i, j, k, l)];
+            Tensor dO_2d = new Tensor(2, dO_2d_rows, dO_2d_columns);
+            for (int i = 0; i < dO_channels; i++) {
+                for (int j=0; j < dO_sample; j++) {
+                    for (int k=0; k < dO_rows; k++) {
+                        for (int l=0; l < dO_columns; l++) {
+                            dO_2d.values[i * dO_2d_columns + (j * dO_rows * dO_columns + k * dO_columns + l)] = dO.values[dO.index(j, k, l, i)];
                         }
                     }
                 }
@@ -304,16 +304,20 @@ namespace Conv_Net {
             return dO_2d;
         }
         public static Tensor I_2_col_backprop(Tensor I, int dO_rows, int dO_columns, int F_rows, int F_columns, int F_channels, int stride, int dilation) {
+            int I_samples = I.dim_1;
 
+            int I_2d_rows = I_samples * dO_rows * dO_columns;
             int I_2d_columns = F_rows * F_columns * F_channels;
-            Tensor I_2d = new Tensor(2, dO_rows * dO_columns, F_rows * F_columns * F_channels);
+            Tensor I_2d = new Tensor(2, I_2d_rows, I_2d_columns);
 
-            for (int l = 0; l < dO_rows; l++) {
-                for (int m = 0; m < dO_columns; m++) {
-                    for (int i=0; i < F_rows; i++) {
-                        for (int j=0; j < F_columns; j++) {
-                            for (int k=0; k < F_channels; k++) {
-                                I_2d.values[(l * dO_columns + m) * (I_2d_columns) + (i * F_columns * F_channels + j * F_channels + k)] = I.values[I.index(0, i * stride + l * dilation, j * stride + m * dilation, k)];
+            for (int i = 0; i < I_samples; i++) {
+                for (int j = 0; j < dO_rows; j++) {
+                    for (int k = 0; k < dO_columns; k++) {
+                        for (int l = 0; l < F_rows; l++) {
+                            for (int m = 0; m < F_columns; m++) {
+                                for (int n = 0; n < F_channels; n++) {
+                                    I_2d.values[(i * dO_rows * dO_columns + j * dO_columns + k) * (I_2d_columns) + (l * F_columns * F_channels + m * F_channels + n)] = I.values[I.index(i, l * stride + j * dilation, m * stride + k * dilation, n)];
+                                }
                             }
                         }
                     }

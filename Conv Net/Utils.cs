@@ -281,6 +281,89 @@ namespace Conv_Net {
             return O;
         }
 
+        public static Tensor dO_2_col(Tensor dO) {
+            int dO_sample = dO.dim_1;
+            int dO_rows = dO.dim_2;
+            int dO_columns = dO.dim_3;
+            int dO_channels = dO.dim_4;
+
+            int dO_2d_rows = dO_sample * dO_channels;
+            int dO_2d_columns = dO_rows * dO_columns;
+
+            // dimensions are: (dO_sample * dO_channel) x (dO_row * dO_column)
+            Tensor dO_2d = new Tensor(2, dO_sample * dO_channels, dO_rows * dO_columns);
+            for (int i=0; i < dO_sample; i++) {
+                for (int j=0; j < dO_rows; j++) {
+                    for (int k=0; k < dO_columns; k++) {
+                        for (int l=0; l < dO_channels; l++) {
+                            dO_2d.values[(i * dO_channels + l) * dO_2d_columns + (j * dO_columns + k)] = dO.values[dO.index(i, j, k, l)];
+                        }
+                    }
+                }
+            }
+            return dO_2d;
+        }
+        public static Tensor I_2_col_backprop(Tensor I, int dO_rows, int dO_columns, int F_rows, int F_columns, int F_channels) {
+
+            int I_2d_columns = F_rows * F_columns * F_channels;
+            Tensor I_2d = new Tensor(2, dO_rows * dO_columns, F_rows * F_columns * F_channels);
+
+            for (int l = 0; l < dO_rows; l++) {
+                for (int m = 0; m < dO_columns; m++) {
+                    for (int i=0; i < F_rows; i++) {
+                        for (int j=0; j < F_columns; j++) {
+                            for (int k=0; k < F_channels; k++) {
+                                I_2d.values[(l * dO_columns + m) * (I_2d_columns) + (i * F_columns * F_channels + j * F_channels + k)] = I.values[I.index(0, i + l, j + m, k)];
+                            }
+                        }
+                    }
+                }
+            }
+            return I_2d;
+        }
+
+        public static Tensor F_rotated_2_col(Tensor F_rotated) {
+            int F_rotated_num = F_rotated.dim_1;
+            int F_rotated_rows = F_rotated.dim_2;
+            int F_rotated_columns = F_rotated.dim_3;
+            int F_rotated_channels = F_rotated.dim_4;
+            int F_rotated_2d_columns = F_rotated_rows * F_rotated_columns * F_rotated_num;
+
+
+            Tensor F_rotated_2d = new Tensor(2, F_rotated_channels, F_rotated_rows * F_rotated_columns * F_rotated_num);
+            for (int i=0; i < F_rotated_channels; i++) {
+                for (int j = 0; j < F_rotated_num; j++) {
+                    for (int k=0; k < F_rotated_rows; k++) {
+                        for (int l = 0; l < F_rotated_columns; l++) {
+                            F_rotated_2d.values[(i) * (F_rotated_2d_columns) + (j * F_rotated_rows * F_rotated_columns + k * F_rotated_columns + l)] = F_rotated.values[F_rotated.index(j, k, l, i)];
+                        }
+                    }
+                }
+            }
+            
+            return F_rotated_2d;
+        }
+        public static Tensor dO_padded_2_col(Tensor dO_padded, int F_rows, int F_columns, int F_num, int I_rows, int I_columns) {
+            int dO_padded_2d_columns = I_rows * I_columns;
+
+
+            Tensor dO_padded_2d = new Tensor(2, F_rows * F_columns * F_num, I_rows * I_columns);
+
+            for (int i=0; i < F_rows; i++) {
+                for (int j=0; j < F_columns; j++) {
+                    for (int k=0; k < I_rows; k++) {
+                        for (int l=0; l < I_columns; l++) {
+                            for (int m = 0; m < F_num; m++) {
+                                dO_padded_2d.values[(m * F_rows * F_columns + i * F_columns + j) * dO_padded_2d_columns + (k * I_columns + l)] = dO_padded.values[dO_padded.index(0, k + i, l + j, m)];
+                                //Console.WriteLine(dO_padded.values[dO_padded.index(0, k + i, l + j, m)]);
+                            }
+                        }
+                    }
+                }
+            }
+            return dO_padded_2d;
+        }
+
         static public void print_labels(Tensor label, Tensor output, int label_sample) {
 
             int label_rows = label.dim_2;

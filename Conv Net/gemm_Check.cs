@@ -104,7 +104,7 @@ namespace Conv_Net {
             gemm_Check test_net = new gemm_Check();
 
 
-
+              
   
 
             //test_net.forward();
@@ -134,7 +134,7 @@ namespace Conv_Net {
             //// Console.WriteLine(numeric_dB);
             //// Console.WriteLine(analytic_dB.difference(numeric_dB));
 
-            //// Numerical gradient of loss with respect to filters
+            // Numerical gradient of loss with respect to filters
             //for (int i = 0; i < test_net.Conv.F.dim_1; i++) {
             //    for (int j = 0; j < test_net.Conv.F.dim_2; j++) {
             //        for (int k = 0; k < test_net.Conv.F.dim_3; k++) {
@@ -153,9 +153,9 @@ namespace Conv_Net {
             //        }
             //    }
             //}
-            //// Console.WriteLine(analytic_dF);
-            //// Console.WriteLine(numeric_dF);
-            //// Console.WriteLine(analytic_dF.difference(numeric_dF));
+            // Console.WriteLine(analytic_dF);
+            // Console.WriteLine(numeric_dF);
+            // Console.WriteLine(analytic_dF.difference(numeric_dF));
 
             //// Numerical gradient of loss with respect to input
             //for (int i = 0; i < test_net.I.dim_1; i++) {

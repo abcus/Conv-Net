@@ -23,24 +23,44 @@ namespace Conv_Net {
             // Output size: 2 samples x 4 rows x 4 columns x 2 channels
 
             // test input tensor
-            this.I = new Tensor(4, 2, 5, 5, 2);
-            for (int i = 0; i < I.dim_1 * I.dim_2 * I.dim_3 * I.dim_4; i++) {
-                this.I.values[i] = i / 100.0;
-            }
+            this.I = new Tensor(4, 1, 4, 4, 3);
+            for (int i = 0; i < I.dim_1; i++) {
+                for (int j=0; j < I.dim_2; j++) {
+                    for (int k=0; k < I.dim_3; k++) {
+                        for (int l=0; l < I.dim_4; l++) {
+                            I.values[I.index(i, j, k, l)] = l * I.dim_2 * I.dim_3 + j * I.dim_3 + k + 1;
+                        }
+                    }
+                }
+            } 
 
             // test target tensor
-            this.T = new Tensor(4, 2, 4, 4, 2);
-            for (int i=0; i < T.dim_1 * T.dim_2 * T.dim_3 * T.dim_4; i++) {
-                this.T.values[i] = i / 20.0;
+            this.T = new Tensor(4, 1, 3, 3, 5);
+            for (int i = 0; i < T.dim_1; i++) {
+                for (int j = 0; j < T.dim_2; j++) {
+                    for (int k = 0; k < T.dim_3; k++) {
+                        for (int l = 0; l < T.dim_4; l++) {
+                            T.values[T.index(i, j, k, l)] = i * T.dim_2 * T.dim_3 * T.dim_4 + l * T.dim_2 * T.dim_3 + j * T.dim_3 + k + 1;
+                        }
+                    }
+                }
             }
 
-            this.Conv = new Convolution_Layer(2, 2, 3, 3, true, 4, 2, 3);
+            this.Conv = new Convolution_Layer(3, 5, 2, 2, true);
             this.MSE = new Mean_Squared_Loss();
 
             // Set filters
-            for (int i=0; i < this.Conv.F_num * this.Conv.F_rows * this.Conv.F_columns * this.Conv.F_channels; i++) {
-                this.Conv.F.values[i] = i / 100.0;
+            // test target tensor
+            for (int i = 0; i < this.Conv.F_num; i++) {
+                for (int j = 0; j < this.Conv.F_rows; j++) {
+                    for (int k = 0; k < this.Conv.F_columns; k++) {
+                        for (int l = 0; l < this.Conv.F_channels; l++) {
+                            this.Conv.F.values[this.Conv.F.index(i, j, k, l)] = i * this.Conv.F_rows * this.Conv.F_columns * this.Conv.F_channels + l * this.Conv.F_rows * this.Conv.F_columns + j * this.Conv.F_columns + k + 1;
+                        }
+                    }
+                }
             }
+
 
             // Set biases
             for (int i=0; i < this.Conv.F_num; i++) {
@@ -51,18 +71,36 @@ namespace Conv_Net {
         public Tensor forward() {
             Tensor A; 
             A = this.Conv.forward(this.I);
-            Console.WriteLine(A);
-            Thread.Sleep(5000);
-
             A = this.MSE.loss(A, this.T);
-            
             return A;
         }
 
         public Tensor backward() {
             Tensor Z;
             Z = this.MSE.backward();
+            //Tensor dO_2d = Utils.dO_2_col(Z);
+            //Tensor I_2d = Utils.I_2_col_backprop(I, Z.dim_2, Z.dim_3, this.Conv.F_rows, this.Conv.F_columns, this.Conv.F_channels);
+            //Tensor dF_2d = new Tensor(2, 5, 12);
+            //dF_2d = Utils.dgemm_cs(dO_2d, I_2d, dF_2d);
+            //Console.WriteLine(dF_2d);
+
+            Tensor F_rotated_2d = Utils.F_rotated_2_col(Conv.F.rotate_180());
+            // Console.WriteLine(F_rotated_2d);
+            Tensor dO_padded_2d = Utils.dO_padded_2_col(Z.pad(Conv.F_rows - 1).unpad(Conv.pad_size), Conv.F_rows, Conv.F_columns, Conv.F_num, Conv.I_rows - 2 * Conv.pad_size, Conv.I_columns - 2 * Conv.pad_size);;
+            // Console.WriteLine(dO_padded_2d);
+            Tensor dI_2d = new Tensor(2, 3, 16);
+            dI_2d = Utils.dgemm_cs(F_rotated_2d, dO_padded_2d, dI_2d);
+            Console.WriteLine(dI_2d);
+
             Z = Conv.backward(Z);
+
+            
+            
+            
+
+
+            //Tensor dO_dilated_padded = dO.dilate(this.stride).pad(this.F_rows * this.dilation - this.dilation).unpad(this.pad_size);
+
             return Z;
         }
     }

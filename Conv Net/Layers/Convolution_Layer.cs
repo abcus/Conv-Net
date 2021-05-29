@@ -8,20 +8,20 @@ using System.Diagnostics;
 namespace Conv_Net {
     class Convolution_Layer {
 
-        private int I_samples, I_rows, I_columns, I_channels;
-        private int B_num;
+        public int I_samples, I_rows, I_columns, I_channels;
+        public int B_num;
         public int F_num, F_rows, F_columns, F_channels;
-        private int O_samples, O_rows, O_columns, O_channels;
+        public int O_samples, O_rows, O_columns, O_channels;
 
-        private int dI_samples, dI_rows, dI_columns, dI_channels;
-        private int dB_num;
-        private int dF_num, dF_rows, dF_columns, dF_channels;
-        private int dO_rows, dO_columns;
+        public int dI_samples, dI_rows, dI_columns, dI_channels;
+        public int dB_num;
+        public int dF_num, dF_rows, dF_columns, dF_channels;
+        public int dO_rows, dO_columns;
 
-        private int pad_size;
-        private bool needs_gradient;
-        private int stride;
-        private int dilation;
+        public int pad_size;
+        public bool needs_gradient;
+        public  int stride;
+        public int dilation;
 
         // Input, bias, and filter tensors
         public Tensor I, B, F;

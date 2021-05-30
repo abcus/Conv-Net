@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Conv_Net {
     static class Program {
@@ -18,10 +19,11 @@ namespace Conv_Net {
 
         public static Tensor training_images, training_labels, testing_images, testing_labels;
        
-        public static int testing_sample_size = 1000;
+        public static int testing_sample_size = 10000;
         public static int epochs = 20;
-        public static int CNN_training_sample_size = 600;
+        public static int CNN_training_sample_size = 6000;
         public static int batch_size = 32;
+        public static int test_batch_size = 256;
 
         public static Double ALPHA = 0.01; // learning rate
         public static Double BETA_1 = 0.9; // momentum
@@ -36,8 +38,6 @@ namespace Conv_Net {
 
 
             // Grad_Check.test();
-            // Gemm_Check.test();
-
 
 
             Tuple<Tensor, Tensor, Tensor, Tensor> data = Utils.load_MNIST(60000, 10000, 28, 28, 1, 10);
@@ -73,39 +73,71 @@ namespace Conv_Net {
         static void test_CNN(int testing_sample_size) {
             stopwatch.Start();
 
+            int num_batches = testing_sample_size / test_batch_size;
+            int remainder = testing_sample_size - num_batches * test_batch_size;
+            
             int correct = 0;
             Double total_cross_entropy_loss = 0.0;
             Tensor A, B;
-            Tuple<Tensor, Tensor> t;
+            Tuple<Tensor, Tensor> R;
 
-            for (int z=0; z < testing_sample_size; z++) {
-                A = testing_images.subset(z, 1);
-                B = testing_labels.subset(z, 1);
-                t = CNN.forward(A, B, false);
+            for (int i = 0; i < num_batches; i++) {
+                A = testing_images.subset(i * test_batch_size, test_batch_size);
+                B = testing_labels.subset(i * test_batch_size, test_batch_size);
+                R = CNN.forward(A, B, false);
 
-                total_cross_entropy_loss += t.Item1.values[0];
+                for (int j = 0; j < test_batch_size; j++) {
+                    total_cross_entropy_loss += R.Item1.values[j];
 
-                int index_max_value_output = -1;
-                Double max_output = Double.MinValue;
+                    int index_max_value_output = -1;
+                    Double max_output = Double.MinValue;
+                    int index_max_value_label = -1;
+                    Double max_label = Double.MinValue;
 
-                int index_max_value_label = -1;
-                Double max_label = Double.MinValue;
-
-                for (int j = 0; j < t.Item2.dim_2; j++) {
-                    if (t.Item2.values[j] > max_output) {
-                        max_output = t.Item2.values[j];
-                        index_max_value_output = j;
+                    for (int k = 0; k < R.Item2.dim_2; k++) {
+                        if (R.Item2.values[j * R.Item2.dim_2 + k] > max_output) {
+                            max_output = R.Item2.values[j * R.Item2.dim_2 + k];
+                            index_max_value_output = j * R.Item2.dim_2 + k;
+                        }
+                        if (B.values[j * R.Item2.dim_2 + k] > max_label) {
+                            max_label = B.values[j * R.Item2.dim_2 + k];
+                            index_max_value_label = j * R.Item2.dim_2 + k;
+                        }
                     }
-                    if (B.values[j] > index_max_value_label) {
-                        max_label = B.values[j];
-                        index_max_value_label = j;
+                    if (index_max_value_output == index_max_value_label) {
+                        correct++;
                     }
-                }
-                if (index_max_value_output == index_max_value_label) {
-                    correct++;
                 }
             }
+            if (remainder != 0) {
 
+                A = testing_images.subset(num_batches * test_batch_size, remainder);
+                B = testing_labels.subset(num_batches * test_batch_size, remainder);
+                R = CNN.forward(A, B, false);
+
+                for (int j = 0; j < remainder; j++) {
+                    total_cross_entropy_loss += R.Item1.values[j];
+
+                    int index_max_value_output = -1;
+                    Double max_output = Double.MinValue;
+                    int index_max_value_label = -1;
+                    Double max_label = Double.MinValue;
+
+                    for (int k = 0; k < R.Item2.dim_2; k++) {
+                        if (R.Item2.values[j * R.Item2.dim_2 + k] > max_output) {
+                            max_output = R.Item2.values[j * R.Item2.dim_2 + k];
+                            index_max_value_output = j * R.Item2.dim_2 + k;
+                        }
+                        if (B.values[j * R.Item2.dim_2 + k] > max_label) {
+                            max_label = B.values[j * R.Item2.dim_2 + k];
+                            index_max_value_label = j * R.Item2.dim_2 + k;
+                        }
+                    }
+                    if (index_max_value_output == index_max_value_label) {
+                        correct++;
+                    }
+                }
+            }
 
             stopwatch.Stop();
             Console.WriteLine("Testing time:\t" + stopwatch.Elapsed);

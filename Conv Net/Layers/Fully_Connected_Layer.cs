@@ -49,6 +49,8 @@ namespace Conv_Net {
             this.I = I;
             this.I_samples = I.dim_1;
 
+            
+
             Tensor O = new Tensor(2, this.I_samples, this.layer_size);
 
             // Selects the input sample from the batch

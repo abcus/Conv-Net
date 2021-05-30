@@ -186,7 +186,30 @@ namespace Conv_Net {
         }
 
         /// <summary>
-        /// Returns A * B + C
+        /// Returns Y = A * X + Y
+        /// </summary>
+        /// <param name="A"> m x n matrix </param>
+        /// <param name="X"> n vector </param>
+        /// <param name="Y"> m vector </param>
+        /// <returns></returns>
+        static public Tensor dgbmv_cs (Tensor A, Tensor X, Tensor Y) {
+            int A_row = A.dim_1;
+            int A_col = A.dim_2;
+
+            Parallel.For(0, A_row, i => {
+                Double temp = 0.0;
+                for (int j = 0; j < A_col; j++) {
+                    temp += A.values[i * A_col + j] * X.values[j];
+                }
+                Y.values[i] += temp;
+            });
+            
+            return Y;
+        }
+
+
+        /// <summary>
+        /// Returns C = A * B + C
         /// </summary>
         /// <param name="A"></param>
         /// <param name="B"></param>
@@ -219,13 +242,14 @@ namespace Conv_Net {
             return C;
         }
 
+        
         /// <summary>
         /// Convolution forward propagation, converts filter tensor into 2D matrix
         /// </summary>
-        public static Tensor F_2_mat(Tensor F) {
-            Tensor F_2d = new Tensor(2, F.dim_1, F.dim_2 * F.dim_3 * F.dim_4);
-            F_2d.values = F.values;
-            return F_2d;
+        public static Tensor F_to_matrix(Tensor F) {
+            Tensor F_matrix = new Tensor(2, F.dim_1, F.dim_2 * F.dim_3 * F.dim_4);
+            F_matrix.values = F.values;
+            return F_matrix;
         }
         /// <summary>
         /// Convolution forward propagation, converts padded input tensor into 2D matrix
@@ -243,7 +267,7 @@ namespace Conv_Net {
 
             Tensor I_matrix = new Tensor(2, I_matrix_rows, I_matrix_columns);
 
-            for (int i = 0; i < F_rows; i++) {
+            Parallel.For (0, F_rows, i => {
                 for (int j = 0; j < F_columns; j++) {
                     for (int k = 0; k < F_channels; k++) {
                         for (int l = 0; l < I_samples; l++) {
@@ -255,7 +279,7 @@ namespace Conv_Net {
                         }
                     }
                 }
-            }
+            }) ;
             return I_matrix;
         }
 
@@ -283,7 +307,8 @@ namespace Conv_Net {
         /// </summary>
         public static Tensor matrix_to_tensor(Tensor X_matrix, int X_sample, int X_rows, int X_columns, int X_channels) {
             Tensor X = new Tensor(4, X_sample, X_rows, X_columns, X_channels);
-            for (int i = 0; i < X_sample; i++) {
+
+            Parallel.For(0, X_sample, i => {
                 for (int j = 0; j < X_rows; j++) {
                     for (int k = 0; k < X_columns; k++) {
                         for (int l = 0; l < X_channels; l++) {
@@ -291,9 +316,21 @@ namespace Conv_Net {
                         }
                     }
                 }
-            }
+            });
             return X;
         }
+
+        /// <summary>
+        /// Convolution backward propagation to calculate ∂L/∂B, generates a matrix with all 1 to multiply with ∂L/∂O 
+        /// </summary>
+        public static Tensor one_vector(int dO_sample, int dO_rows, int dO_columns) {
+            Tensor one_vector = new Tensor(1, dO_sample * dO_rows * dO_columns);
+            for (int i=0; i < one_vector.values.Count(); i++) {
+                one_vector.values[i] = 1.0;
+            }
+            return one_vector;
+        }
+
         /// <summary>
         /// Convolution backward propagation to calculate ∂L/∂F, converts ∂L/∂O tensor into 2D matrix
         /// </summary>
@@ -307,15 +344,16 @@ namespace Conv_Net {
             int dO_matrix_columns = dO_sample * dO_rows * dO_columns;
 
             Tensor dO_matrix = new Tensor(2, dO_matrix_rows, dO_matrix_columns);
-            for (int i = 0; i < dO_channels; i++) {
-                for (int j=0; j < dO_sample; j++) {
-                    for (int k=0; k < dO_rows; k++) {
-                        for (int l=0; l < dO_columns; l++) {
+
+            Parallel.For(0, dO_channels, i => {
+                for (int j = 0; j < dO_sample; j++) {
+                    for (int k = 0; k < dO_rows; k++) {
+                        for (int l = 0; l < dO_columns; l++) {
                             dO_matrix.values[i * dO_matrix_columns + (j * dO_rows * dO_columns + k * dO_columns + l)] = dO.values[dO.index(j, k, l, i)];
                         }
                     }
                 }
-            }
+            });
             return dO_matrix;
         }
 
@@ -329,7 +367,7 @@ namespace Conv_Net {
             int I_matrix_columns = F_rows * F_columns * F_channels;
             Tensor I_matrix = new Tensor(2, I_matrix_rows, I_matrix_columns);
 
-            for (int i = 0; i < I_samples; i++) {
+            Parallel.For(0, I_samples, i => {
                 for (int j = 0; j < dO_rows; j++) {
                     for (int k = 0; k < dO_columns; k++) {
                         for (int l = 0; l < F_rows; l++) {
@@ -341,7 +379,7 @@ namespace Conv_Net {
                         }
                     }
                 }
-            }
+            });
             return I_matrix;
         }
 
@@ -366,17 +404,17 @@ namespace Conv_Net {
             int F_rotated_matrix_rows = F_rotated_channels;
             int F_rotated_matrix_columns = F_rotated_num * F_rotated_rows * F_rotated_columns;
 
-
             Tensor F_rotated_matrix = new Tensor(2, F_rotated_matrix_rows, F_rotated_matrix_columns);
-            for (int i=0; i < F_rotated_channels; i++) {
+
+            Parallel.For(0, F_rotated_channels, i => {
                 for (int j = 0; j < F_rotated_num; j++) {
-                    for (int k=0; k < F_rotated_rows; k++) {
+                    for (int k = 0; k < F_rotated_rows; k++) {
                         for (int l = 0; l < F_rotated_columns; l++) {
                             F_rotated_matrix.values[(i) * (F_rotated_matrix_columns) + (j * F_rotated_rows * F_rotated_columns + k * F_rotated_columns + l)] = F_rotated.values[F_rotated.index(j, k, l, i)];
                         }
                     }
                 }
-            }
+            });
             return F_rotated_matrix;
         }
 
@@ -393,10 +431,10 @@ namespace Conv_Net {
 
             Tensor dO_dilated_padded_matrix = new Tensor(2, dO_dilated_padded_matrix_rows, dO_dilated_padded_matrix_columns);
 
-            for (int i = 0; i < F_num; i++) {
-                for (int j=0; j < F_rows; j++) {
-                    for (int k=0; k < F_columns; k++) {
-                        for (int l=0; l < dI_samples; l++) {
+            Parallel.For(0, F_num, i => {
+                for (int j = 0; j < F_rows; j++) {
+                    for (int k = 0; k < F_columns; k++) {
+                        for (int l = 0; l < dI_samples; l++) {
                             for (int m = 0; m < dI_rows; m++) {
                                 for (int n = 0; n < dI_columns; n++) {
                                     dO_dilated_padded_matrix.values[(i * F_rows * F_columns + j * F_columns + k) * dO_dilated_padded_matrix_columns + (l * dI_rows * dI_columns + m * dI_columns + n)] = dO_dilated_padded.values[dO_dilated_padded.index(l, m + j * dilation, n + k * dilation, i)];
@@ -405,7 +443,7 @@ namespace Conv_Net {
                         }
                     }
                 }
-            }
+            });
             return dO_dilated_padded_matrix;
         }
 

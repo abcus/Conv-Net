@@ -9,7 +9,8 @@ namespace Conv_Net {
 
     class test_CNN {
 
-        public Convolution_Layer Conv; 
+        public Convolution_Layer Conv;
+        public Fully_Connected_Layer FC;
         public Mean_Squared_Loss MSE;
         public Tensor I, T;
 
@@ -49,7 +50,7 @@ namespace Conv_Net {
                 for (int j=0; j < I_rows; j++) {
                     for (int k=0; k < I_columns; k++) {
                         for (int l=0; l < I_channels; l++) {
-                            I.values[I.index(i, j, k, l)] = I.index(i, j, k, l) / 1000.0;
+                            I.values[I.index(i, j, k, l)] = I.index(i, j, k, l) / 10.0;
                         }
                     }
                 }
@@ -61,7 +62,7 @@ namespace Conv_Net {
                 for (int j = 0; j < O_rows; j++) {
                     for (int k = 0; k < O_columns; k++) {
                         for (int l = 0; l < O_channels; l++) {
-                            T.values[T.index(i, j, k, l)] = T.index(i, j, k, l) / 2000.0;
+                            T.values[T.index(i, j, k, l)] = T.index(i, j, k, l) / 20.0;
                         }
                     }
                 }
@@ -76,7 +77,7 @@ namespace Conv_Net {
                 for (int j = 0; j < F_rows; j++) {
                     for (int k = 0; k < F_columns; k++) {
                         for (int l = 0; l < F_channels; l++) {
-                            this.Conv.F.values[this.Conv.F.index(i, j, k, l)] = this.Conv.F.index(i, j, k, l);
+                            this.Conv.F.values[this.Conv.F.index(i, j, k, l)] = this.Conv.F.index(i, j, k, l) / 100.0;
                         }
                     }
                 }
@@ -85,7 +86,7 @@ namespace Conv_Net {
 
             // Set biases
             for (int i=0; i < F_num; i++) {
-                this.Conv.B.values[i] = (i + 1);
+                this.Conv.B.values[i] = (i + 1) / 10.0;
             }
         }
 
@@ -99,8 +100,6 @@ namespace Conv_Net {
         public Tensor backward() {
             Tensor Z;
             Z = this.MSE.backward();
-            
-            Tensor dO_2d = Utils.dO_to_matrix(Z);
             Z = Conv.backward(Z);
             return Z;
         }
@@ -127,7 +126,7 @@ namespace Conv_Net {
             test_CNN.forward();
             
             analytic_dI = test_CNN.backward();
-            analytic_dB = new Tensor(1, test_CNN.Conv.dB.dim_2);
+            analytic_dB = test_CNN.Conv.dB; 
             analytic_dF = test_CNN.Conv.dF;
 
             numeric_dI = new Tensor(analytic_dI.dimensions, analytic_dI.dim_1, analytic_dI.dim_2, analytic_dI.dim_3, analytic_dI.dim_4);
@@ -137,14 +136,6 @@ namespace Conv_Net {
             int I_samples = test_CNN.I.dim_1;
             int B_num = test_CNN.Conv.B.dim_1;
             int F_num = test_CNN.Conv.F.dim_1; int F_rows = test_CNN.Conv.F.dim_2; int F_columns = test_CNN.Conv.F.dim_3; int F_channels = test_CNN.Conv.F.dim_4;
-
-            // Analytic gradient of loss with respect to bias
-            // For each bias, sum contribution from each sample (which has already been divided by batch size)
-            for (int i=0; i < B_num; i++) {
-                for (int s=0; s < I_samples; s++) {
-                    analytic_dB.values[i] += test_CNN.Conv.dB.values[s * test_CNN.Conv.B.dim_1 + i];
-                }
-            }
 
             //Numerical gradient of loss with respect to bias
             // For each bias, sum contribution from each sample (divide by batch size at the end)
@@ -163,9 +154,11 @@ namespace Conv_Net {
                 test_CNN.Conv.B.values[i] += h;
                 numeric_dB.values[i] = (loss_up - loss_down) / (2 * h * I_samples);
             }
-            // Console.WriteLine(analytic_dB);
-            // Console.WriteLine(numeric_dB);
-            // Console.WriteLine(analytic_dB.difference(numeric_dB));
+            //Console.WriteLine("--------------------------------------");
+            //Console.WriteLine("ANALYTIC DB");
+            //Console.WriteLine(analytic_dB);
+            //Console.WriteLine(numeric_dB);
+            Console.WriteLine(analytic_dB.difference(numeric_dB));
 
             // Numerical gradient of loss with respect to filters
             // For each bias, sum contribution from each sample (divide by batch size at the end)
@@ -190,10 +183,10 @@ namespace Conv_Net {
                     }
                 }
             }
-            Console.WriteLine("--------------------------------------");
-            Console.WriteLine("ANALYTIC DF");
-            Console.WriteLine(analytic_dF);
-            Console.WriteLine(numeric_dF);
+            //Console.WriteLine("--------------------------------------");
+            //Console.WriteLine("ANALYTIC DF");
+            //Console.WriteLine(analytic_dF);
+            //Console.WriteLine(numeric_dF);
             Console.WriteLine(analytic_dF.difference(numeric_dF));
 
             // Numerical gradient of loss with respect to input
@@ -218,8 +211,8 @@ namespace Conv_Net {
             //Console.WriteLine("--------------------------------------");
             //Console.WriteLine("ANALYTIC DI");
             //Console.WriteLine(analytic_dI);
-            // Console.WriteLine(numeric_dI);
-            // Console.WriteLine(analytic_dI.difference(numeric_dI));
+            //Console.WriteLine(numeric_dI);
+            Console.WriteLine(analytic_dI.difference(numeric_dI));
         }
     }
 }

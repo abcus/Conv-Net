@@ -239,6 +239,9 @@ namespace Conv_Net {
                     C.values[i * B_col + j] += temp;
                 }
             });
+
+            // Console.WriteLine("[" + A_row + ", " + A_col + "] x [" + B_row + ", " + B_col + "] " + A_row * A_col + " * " + B_row * B_col);
+
             return C;
         }
 

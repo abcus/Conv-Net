@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace Conv_Net {
     class Fully_Connected_Layer {
@@ -50,6 +51,7 @@ namespace Conv_Net {
             this.I_samples = I.dim_1;
 
             
+
 
             Tensor O = new Tensor(2, this.I_samples, this.layer_size);
 

@@ -19,20 +19,24 @@ namespace Conv_Net {
             this.scaling_factor = 1 / (1 - this.p);
         }
 
-        public Tensor forward(Tensor I) {
-            this.d_local = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4, I.dim_5);
+        public Tensor forward(Tensor I, bool is_train) {
+            this.d_local = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4);
             
-            // Do not parallelize because of random number generation
-            for (int i=0; i < I.values.Count(); i++) {
-                if (Program.dropout_rand.NextDouble() < this.p) {
-                    I.values[i] = 0;
-                    d_local.values[i] = 0;
-                } else {
-                    I.values[i] = I.values[i] * this.scaling_factor;
-                    d_local.values[i] = this.scaling_factor;
+            if (is_train) {
+                // Do not parallelize because of random number generation
+                for (int i = 0; i < I.values.Count(); i++) {
+                    if (Program.dropout_rand.NextDouble() < this.p) {
+                        I.values[i] = 0;
+                        d_local.values[i] = 0;
+                    } else {
+                        // O is calculated in-place from I
+                        I.values[i] = I.values[i] * this.scaling_factor;
+                        d_local.values[i] = this.scaling_factor;
+                    }
                 }
-            }
-            // O is calculated in-place from I
+            } else {
+                // If testing, do not change inputs
+            }            
             return I;
         }
 

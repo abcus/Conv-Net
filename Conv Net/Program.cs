@@ -19,11 +19,11 @@ namespace Conv_Net {
 
         public static Tensor training_images, training_labels, testing_images, testing_labels;
        
-        public static int testing_sample_size = 10000;
+        public static int testing_sample_size = 1000;
         public static int epochs = 20;
-        public static int CNN_training_sample_size = 6000;
+        public static int CNN_training_sample_size = 600;
         public static int batch_size = 32;
-        public static int test_batch_size = 256;
+        public static int test_batch_size = 1000;
 
         public static Double ALPHA = 0.01; // learning rate
         public static Double BETA_1 = 0.9; // momentum
@@ -37,7 +37,7 @@ namespace Conv_Net {
             Application.Run(new Form1());*/
 
 
-            // Grad_Check.test();
+            //Grad_Check.test();
 
 
             Tuple<Tensor, Tensor, Tensor, Tensor> data = Utils.load_MNIST(60000, 10000, 28, 28, 1, 10);

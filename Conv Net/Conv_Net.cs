@@ -15,7 +15,7 @@ namespace Conv_Net {
         public Dropout_Layer Dropout_1, Dropout_2;
         public Flatten_Layer Flatten_3;
         public Fully_Connected_Layer FC_3;
-        public Softmax_Loss_Layer Softmax;
+        public Softmax_Loss_Layer Softmax_Loss;
 
         public Optimizer Optim;
 
@@ -52,7 +52,7 @@ namespace Conv_Net {
 
             Flatten_3 = new Flatten_Layer(); 
             FC_3 = new Fully_Connected_Layer(4 * 4 * 32, 10, true); 
-            Softmax = new Softmax_Loss_Layer();
+            Softmax_Loss = new Softmax_Loss_Layer();
 
             Optim = new Optimizer();
         }
@@ -73,18 +73,18 @@ namespace Conv_Net {
             output = Conv_1.forward(output);
             output = Relu_1.forward(output);
             output = Pool_1.forward(output);
-            if (is_train == true) { output = Dropout_1.forward(output); }
+            output = Dropout_1.forward(output, is_train);
 
             output = Conv_2.forward(output);
             output = Relu_2.forward(output);
             output = Pool_2.forward(output);
-            if (is_train == true) { output = Dropout_2.forward(output); }
+            output = Dropout_2.forward(output, is_train);
 
             output = Flatten_3.forward(output);
             output = FC_3.forward(output);
-            output = Softmax.forward(output);
+            output = Softmax_Loss.forward(output);
 
-            loss = Softmax.loss(target);
+            loss = Softmax_Loss.loss(target);
 
             return Tuple.Create(loss, output);
         }
@@ -94,9 +94,9 @@ namespace Conv_Net {
         /// Output of Conv_1 is null (dL/dI is not needed because Conv_1 is the first layer)
         /// </summary>
         public void backward(int batch_size) {
-            Tensor grad = new Tensor (0, 0, 0, 0, 0);
-
-            grad = Softmax.backward();
+            Tensor grad;
+            
+            grad = Softmax_Loss.backward();
             grad = FC_3.backward(grad);
             grad = Flatten_3.backward(grad);
 

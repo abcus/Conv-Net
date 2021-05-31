@@ -70,7 +70,7 @@ namespace Conv_Net {
             }
 
             this.Conv = new Convolution_Layer(I_channels, F_num, F_rows, F_columns, true, pad_size, stride, dilation);
-            this.BN = new Batch_Normalization_Layer();
+            this.BN = new Batch_Normalization_Layer(F_num);
             this.MSE = new Mean_Squared_Loss();
 
             // Set filters
@@ -96,7 +96,7 @@ namespace Conv_Net {
             Tensor A; 
             A = this.Conv.forward(this.I);
             // Console.WriteLine(A);
-            A = this.BN.forward(A);
+            A = this.BN.forward(A, true);
             // Console.WriteLine(A);
             A = this.MSE.loss(A, this.T);
             return A;
@@ -105,6 +105,7 @@ namespace Conv_Net {
         public Tensor backward() {
             Tensor Z;
             Z = this.MSE.backward();
+            Z = this.BN.backward(Z);
             Z = Conv.backward(Z);
             return Z;
         }
@@ -121,26 +122,79 @@ namespace Conv_Net {
             Tensor analytic_dI;
             Tensor analytic_dB;
             Tensor analytic_dF;
+            Tensor analytic_d_gamma;
+            Tensor analytic_d_beta;
 
             Tensor numeric_dI;
             Tensor numeric_dB;
             Tensor numeric_dF;
+            Tensor numeric_d_gamma;
+            Tensor numeric_d_beta;
 
             test_CNN test_CNN = new test_CNN();
 
             test_CNN.forward();
             
-            //analytic_dI = test_CNN.backward();
+            analytic_dI = test_CNN.backward();
             //analytic_dB = test_CNN.Conv.dB; 
             //analytic_dF = test_CNN.Conv.dF;
+            analytic_d_gamma = test_CNN.BN.d_gamma;
+            analytic_d_beta = test_CNN.BN.d_beta;
 
             //numeric_dI = new Tensor(analytic_dI.dimensions, analytic_dI.dim_1, analytic_dI.dim_2, analytic_dI.dim_3, analytic_dI.dim_4);
             //numeric_dB = new Tensor(analytic_dB.dimensions, analytic_dB.dim_1);
             //numeric_dF = new Tensor(analytic_dF.dimensions, analytic_dF.dim_1, analytic_dF.dim_2, analytic_dF.dim_3, analytic_dF.dim_4);
+            numeric_d_gamma = new Tensor(analytic_d_gamma.dimensions, analytic_d_gamma.dim_1);
+            numeric_d_beta = new Tensor(analytic_d_beta.dimensions, analytic_d_beta.dim_1);
 
-            //int I_samples = test_CNN.I.dim_1;
-            //int B_num = test_CNN.Conv.B.dim_1;
-            //int F_num = test_CNN.Conv.F.dim_1; int F_rows = test_CNN.Conv.F.dim_2; int F_columns = test_CNN.Conv.F.dim_3; int F_channels = test_CNN.Conv.F.dim_4;
+            int I_samples = test_CNN.I.dim_1;
+            int B_num = test_CNN.Conv.B.dim_1;
+            int F_num = test_CNN.Conv.F.dim_1; int F_rows = test_CNN.Conv.F.dim_2; int F_columns = test_CNN.Conv.F.dim_3; int F_channels = test_CNN.Conv.F.dim_4;
+            int elements = analytic_d_gamma.dim_1;
+
+
+            // Numerical gradient of loss with respect to gamma
+            for (int i = 0; i < elements; i++) {
+            
+                loss_up = 0.0;
+                loss_down = 0.0;
+
+                test_CNN.BN.gamma.values[i] += h;
+                for (int s = 0; s < I_samples; s++) {
+                    loss_up += test_CNN.forward().values[s];
+                }
+                test_CNN.BN.gamma.values[i] -= 2 * h;
+                for (int s = 0; s < I_samples; s++) {
+                    loss_down += test_CNN.forward().values[s];
+                }
+                test_CNN.BN.gamma.values[i] += h;
+                numeric_d_gamma.values[i] = (loss_up - loss_down) / (2 * h * I_samples);
+            }
+            // Console.WriteLine(analytic_d_gamma);
+            // Console.WriteLine(numeric_d_gamma);
+            // Console.WriteLine(analytic_d_gamma.difference(numeric_d_gamma));
+
+            // Numerical gradient of loss with respect to beta
+            for (int i = 0; i < elements; i++) {
+
+                loss_up = 0.0;
+                loss_down = 0.0;
+
+                test_CNN.BN.beta.values[i] += h;
+                for (int s = 0; s < I_samples; s++) {
+                    loss_up += test_CNN.forward().values[s];
+                }
+                test_CNN.BN.beta.values[i] -= 2 * h;
+                for (int s = 0; s < I_samples; s++) {
+                    loss_down += test_CNN.forward().values[s];
+                }
+                test_CNN.BN.beta.values[i] += h;
+                numeric_d_beta.values[i] = (loss_up - loss_down) / (2 * h * I_samples);
+            }
+            Console.WriteLine(analytic_d_beta);
+            Console.WriteLine(numeric_d_beta);
+            Console.WriteLine(analytic_d_beta.difference(numeric_d_beta));
+
 
             ////Numerical gradient of loss with respect to bias
             //// For each bias, sum contribution from each sample (divide by batch size at the end)

@@ -85,7 +85,7 @@ namespace Conv_Net {
             Tensor dO_matrix = Utils.dO_to_matrix(dO);
 
             // Calculate ∂L/∂B
-            Tensor one_vector = Utils.one_vector(this.dO_samples, this.dO_rows, this.dO_columns);
+            Tensor one_vector = Utils.one_vector_3D(this.dO_samples, this.dO_rows, this.dO_columns);
             this.dB = new Tensor(1, this.dB_num);
             this.dB = Utils.dgbmv_cs(dO_matrix, one_vector, this.dB);
 

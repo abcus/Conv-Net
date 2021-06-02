@@ -13,9 +13,11 @@ namespace Conv_Net {
         private bool is_training;
         private bool is_conv;
 
+        
         private Tensor I_hat;
         private Tensor mean;
         private Tensor variance;
+        private Tensor inverse_stdev; // 1/Sqrt(variance + epsilon)
         public Tensor gamma;
         public Tensor beta;
 
@@ -27,10 +29,10 @@ namespace Conv_Net {
             gamma = new Tensor(1, element);
             beta = new Tensor(1, element);
             for (int i = 0; i < gamma.values.Count(); i++) {
-                gamma.values[i] = i + 1;
+                gamma.values[i] = 4 + i;
             }
             for (int i=0; i < beta.values.Count(); i++) {
-                beta.values[i] = i + 2;
+                beta.values[i] = 6 + i;
             }
         }
 
@@ -57,9 +59,12 @@ namespace Conv_Net {
                 effective_sample_size = I.dim_1;
                 element = I.dim_2;
 
+
+
                 this.I_hat = new Tensor(2, effective_sample_size, element);
                 mean = new Tensor(1, element);
                 variance = new Tensor(1, element);
+                inverse_stdev = new Tensor(1, element);
 
                 // Calculate mean
                 for (int i = 0; i < effective_sample_size; i++) {
@@ -68,26 +73,32 @@ namespace Conv_Net {
                     }
                 }
 
-                // Calculate variance
+                // Calculate variance 
                 for (int i = 0; i < effective_sample_size; i++) {
                     for (int j = 0; j < element; j++) {
                         variance.values[j] += (Math.Pow((I.values[i * element + j] - mean.values[j]), 2) / effective_sample_size);
                     }
                 }
 
+                // Calculate inverse standard deviation
+                for (int i=0; i < element; i++) {
+                    this.inverse_stdev.values[i] = 1 / Math.Sqrt(this.variance.values[i] + this.EPSILON);
+                }
+
                 // I_hat = (z - mean)/(sqrt(variance) + epsilon) 
                 for (int i = 0; i < effective_sample_size; i++) {
                     for (int j = 0; j < element; j++) {
-                        this.I_hat.values[i * element + j] = (I.values[i * element + j] - this.mean.values[j]) / Math.Sqrt(this.variance.values[j] + this.EPSILON) ;
+                        this.I_hat.values[i * element + j] = (I.values[i * element + j] - this.mean.values[j]) * this.inverse_stdev.values[j];
                     }
                 }
-
                 // Output = gamma * ((z - mean)/(sqrt(variance) + epsilon))+ beta
                 for (int i = 0; i < effective_sample_size; i++) {
                     for (int j = 0; j < element; j++) {
                         I.values[i * element + j] = this.gamma.values[j] * ((I.values[i * element + j] - this.mean.values[j]) / Math.Sqrt(this.variance.values[j] + this.EPSILON)) + this.beta.values[j];
                     }
                 }
+
+
                 // Reshape output if convolutional layer
                 if (is_conv == true) {
                     I.dimensions = 4;
@@ -101,6 +112,8 @@ namespace Conv_Net {
 
 
         public Tensor backward (Tensor dO) {
+
+ 
             if (this.is_conv == true) {
                 dO.dimensions = 2;
                 dO.dim_1 = I_sample * I_rows * I_columns;
@@ -109,17 +122,47 @@ namespace Conv_Net {
                 dO.dim_4 = 1;
 
             }
+
+
+
             // dL/dgamma
             Tensor one_vector = Utils.one_vector_1D(effective_sample_size);
+            Tensor column_vector_1 = Utils.column_vector_1(effective_sample_size);
             this.d_gamma = new Tensor(1, this.element);
-            this.d_gamma = Utils.dgbvm_cs(one_vector, Utils.elementwise_multiply(dO, this.I_hat), this.d_gamma);
+            this.d_gamma = Utils.dgbvm_cs(one_vector, Utils.elementwise_product(dO, this.I_hat), this.d_gamma);
 
             // dL/dbeta
             this.d_beta = new Tensor(1, this.element);
-            this.d_beta = Utils.dgbvm_cs(one_vector, dO, d_beta);   
+            this.d_beta = Utils.dgbvm_cs(one_vector, dO, d_beta);
 
-            
-            
+            // dL/dI
+            Tensor dI = new Tensor(2, this.effective_sample_size, this.element);
+
+            this.d_beta.dimensions = 2; this.d_beta.dim_2 = this.d_beta.dim_1; this.d_beta.dim_1 = 1;
+            this.d_gamma.dimensions = 2; this.d_gamma.dim_2 = this.d_gamma.dim_1; this.d_gamma.dim_1 = 1;
+            this.inverse_stdev.dimensions = 2; this.inverse_stdev.dim_2 = this.inverse_stdev.dim_1; this.inverse_stdev.dim_1 = 1;
+            this.gamma.dimensions = 2; this.gamma.dim_2 = this.gamma.dim_1; this.gamma.dim_1 = 1;
+
+            Tensor left_side = new Tensor(2, this.effective_sample_size, this.element);        
+            left_side = Utils.scalar_product(1.0/this.effective_sample_size ,Utils.dgemm_cs(column_vector_1, Utils.elementwise_product(this.gamma, this.inverse_stdev), left_side));    
+
+            Tensor part1 = Utils.scalar_product(this.effective_sample_size, dO);
+            Tensor part2 = new Tensor(2, this.effective_sample_size, this.element);
+            part2 = Utils.dgemm_cs(column_vector_1, this.d_beta, part2);
+            Tensor part3 = new Tensor(2, this.effective_sample_size, this.element);
+            part3 = Utils.elementwise_product(Utils.dgemm_cs(column_vector_1, this.d_gamma, part3), this.I_hat);
+            Tensor right_side = Utils.subtract(Utils.subtract(part1, part2), part3);
+
+            Console.WriteLine(Utils.elementwise_product(left_side, right_side));
+
+              Console.WriteLine(d_gamma);
+              Console.WriteLine(d_beta);
+             // Console.WriteLine(dI);
+
+            this.d_beta.dimensions = 1; this.d_beta.dim_1 = this.d_beta.dim_2; this.d_beta.dim_2 = 1;
+            this.d_gamma.dimensions = 1; this.d_gamma.dim_1 = this.d_gamma.dim_2; this.d_gamma.dim_2 = 1;
+            this.gamma.dimensions = 1; this.gamma.dim_1 = this.gamma.dim_2; this.gamma.dim_2 = 1;
+            this.inverse_stdev.dimensions = 1; this.inverse_stdev.dim_1 = this.inverse_stdev.dim_2; this.inverse_stdev.dim_2 = 1;
 
             if (is_conv == true) {
                 dO.dimensions = 4;

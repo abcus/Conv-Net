@@ -185,7 +185,7 @@ namespace Conv_Net {
             Console.WriteLine("\t\t\t\t   ╚════════════════════════════╝");
         }
 
-        static public Tensor elementwise_multiply (Tensor A, Tensor B) {
+        static public Tensor elementwise_product (Tensor A, Tensor B) {
             Tensor C = new Tensor(A.dimensions, A.dim_1, A.dim_2, A.dim_3, A.dim_4);
             for (int i=0; i < C.values.Count(); i++) {
                 C.values[i] = A.values[i] * B.values[i]; 
@@ -193,6 +193,29 @@ namespace Conv_Net {
             return C;
         }
 
+        static public Tensor add (Tensor A, Tensor B) {
+            Tensor C = new Tensor(A.dimensions, A.dim_1, A.dim_2, A.dim_3, A.dim_4);
+            for (int i=0; i < C.values.Count(); i++) {
+                C.values[i] = A.values[i] + B.values[i];   
+            }
+            return C;
+        }
+
+        static public Tensor subtract(Tensor A, Tensor B) {
+            Tensor C = new Tensor(A.dimensions, A.dim_1, A.dim_2, A.dim_3, A.dim_4);
+            for (int i = 0; i < C.values.Count(); i++) {
+                C.values[i] = A.values[i] - B.values[i];
+            }
+            return C;
+        }
+
+        static public Tensor scalar_product(Double N, Tensor A) {
+            Tensor C = new Tensor(A.dimensions, A.dim_1, A.dim_2, A.dim_3, A.dim_4);
+            for (int i=0; i < C.values.Count(); i++) {
+                C.values[i] = A.values[i] * N;
+            }
+            return C;
+        }
 
         /// <summary>
         /// Returns Y = A * X + Y
@@ -272,6 +295,7 @@ namespace Conv_Net {
             });
 
             // Console.WriteLine("[" + A_row + ", " + A_col + "] x [" + B_row + ", " + B_col + "] " + A_row * A_col + " * " + B_row * B_col);
+            
 
             return C;
         }
@@ -360,6 +384,22 @@ namespace Conv_Net {
                 one_vector.values[i] = 1.0;
             }
             return one_vector;
+        }
+
+        public static Tensor column_vector_1 (int rows) {
+            Tensor column_vector_1 = new Tensor(2, rows, 1);
+            for (int i=0; i < column_vector_1.values.Count(); i++) {
+                column_vector_1.values[i] = 1.0;
+            }
+            return column_vector_1;
+        }
+
+        public static Tensor row_vector_1 (int columns) {
+            Tensor row_vector_1 = new Tensor(2, 1, columns);
+            for (int i=0; i < row_vector_1.values.Count(); i++) {
+                row_vector_1.values[i] = 1.0;
+            }
+            return row_vector_1;
         }
 
         /// <summary>

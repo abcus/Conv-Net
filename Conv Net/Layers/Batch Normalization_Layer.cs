@@ -17,7 +17,7 @@ namespace Conv_Net {
         private Tensor I_hat;
         private Tensor mean;
         private Tensor variance;
-        private Tensor inverse_stdev; // 1/Sqrt(variance + epsilon)
+        public Tensor inverse_stdev; // 1/Sqrt(variance + epsilon)
         public Tensor gamma;
         public Tensor beta;
 
@@ -28,11 +28,12 @@ namespace Conv_Net {
         public Batch_Normalization_Layer(int element) {
             gamma = new Tensor(1, element);
             beta = new Tensor(1, element);
+            // gamma initialized to 1, beta initialized to 0
             for (int i = 0; i < gamma.values.Count(); i++) {
-                gamma.values[i] = 4 + i;
+                gamma.values[i] = 1;
             }
             for (int i=0; i < beta.values.Count(); i++) {
-                beta.values[i] = 6 + i;
+                beta.values[i] = 0;
             }
         }
 
@@ -59,7 +60,7 @@ namespace Conv_Net {
                 effective_sample_size = I.dim_1;
                 element = I.dim_2;
 
-
+                
 
                 this.I_hat = new Tensor(2, effective_sample_size, element);
                 mean = new Tensor(1, element);
@@ -72,6 +73,8 @@ namespace Conv_Net {
                         mean.values[j] += (I.values[i * element + j] / effective_sample_size);
                     }
                 }
+                
+
 
                 // Calculate variance 
                 for (int i = 0; i < effective_sample_size; i++) {
@@ -80,10 +83,15 @@ namespace Conv_Net {
                     }
                 }
 
+                
+
                 // Calculate inverse standard deviation
                 for (int i=0; i < element; i++) {
                     this.inverse_stdev.values[i] = 1 / Math.Sqrt(this.variance.values[i] + this.EPSILON);
+                    
                 }
+
+
 
                 // I_hat = (z - mean)/(sqrt(variance) + epsilon) 
                 for (int i = 0; i < effective_sample_size; i++) {
@@ -91,6 +99,9 @@ namespace Conv_Net {
                         this.I_hat.values[i * element + j] = (I.values[i * element + j] - this.mean.values[j]) * this.inverse_stdev.values[j];
                     }
                 }
+
+                
+
                 // Output = gamma * ((z - mean)/(sqrt(variance) + epsilon))+ beta
                 for (int i = 0; i < effective_sample_size; i++) {
                     for (int j = 0; j < element; j++) {
@@ -106,6 +117,7 @@ namespace Conv_Net {
                 }
 
                 return I;
+                
             }
             return null;
         }
@@ -120,20 +132,19 @@ namespace Conv_Net {
                 dO.dim_2 = I_channels;
                 dO.dim_3 = 1;
                 dO.dim_4 = 1;
-
             }
-
-
 
             // dL/dgamma
             Tensor one_vector = Utils.one_vector_1D(effective_sample_size);
             Tensor column_vector_1 = Utils.column_vector_1(effective_sample_size);
-            this.d_gamma = new Tensor(1, this.element);
-            this.d_gamma = Utils.dgbvm_cs(one_vector, Utils.elementwise_product(dO, this.I_hat), this.d_gamma);
 
             // dL/dbeta
             this.d_beta = new Tensor(1, this.element);
             this.d_beta = Utils.dgbvm_cs(one_vector, dO, d_beta);
+
+            this.d_gamma = new Tensor(1, this.element);
+            this.d_gamma = Utils.dgbvm_cs(one_vector, Utils.elementwise_product(dO, this.I_hat), this.d_gamma);
+            
 
             // dL/dI
             Tensor dI = new Tensor(2, this.effective_sample_size, this.element);
@@ -144,7 +155,7 @@ namespace Conv_Net {
             this.gamma.dimensions = 2; this.gamma.dim_2 = this.gamma.dim_1; this.gamma.dim_1 = 1;
 
             Tensor left_side = new Tensor(2, this.effective_sample_size, this.element);        
-            left_side = Utils.scalar_product(1.0/this.effective_sample_size ,Utils.dgemm_cs(column_vector_1, Utils.elementwise_product(this.gamma, this.inverse_stdev), left_side));    
+            left_side = Utils.scalar_product(1.0/this.effective_sample_size ,Utils.dgemm_cs(column_vector_1, Utils.elementwise_product(this.gamma, this.inverse_stdev), left_side));
 
             Tensor part1 = Utils.scalar_product(this.effective_sample_size, dO);
             Tensor part2 = new Tensor(2, this.effective_sample_size, this.element);
@@ -153,11 +164,7 @@ namespace Conv_Net {
             part3 = Utils.elementwise_product(Utils.dgemm_cs(column_vector_1, this.d_gamma, part3), this.I_hat);
             Tensor right_side = Utils.subtract(Utils.subtract(part1, part2), part3);
 
-            Console.WriteLine(Utils.elementwise_product(left_side, right_side));
-
-              Console.WriteLine(d_gamma);
-              Console.WriteLine(d_beta);
-             // Console.WriteLine(dI);
+            dI = Utils.elementwise_product(left_side, right_side);
 
             this.d_beta.dimensions = 1; this.d_beta.dim_1 = this.d_beta.dim_2; this.d_beta.dim_2 = 1;
             this.d_gamma.dimensions = 1; this.d_gamma.dim_1 = this.d_gamma.dim_2; this.d_gamma.dim_2 = 1;
@@ -165,10 +172,10 @@ namespace Conv_Net {
             this.inverse_stdev.dimensions = 1; this.inverse_stdev.dim_1 = this.inverse_stdev.dim_2; this.inverse_stdev.dim_2 = 1;
 
             if (is_conv == true) {
-                dO.dimensions = 4;
-                dO.dim_1 = I_sample; dO.dim_2 = I_rows; dO.dim_3 = I_columns; dO.dim_4 = I_channels;
+                dI.dimensions = 4;
+                dI.dim_1 = I_sample; dI.dim_2 = I_rows; dI.dim_3 = I_columns; dI.dim_4 = I_channels;
             }
-            return dO;
+            return dI;
         }
     }
 

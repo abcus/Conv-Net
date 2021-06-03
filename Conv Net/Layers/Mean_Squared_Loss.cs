@@ -20,15 +20,13 @@ namespace Conv_Net {
             this.I_dimensions = I.dimensions; this.I_samples = I.dim_1; this.I_rows = I.dim_2; this.I_columns = I.dim_3; this.I_channels = I.dim_4;
             this.I_elements = this.I_rows * this.I_columns * this.I_channels;
 
-            Tensor L = new Tensor(1, this.I_samples);
+            Tensor L = new Tensor(1, 1);
 
-            for (int i = 0; i < this.I_samples; i ++) {
-                Double difference = 0.0;
-                for (int j = 0; j < this.I_elements; j++) {
-                    difference += Math.Pow(I.values[i * I_elements + j] - T.values[i * I_elements + j], 2);
-                }
-                L.values[i] = difference / (2 * this.I_elements);
+            Double difference = 0.0;
+            for (int i = 0; i < this.I_samples * this.I_rows * this.I_columns * this.I_channels; i ++) {
+                difference += Math.Pow(I.values[i] - T.values[i], 2);
             }
+            L.values[0] = difference / (this.I_samples * this.I_rows * this.I_columns * this.I_channels);
             return L;
         }
 
@@ -37,10 +35,8 @@ namespace Conv_Net {
             
             Tensor dI = new Tensor(this.I_dimensions, this.I_samples, this.I_rows, this.I_columns, this.I_channels);
 
-            for (int i=0; i < I_samples; i++) {
-                for (int j=0; j < this.I_elements; j++) {
-                    dI.values[i * I_elements + j] = (I.values[i * I_elements + j] - T.values[i * I_elements + j]) / (this.I_elements * batch_size);
-                }
+            for (int i=0; i < this.I_samples * this.I_rows * this.I_columns * this.I_channels; i++) {
+                dI.values[i] = (I.values[i] - T.values[i]) * 2 / (this.I_elements * batch_size);
             }
             this.I = null;
             this.T = null;

@@ -14,7 +14,7 @@ namespace Conv_Net {
         public Fully_Connected_Layer FC;
         public Mean_Squared_Loss MSE;
 
-        public Tensor I, BN_I, T, BN_T;
+        public Tensor I, BN_I, T, BN_T, dO;
 
         public int I_samples, I_rows, I_columns, I_channels;
         public int n, d;
@@ -70,6 +70,16 @@ namespace Conv_Net {
                                 1.1149, -0.1407,  0.8058 };
             BN_T.values = target;
 
+            this.dO = new Tensor(2, n, d);
+            Double[] gradOut = {-0.0875, -0.0206, -0.0737,
+                                -0.0594, 0.0746,  0.1076,
+                                -0.1044, -0.1918, 0.08,
+                                -0.0874, 0.0099,  -0.0916,
+                                0.1442,  -0.152,  0.0214,
+                                -0.0342, 0.2018,  0.1437,
+                                0.2411,  0.0451,  0.1339,
+                                -0.1286, -0.0486, -0.2646};
+            dO.values = gradOut;
 
             // test input tensor
             //this.I = new Tensor(4, I_samples, I_rows, I_columns, I_channels);
@@ -138,8 +148,42 @@ namespace Conv_Net {
     
     static class Grad_Check {
 
+        public static Tensor grad_check(Func<Tensor, bool, Tensor> forward, Tensor I, Tensor dO, Double h = 0.00001) {
+            Tensor numeric_gradient = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4);
+
+            for (int i=0; i < I.values.Count(); i++) {
+                
+                Tensor I_up = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4);
+                Tensor I_down = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4);
+                for (int j=0; j < I.values.Count(); j++) {
+                    I_up.values[j] = I.values[j];
+                    I_down.values[j] = I.values[j];
+                }
+                I_up.values[i] += h;
+                Tensor up = (forward(I_up, true));
+                I_down.values[i] -= h;
+                Tensor down = forward(I_down, true);
+                
+                // 1. (f(x + h) - f (x - h)) * dL/dO (elementwise)
+                // 2. Sum all elements
+                // 3. Divide by (2 * h)
+                numeric_gradient.values[i] = Utils.sum(Utils.elementwise_product(Utils.subtract(up, down), dO)) / (2 * h);
+            }
+            return numeric_gradient;
+        }
+
+
+
+
+
+
+
+
+
         public static void test () {
+
             
+
             Double loss_up = 0.0;
             Double loss_down = 0.0;
             Double h = 0.0000001;
@@ -160,6 +204,8 @@ namespace Conv_Net {
 
             test_CNN test_CNN = new test_CNN();
 
+            numeric_d_I_BN = grad_check(test_CNN.BN.forward, test_CNN.BN_I, test_CNN.dO);
+
             test_CNN.forward();
 
 
@@ -169,6 +215,10 @@ namespace Conv_Net {
             analytic_d_I_BN = test_CNN.backward();
             analytic_d_gamma = test_CNN.BN.d_gamma;
             analytic_d_beta = test_CNN.BN.d_beta;
+            
+
+            Console.WriteLine(analytic_d_I_BN.difference(numeric_d_I_BN));
+            
 
             //numeric_dI = new Tensor(analytic_dI.dimensions, analytic_dI.dim_1, analytic_dI.dim_2, analytic_dI.dim_3, analytic_dI.dim_4);
             //numeric_dB = new Tensor(analytic_dB.dimensions, analytic_dB.dim_1);
@@ -200,8 +250,10 @@ namespace Conv_Net {
             //        numeric_d_I_BN.values[i * test_CNN.d + j] = (loss_up - loss_down) / (2 * h * test_CNN.n);
             //    }
             //}
-            Console.WriteLine("Analytic d_I:");
-            Console.WriteLine(analytic_d_I_BN);
+            // Console.WriteLine("Analytic d_I:");
+            // Console.WriteLine(analytic_d_I_BN);
+
+            
 
             //Console.WriteLine("Numeric d_I:");
             //Console.WriteLine(numeric_d_I_BN);
@@ -227,8 +279,8 @@ namespace Conv_Net {
             //    test_CNN.BN.gamma.values[i] += h;
             //    numeric_d_gamma.values[i] = (loss_up - loss_down) / (2 * h * test_CNN.n);
             //}
-            Console.WriteLine("Analytic d_gamma:");
-            Console.WriteLine(analytic_d_gamma);
+            // Console.WriteLine("Analytic d_gamma:");
+            // Console.WriteLine(analytic_d_gamma);
 
             //Console.WriteLine("Numeric d_gamma:");
             //Console.WriteLine(numeric_d_gamma);
@@ -255,8 +307,8 @@ namespace Conv_Net {
             //    test_CNN.BN.beta.values[i] += h;
             //    numeric_d_beta.values[i] = (loss_up - loss_down) / (2 * h * test_CNN.n);
             //}
-            Console.WriteLine("Analytic d_beta:");
-            Console.WriteLine(analytic_d_beta);
+            // Console.WriteLine("Analytic d_beta:");
+            // Console.WriteLine(analytic_d_beta);
 
             //Console.WriteLine("Numeric d_beta:");
             //Console.WriteLine(numeric_d_beta);

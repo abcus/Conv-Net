@@ -5,12 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class Mean_Squared_Loss {
+    class Mean_Squared_Loss_Layer {
 
         private int I_dimensions, I_samples, I_rows, I_columns, I_channels, I_elements;
 
         private Tensor I, T;
-        public Mean_Squared_Loss () {
+        public Mean_Squared_Loss_Layer () {
         }
 
         public Tensor loss (Tensor I, Tensor T) {

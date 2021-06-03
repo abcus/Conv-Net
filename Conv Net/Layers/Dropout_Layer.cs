@@ -19,10 +19,10 @@ namespace Conv_Net {
             this.scaling_factor = 1 / (1 - this.p);
         }
 
-        public Tensor forward(Tensor I, bool is_train) {
+        public Tensor forward(Tensor I, bool is_training) {
             this.d_local = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4);
             
-            if (is_train) {
+            if (is_training) {
                 // Do not parallelize because of random number generation
                 for (int i = 0; i < I.values.Count(); i++) {
                     if (Program.dropout_rand.NextDouble() < this.p) {

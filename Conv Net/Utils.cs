@@ -217,6 +217,14 @@ namespace Conv_Net {
             return sum;
         }
 
+        static public Tensor copy (Tensor A) {
+            Tensor copy = new Tensor(A.dimensions, A.dim_1, A.dim_2, A.dim_3, A.dim_4);
+            for (int i=0; i < A.values.Count(); i++) {
+                copy.values[i] = A.values[i];
+            }
+            return copy;
+        }
+
         static public Tensor scalar_product(Double N, Tensor A) {
             Tensor C = new Tensor(A.dimensions, A.dim_1, A.dim_2, A.dim_3, A.dim_4);
             for (int i=0; i < C.values.Count(); i++) {

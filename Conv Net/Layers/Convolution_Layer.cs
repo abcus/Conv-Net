@@ -58,8 +58,8 @@ namespace Conv_Net {
                 this.F.values[i] = Utils.next_normal(Program.rand, 0, 1) * Math.Sqrt(2 / ((Double)this.F_num * this.F_rows * this.F_columns));
             }
         }
-      
-        public Tensor forward (Tensor I) {
+
+        public Tensor forward(Tensor I, bool is_training = false) {
             
             this.I = I.pad(this.pad_size); 
             

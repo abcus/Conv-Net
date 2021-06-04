@@ -244,9 +244,9 @@ namespace Conv_Net {
             // Conv analytic and numeric gradients
             Tensor analytic_dI_conv = analytic_grad_conv(Conv, MSE, I_Conv, T_Conv);
             Tensor numeric_dI_conv = numeric_grad_2(Conv.forward, MSE.loss, I_Conv, T_Conv);
-            Console.WriteLine(analytic_dI_conv);
-            Console.WriteLine(numeric_dI_conv);
-            Console.WriteLine(analytic_dI_conv.difference(numeric_dI_conv));
+            // Console.WriteLine(analytic_dI_conv);
+            // Console.WriteLine(numeric_dI_conv);
+            // Console.WriteLine(analytic_dI_conv.difference(numeric_dI_conv));
 
             // Conv + BN analytic and numeric gradients
             Tensor analytic_dI_conv_BN = analytic_grad_conv_BN(Conv, BN, MSE, I_Conv, T_Conv);
@@ -278,36 +278,8 @@ namespace Conv_Net {
             // numeric_d_I_BN = grad_check(test_CNN.BN.forward, test_CNN.BN_I, test_CNN.dO);
             // Console.WriteLine(numeric_d_I_BN);
 
-            //// Numerical gradient of loss with respect to input for BN
-            //for (int i = 0; i < test_CNN.BN_I.values.Count(); i++) {
-            //    Tensor I_up = Utils.copy(test_CNN.BN_I);
-            //    Tensor I_down = Utils.copy(test_CNN.BN_I);
-           
-            //    I_up.values[i] += h;
-            //    I_down.values[i] -= h;
-
-            //    Tensor L_up = test_CNN.forward(I_up);
-            //    Tensor L_down = test_CNN.forward(I_down);
-
-            //    numeric_d_I_BN.values[i] = Utils.sum(Utils.subtract(L_up, L_down)) / (2 * h);
-            //}
-            //Console.WriteLine(numeric_d_I_BN);
-
-            // Console.WriteLine("Analytic d_I:");
-            //Console.WriteLine(analytic_d_I_BN);
-
-            //Console.WriteLine("Numeric d_I:");
-             // Console.WriteLine(numeric_d_I_BN);
-
-            // Console.WriteLine("Difference");
-            //Console.WriteLine(analytic_d_I_BN.difference(numeric_d_I_BN));
-
-
-
-
            
 
-            //test_CNN.forward();
 
 
             //analytic_dI = test_CNN.backward();
@@ -328,9 +300,7 @@ namespace Conv_Net {
             //numeric_d_beta = new Tensor(1, test_CNN.d);
             //numeric_d_I_BN = new Tensor(2, test_CNN.n, test_CNN.d);
 
-            //int B_num = test_CNN.Conv.B.dim_1;
-            //int F_num = test_CNN.Conv.F.dim_1; int F_rows = test_CNN.Conv.F.dim_2; int F_columns = test_CNN.Conv.F.dim_3; int F_channels = test_CNN.Conv.F.dim_4;
-            //int I_samples = test_CNN.I_samples;
+
 
            
 
@@ -442,34 +412,7 @@ namespace Conv_Net {
             //Console.WriteLine(numeric_dF);
             //Console.WriteLine(analytic_dF.difference(numeric_dF));
 
-            //// Numerical gradient of loss with respect to input
-            //for (int i = 0; i < test_CNN.I.dim_1; i++) {
-            //    for (int j = 0; j < test_CNN.I.dim_2; j++) {
-            //        for (int k = 0; k < test_CNN.I.dim_3; k++) {
-            //            for (int l = 0; l < test_CNN.I.dim_4; l++) {
-            //                loss_up = 0.0;
-            //                loss_down = 0.0;
-
-            //                test_CNN.I.values[test_CNN.I.index(i, j, k, l)] += h;
-            //                for (int s = 0; s < test_CNN.forward().values.Count(); s++) {
-            //                    loss_up = test_CNN.forward().values[i];
-            //                }
-            //                test_CNN.I.values[test_CNN.I.index(i, j, k, l)] -= 2 * h;
-            //                for (int s = 0; s < test_CNN.forward().values.Count(); s++) {
-            //                    loss_down = test_CNN.forward().values[i];
-            //                }
-            //                test_CNN.I.values[test_CNN.I.index(i, j, k, l)] += h;
-
-            //                numeric_dI.values[numeric_dI.index(i, j, k, l)] = (loss_up - loss_down) / (2 * h * test_CNN.I.dim_1 * test_CNN.I.dim_1);
-            //            }
-            //        }
-            //    }
-            //}
-            //Console.WriteLine("--------------------------------------");
-            //Console.WriteLine("ANALYTIC DI");
-            //Console.WriteLine(analytic_dI);
-            //Console.WriteLine(numeric_dI);
-            //Console.WriteLine(analytic_dI.difference(numeric_dI));
+          
         }
     }
 }

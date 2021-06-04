@@ -48,7 +48,7 @@ namespace Conv_Net {
                 for (int j = 0; j < F_rows; j++) {
                     for (int k = 0; k < F_columns; k++) {
                         for (int l = 0; l < F_channels; l++) {
-                            Conv.F.values[Conv.F.index(i, j, k, l)] -= Program.ALPHA * Conv.dF.values[Conv.dF.index(i, j, k, l)];
+                            Conv.W.values[Conv.W.index(i, j, k, l)] -= Program.ALPHA * Conv.dF.values[Conv.dF.index(i, j, k, l)];
                         }
                     }
                 }
@@ -92,8 +92,8 @@ namespace Conv_Net {
                 for (int j = 0; j < F_rows; j++) {
                     for (int k = 0; k < F_columns; k++) {
                         for (int l = 0; l < F_channels; l++) {
-                            Conv.V_dF.values[Conv.V_dF.index(i, j, k, l)] = Program.BETA_1 * Conv.V_dF.values[Conv.V_dF.index(i, j, k, l)] + (1 - Program.BETA_1) * Conv.dF.values[Conv.dF.index(i, j, k, l)];
-                            Conv.F.values[Conv.F.index(i, j, k, l)] -= Program.ALPHA * (Conv.V_dF.values[Conv.V_dF.index(i, j, k, l)] /V_bias_correction);
+                            Conv.V_dW.values[Conv.V_dW.index(i, j, k, l)] = Program.BETA_1 * Conv.V_dW.values[Conv.V_dW.index(i, j, k, l)] + (1 - Program.BETA_1) * Conv.dF.values[Conv.dF.index(i, j, k, l)];
+                            Conv.W.values[Conv.W.index(i, j, k, l)] -= Program.ALPHA * (Conv.V_dW.values[Conv.V_dW.index(i, j, k, l)] /V_bias_correction);
                         }
                     }
                 }

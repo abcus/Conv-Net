@@ -124,13 +124,13 @@ namespace Conv_Net {
             foreach(Double b in Conv_1.B.values) {
                 writer.WriteLine(b);
             }
-            foreach (Double b in Conv_1.F.values) {
+            foreach (Double b in Conv_1.W.values) {
                 writer.WriteLine(b);
             }
             foreach (Double b in Conv_2.B.values) {
                 writer.WriteLine(b);
             }
-            foreach (Double b in Conv_2.F.values) {
+            foreach (Double b in Conv_2.W.values) {
                 writer.WriteLine(b);
             }
             foreach (Double b in FC_3.B.values) {
@@ -149,14 +149,14 @@ namespace Conv_Net {
             for (int i=0; i < Conv_1.B.values.Length; i++) {
                 Conv_1.B.values[i] = Convert.ToDouble(reader.ReadLine());
             }
-            for (int i = 0; i < Conv_1.F.values.Length; i++) {
-                Conv_1.F.values[i] = Convert.ToDouble(reader.ReadLine());
+            for (int i = 0; i < Conv_1.W.values.Length; i++) {
+                Conv_1.W.values[i] = Convert.ToDouble(reader.ReadLine());
             }
             for (int i = 0; i < Conv_2.B.values.Length; i++) {
                 Conv_2.B.values[i] = Convert.ToDouble(reader.ReadLine());
             }
-            for (int i = 0; i < Conv_2.F.values.Length; i++) {
-                Conv_2.F.values[i] = Convert.ToDouble(reader.ReadLine());
+            for (int i = 0; i < Conv_2.W.values.Length; i++) {
+                Conv_2.W.values[i] = Convert.ToDouble(reader.ReadLine());
             }
             for (int i = 0; i < FC_3.B.values.Length; i++) {
                 FC_3.B.values[i] = Convert.ToDouble(reader.ReadLine());

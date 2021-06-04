@@ -187,7 +187,7 @@ namespace Conv_Net {
 
         static public Tensor elementwise_product (Tensor A, Tensor B) {
             Tensor C = new Tensor(A.dimensions, A.dim_1, A.dim_2, A.dim_3, A.dim_4);
-            for (int i=0; i < C.values.Count(); i++) {
+            for (int i=0; i < C.values.Length; i++) {
                 C.values[i] = A.values[i] * B.values[i]; 
             }
             return C;
@@ -195,7 +195,7 @@ namespace Conv_Net {
 
         static public Tensor add (Tensor A, Tensor B) {
             Tensor C = new Tensor(A.dimensions, A.dim_1, A.dim_2, A.dim_3, A.dim_4);
-            for (int i=0; i < C.values.Count(); i++) {
+            for (int i=0; i < C.values.Length; i++) {
                 C.values[i] = A.values[i] + B.values[i];   
             }
             return C;
@@ -203,7 +203,7 @@ namespace Conv_Net {
 
         static public Tensor subtract(Tensor A, Tensor B) {
             Tensor C = new Tensor(A.dimensions, A.dim_1, A.dim_2, A.dim_3, A.dim_4);
-            for (int i = 0; i < C.values.Count(); i++) {
+            for (int i = 0; i < C.values.Length; i++) {
                 C.values[i] = A.values[i] - B.values[i];
             }
             return C;
@@ -211,7 +211,7 @@ namespace Conv_Net {
 
         static public Double sum (Tensor A) {
             Double sum = 0.0;
-            for (int i=0; i < A.values.Count(); i++) {
+            for (int i=0; i < A.values.Length; i++) {
                 sum += A.values[i];
             }
             return sum;
@@ -219,7 +219,7 @@ namespace Conv_Net {
 
         static public Tensor copy (Tensor A) {
             Tensor copy = new Tensor(A.dimensions, A.dim_1, A.dim_2, A.dim_3, A.dim_4);
-            for (int i=0; i < A.values.Count(); i++) {
+            for (int i=0; i < A.values.Length; i++) {
                 copy.values[i] = A.values[i];
             }
             return copy;
@@ -227,7 +227,7 @@ namespace Conv_Net {
 
         static public Tensor scalar_product(Double N, Tensor A) {
             Tensor C = new Tensor(A.dimensions, A.dim_1, A.dim_2, A.dim_3, A.dim_4);
-            for (int i=0; i < C.values.Count(); i++) {
+            for (int i=0; i < C.values.Length; i++) {
                 C.values[i] = A.values[i] * N;
             }
             return C;
@@ -293,7 +293,9 @@ namespace Conv_Net {
             int B_transposed_row = B_col;
             int B_transposed_col = B_row;
             Tensor B_transposed = new Tensor(2, B_transposed_row, B_transposed_col);
-            
+            Tensor O = new Tensor(2, A_row, B_col);
+
+            // Transpose B
             Parallel.For(0, B_transposed_row, i => {
                 for (int j = 0; j < B_transposed_col; j++) {
                     B_transposed.values[i * B_transposed_col + j] = B.values[j * B_col + i];
@@ -306,14 +308,10 @@ namespace Conv_Net {
                     for (int k = 0; k < A_col; k++) {
                         temp += A.values[i * A_col + k] * B_transposed.values[j * B_transposed_col + k];
                     }
-                    C.values[i * B_col + j] += temp;
+                    O.values[i * B_col + j] = (temp + C.values[i * B_col + j]);
                 }
             });
-
-            // Console.WriteLine("[" + A_row + ", " + A_col + "] x [" + B_row + ", " + B_col + "] " + A_row * A_col + " * " + B_row * B_col);
-            
-
-            return C;
+            return O;
         }
 
         
@@ -396,7 +394,7 @@ namespace Conv_Net {
 
         public static Tensor one_vector_1D(int size) {
             Tensor one_vector = new Tensor(1, size);
-            for (int i=0; i < one_vector.values.Count(); i++) {
+            for (int i=0; i < one_vector.values.Length; i++) {
                 one_vector.values[i] = 1.0;
             }
             return one_vector;
@@ -404,7 +402,7 @@ namespace Conv_Net {
 
         public static Tensor column_vector_1 (int rows) {
             Tensor column_vector_1 = new Tensor(2, rows, 1);
-            for (int i=0; i < column_vector_1.values.Count(); i++) {
+            for (int i=0; i < column_vector_1.values.Length; i++) {
                 column_vector_1.values[i] = 1.0;
             }
             return column_vector_1;
@@ -412,7 +410,7 @@ namespace Conv_Net {
 
         public static Tensor row_vector_1 (int columns) {
             Tensor row_vector_1 = new Tensor(2, 1, columns);
-            for (int i=0; i < row_vector_1.values.Count(); i++) {
+            for (int i=0; i < row_vector_1.values.Length; i++) {
                 row_vector_1.values[i] = 1.0;
             }
             return row_vector_1;
@@ -423,7 +421,7 @@ namespace Conv_Net {
         /// </summary>
         public static Tensor one_vector_3D(int dO_sample, int dO_rows, int dO_columns) {
             Tensor one_vector = new Tensor(1, dO_sample * dO_rows * dO_columns);
-            for (int i=0; i < one_vector.values.Count(); i++) {
+            for (int i=0; i < one_vector.values.Length; i++) {
                 one_vector.values[i] = 1.0;
             }
             return one_vector;

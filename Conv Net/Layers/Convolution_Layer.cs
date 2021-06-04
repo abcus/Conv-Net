@@ -25,8 +25,8 @@ namespace Conv_Net {
         public int dilation;
 
         public Tensor I, B, W;
-        public Tensor dB, dF;
-        public Tensor V_dB, S_dB, V_dW, S_dF;
+        public Tensor dB, dW;
+        public Tensor V_dB, S_dB, V_dW, S_dW;
 
         public Convolution_Layer(int I_channels, int W_num, int W_rows, int W_columns, bool needs_gradient, int pad_size = 0, int stride = 1, int dilation = 1) {
 
@@ -48,13 +48,13 @@ namespace Conv_Net {
 
             this.W = new Tensor(4, this.W_num, this.W_rows, this.W_columns, this.F_channels);
             this.V_dW = new Tensor(4, this.dW_num, this.dW_rows, this.dW_columns, this.dW_channels);
-            this.S_dF = new Tensor(4, this.dW_num, this.dW_rows, this.dW_columns, this.dW_channels);
+            this.S_dW = new Tensor(4, this.dW_num, this.dW_rows, this.dW_columns, this.dW_channels);
 
             // Biases are initialized to 0, Filters are initializedto random value from normal distribution * sqrt(2/ (num_filters * filter_rows * filter_columns))
-            for (int i = 0; i < B.values.Count(); i++) { 
+            for (int i = 0; i < B.values.Length; i++) { 
                 B.values[i] = 0.0; 
             }
-            for (int i=0; i < W.values.Count(); i++) {
+            for (int i=0; i < W.values.Length; i++) {
                 this.W.values[i] = Utils.next_normal(Program.rand, 0, 1) * Math.Sqrt(2 / ((Double)this.W_num * this.W_rows * this.W_columns));
             }
         }
@@ -96,7 +96,7 @@ namespace Conv_Net {
             Tensor I_matrix = Utils.I_to_matrix_backprop(this.I, this.dO_rows, this.dO_columns, this.W_rows, this.W_columns, this.F_channels, this.dilation, this.stride);        
             Tensor dF_matrix = new Tensor(2, this.W_num, this.W_rows * this.W_columns * this.F_channels);
             dF_matrix = Utils.dgemm_cs(dO_matrix, I_matrix, dF_matrix);
-            this.dF = Utils.dF_matrix_to_tensor(dF_matrix, this.W_num, this.W_rows, this.W_columns, this.F_channels);
+            this.dW = Utils.dF_matrix_to_tensor(dF_matrix, this.W_num, this.W_rows, this.W_columns, this.F_channels);
             this.I = null;
 
             // Calculate ∂L/∂I (if first layer, it is not needed and can return null)

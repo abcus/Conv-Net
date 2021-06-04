@@ -15,7 +15,7 @@ namespace Conv_Net {
         public Tensor forward(Tensor I) {
             this.d_local = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4);
 
-            Parallel.For(0, I.values.Count(), i => {
+            Parallel.For(0, I.values.Length, i => {
                 if (I.values[i] > 0) {
                     this.d_local.values[i] = 1;
                 } else {
@@ -28,7 +28,7 @@ namespace Conv_Net {
         }
 
         public Tensor backward (Tensor dO) {
-            Parallel.For(0, this.d_local.values.Count(), i => {
+            Parallel.For(0, this.d_local.values.Length, i => {
 
                 // ∂L/∂I = ∂L/∂O * ∂O/∂I
                 dO.values[i] *= this.d_local.values[i];

@@ -30,10 +30,10 @@ namespace Conv_Net {
             W = new Tensor(1, element);
             B = new Tensor(1, element);
             // gamma initialized to 1, beta initialized to 0
-            for (int i = 0; i < W.values.Count(); i++) {
+            for (int i = 0; i < W.values.Length; i++) {
                 W.values[i] = 1;
             }
-            for (int i=0; i < B.values.Count(); i++) {
+            for (int i=0; i < B.values.Length; i++) {
                 B.values[i] = 0;
             }
         }

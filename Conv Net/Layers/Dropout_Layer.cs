@@ -24,7 +24,7 @@ namespace Conv_Net {
             
             if (is_training) {
                 // Do not parallelize because of random number generation
-                for (int i = 0; i < I.values.Count(); i++) {
+                for (int i = 0; i < I.values.Length; i++) {
                     if (Program.dropout_rand.NextDouble() < this.p) {
                         I.values[i] = 0;
                         d_local.values[i] = 0;
@@ -41,7 +41,7 @@ namespace Conv_Net {
         }
 
         public Tensor backward(Tensor dO) {
-            Parallel.For(0, this.d_local.values.Count(), i => {
+            Parallel.For(0, this.d_local.values.Length, i => {
 
                 // ∂L/∂I = ∂L/∂O * ∂O/∂I
                 dO.values[i] *= this.d_local.values[i];

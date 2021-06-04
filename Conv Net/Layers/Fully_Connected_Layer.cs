@@ -8,17 +8,13 @@ using System.Threading;
 namespace Conv_Net {
     class Fully_Connected_Layer {
 
-        private int I_samples;
         private int previous_layer_size, layer_size;
-        
         private bool needs_gradient;
 
+        private int I_samples;
+
         public Tensor I, B, W;
-
-        // Tensors to hold ∂L/∂B and ∂L/∂W
-        // Will have separate entries for each input sample
         public Tensor dB, dW;
-
         public Tensor V_dB, S_dB, V_dW, S_dW;
 
         public Fully_Connected_Layer(int previous_layer_size, int layer_size, bool needs_gradient) {
@@ -26,9 +22,9 @@ namespace Conv_Net {
             this.layer_size = layer_size;
             this.needs_gradient = needs_gradient;
 
-            this.B = new Tensor(1, this.layer_size);
-            this.V_dB = new Tensor(1, this.layer_size);
-            this.S_dB = new Tensor(1, this.layer_size);
+            this.B = new Tensor(2, this.layer_size, 1);
+            this.V_dB = new Tensor(2, this.layer_size, 1);
+            this.S_dB = new Tensor(2, this.layer_size, 1);
 
             this.W = new Tensor(2, this.layer_size, this.previous_layer_size);
             this.V_dW = new Tensor(2, this.layer_size, this.previous_layer_size);
@@ -37,84 +33,48 @@ namespace Conv_Net {
             // Biases and weights initialization
             // Biases are set to 0
             // Weights are set to random value from normal distribution * sqrt(2/previous layer size)
-            for (int i = 0; i < layer_size; i++) {
-                
+            for (int i=0; i < B.values.Length; i++) {
                 B.values[i] = 0.0;
-                
-                for (int j = 0; j < previous_layer_size; j++) {
-                    this.W.values[i * this.previous_layer_size + j] = Utils.next_normal(Program.rand, 0, 1) * Math.Sqrt(2 / (Double)previous_layer_size);
-                }
+            }
+            for (int i=0; i < W.values.Length; i++) {
+                this.W.values[i] = Utils.next_normal(Program.rand, 0, 1) * Math.Sqrt(2 / (Double)previous_layer_size);
             }
         }
         public Tensor forward(Tensor I) {
             this.I = I;
             this.I_samples = I.dim_1;
 
-            
-
-
+            // B_matrix [samples x layer_size] = 1_column [samples x 1] * transposed_B [1 x layer_size]
+            // O [samples x layer_size] = I [samples x previous_layer_size] * W_transposed [previous_layer_size x layer_size] + B_matrix [samples x layer_size]
+            Tensor B_matrix = new Tensor(2, this.I_samples, this.layer_size);
+            B_matrix = Utils.dgemm_cs(Utils.column_vector_1(this.I_samples), this.B.transpose_2D(), B_matrix);
             Tensor O = new Tensor(2, this.I_samples, this.layer_size);
-
-            // Selects the input sample from the batch
-            Parallel.For(0, this.I_samples, i => {
-
-                // Output is (dot product of input and corresponding weights) + bias
-                for (int j = 0; j < this.layer_size; j++) {
-
-                    Double dot_product = 0.0;
-                    
-                    for (int k = 0; k < this.previous_layer_size; k++) {
-                        dot_product += I.values[i * previous_layer_size + k] * this.W.values[j * previous_layer_size + k];
-                    }
-                    O.values[i * this.layer_size + j] = (dot_product + this.B.values[j]);
-                }
-            });
+            O = Utils.dgemm_cs(I, this.W.transpose_2D(), B_matrix);
             return O;
         }
 
         public Tensor backward (Tensor dO) {
 
-            // Initialize ∂L/∂B and ∂L/∂W (have to store these for gradient descent)
-            // Input samples is stored as the highest dimension to allow for faster access when calculating the sum across all input samples
-            // Don't have to set values to 0.0 after updating because a new gradient tensor is created during each backward pass
-            this.dB = new Tensor(2, this.I_samples, this.layer_size);
-            this.dW = new Tensor(3, this.I_samples, this.layer_size, this.previous_layer_size);
+            // Calculates ∂L/∂B and ∂L/∂W and stores these for gradient descent
+            // Don't have to set values of dB and dW to 0.0 after updating because a new gradient tensor is created during each backward pass
 
-            Parallel.For(0, this.I_samples, i => {
-                for (int j = 0; j < layer_size; j++) {
+            // dB [layer_size x 1] = dO_transposed [layer_size x sample] * 1_column [sample x 1]
+            this.dB = new Tensor(2, this.layer_size, 1);
+            this.dB = Utils.dgemm_cs(dO.transpose_2D(), Utils.column_vector_1(this.I_samples), this.dB);
 
-                    // ∂L/∂B = ∂L/∂O * ∂O/∂B, stores it for gradient descent
-                    this.dB.values[i * layer_size + j] = dO.values[i * layer_size + j]; // * 1
+            // dW [layer_size x previous_layer_size] = dO_transposed [layer_size x samples] * I [samples x previous_layer_size]
+            this.dW = new Tensor(2, this.layer_size, this.previous_layer_size);
+            this.dW = Utils.dgemm_cs(dO.transpose_2D(), this.I, this.dW);
+            this.I = null;
 
-                    for (int k = 0; k < previous_layer_size; k++) {
-
-                        // ∂L/∂W = ∂L/∂O * ∂O/∂W, stores it for gradient descent
-                        this.dW.values[i * this.layer_size * this.previous_layer_size + j * this.previous_layer_size + k] = dO.values[i * layer_size + j] * this.I.values[i * previous_layer_size + k];
-                    }
-                }
-            });
-
-            // If not first layer and ∂L/∂I needs to be returned, calculate and return ∂L/∂I = ∂L/∂O * ∂O/∂I; otherwise return null
+            // Calculates ∂L/∂I (if first layer, it is not needed and can return null) 
             if (this.needs_gradient == true) {
+
+                // dI [samples x previous_layer_size] = dO [samples x layer_size] * W [layer_size x previous_layer_size]
                 Tensor dI = new Tensor(2, this.I_samples, this.previous_layer_size);
-                
-                Parallel.For(0, this.I_samples, i => {
-                    for (int j = 0; j < this.previous_layer_size; j++) {
-                        
-                        Double dot_product = 0.0;
-                        
-                        for (int k = 0; k < this.layer_size; k++) {
-                            
-                            // W_transposed[j * layer_size + k] = W[k * previous_layer_size + j];
-                            dot_product += (W.values[k * previous_layer_size + j] * dO.values[i * layer_size + k]);
-                        }
-                        dI.values[i * previous_layer_size + j] = dot_product;
-                    }
-                });
-                this.I = null;
+                dI = Utils.dgemm_cs(dO, this.W, dI);
                 return dI;
             } else {
-                this.I = null;
                 return null;
             }
         }

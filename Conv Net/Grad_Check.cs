@@ -47,7 +47,7 @@ namespace Conv_Net {
             
             // A = this.Conv.forward(this.I);
             Tensor I = new Tensor(input.dimensions, input.dim_1, input.dim_2, input.dim_3, input.dim_4);
-            for (int k = 0; k < input.values.Count(); k++) {
+            for (int k = 0; k < input.values.Length; k++) {
                 I.values[k] = input.values[k];
             }
 
@@ -82,7 +82,7 @@ namespace Conv_Net {
 
             // For each element of the input, make two copies of the input tensor
             // Increment that element up by h in one copy, and down by h in the other copy
-            for (int i=0; i < I.values.Count(); i++) {
+            for (int i=0; i < I.values.Length; i++) {
                 Tensor I_up = Utils.copy(I);
                 Tensor I_down = Utils.copy(I);
 
@@ -103,7 +103,7 @@ namespace Conv_Net {
         public static Tensor numeric_grad_2(Func<Tensor, bool, Tensor> forward, Func<Tensor, Tensor, Tensor> loss, Tensor I, Tensor T, Double h = 0.00001) {
             Tensor numeric_gradient = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4);
 
-            for (int i=0; i < I.values.Count(); i++) {
+            for (int i=0; i < I.values.Length; i++) {
                 Tensor I_up = Utils.copy(I);
                 Tensor I_down = Utils.copy(I);
 
@@ -121,7 +121,7 @@ namespace Conv_Net {
         public static Tensor numeric_grad_conv_BN(Func<Tensor, bool, Tensor> forward_conv, Func<Tensor, bool, Tensor> forward_BN, Func<Tensor, Tensor, Tensor> loss, Tensor I, Tensor T, Double h = 0.00001) {
             Tensor numeric_gradient = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4);
 
-            for (int i = 0; i < I.values.Count(); i++) {
+            for (int i = 0; i < I.values.Length; i++) {
                 Tensor I_up = Utils.copy(I);
                 Tensor I_down = Utils.copy(I);
 
@@ -220,12 +220,12 @@ namespace Conv_Net {
             dO_BN.values = temp2;
 
             // Conv input tensor
-            for (int i=0; i < I_Conv.values.Count(); i++) {
+            for (int i=0; i < I_Conv.values.Length; i++) {
                 I_Conv.values[i] = rand.NextDouble();
             }
 
             // Conv target tensor
-            for (int i=0; i < T_Conv.values.Count(); i++) {
+            for (int i=0; i < T_Conv.values.Length; i++) {
                 T_Conv.values[i] = rand.NextDouble();
             }
 

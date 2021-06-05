@@ -131,14 +131,15 @@ namespace Conv_Net {
 
             return Tuple.Create(analytic_dB, analytic_dW, analytic_dI);
         }
-        public static Tuple<Tensor, Tensor, Tensor> numeric_grad(Layer Conv, Layer MSE, Tensor I, Tensor T, Double h = 0.00001) {
-            Tensor B = Conv.B;
+        public static Tuple<Tensor, Tensor, Tensor> numeric_grad(Layer test_layer, Layer loss_layer, Tensor I, Tensor T, Double h = 0.00001) {
+            Tensor B = test_layer.B;
             Tensor numeric_dB = new Tensor(B.dimensions, B.dim_1, B.dim_2, B.dim_3, B.dim_4);
-            Tensor W = Conv.W;
+            Tensor W = test_layer.W;
             Tensor numeric_dW = new Tensor(W.dimensions, W.dim_1, W.dim_2, W.dim_3, W.dim_4);
             Tensor numeric_dI = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4);
 
             for (int i = 0; i < B.values.Length; i++) {
+                Tensor I_copy = Utils.copy(I);
                 Tensor B_up = Utils.copy(B);
                 Tensor B_down = Utils.copy(B);
                 Tensor B_old = Utils.copy(B);
@@ -146,16 +147,18 @@ namespace Conv_Net {
                 B_up.values[i] += h;
                 B_down.values[i] -= h;
 
-                Conv.B = B_up;
-                Tensor L_up = MSE.loss(Conv.forward(I, true), T);
-                Conv.B = B_down;
-                Tensor L_down = MSE.loss(Conv.forward(I, true), T);
-                Conv.B = B_old;
+                test_layer.B = B_up;
+                Tensor L_up = loss_layer.loss(test_layer.forward(I_copy, true), T);
+                test_layer.B = B_down;
+                I_copy = Utils.copy(I);
+                Tensor L_down = loss_layer.loss(test_layer.forward(I_copy, true), T);
+                test_layer.B = B_old;
 
                 numeric_dB.values[i] = Utils.sum(Utils.subtract(L_up, L_down)) / (2 * h);
             }
 
             for (int i = 0; i < W.values.Length; i++) {
+                Tensor I_copy = Utils.copy(I);
                 Tensor W_up = Utils.copy(W);
                 Tensor W_down = Utils.copy(W);
                 Tensor W_old = Utils.copy(W);
@@ -163,11 +166,12 @@ namespace Conv_Net {
                 W_up.values[i] += h;
                 W_down.values[i] -= h;
 
-                Conv.W = W_up;
-                Tensor L_up = MSE.loss(Conv.forward(I, true), T);
-                Conv.W = W_down;
-                Tensor L_down = MSE.loss(Conv.forward(I, true), T);
-                Conv.W = W_old;
+                test_layer.W = W_up;
+                Tensor L_up = loss_layer.loss(test_layer.forward(I_copy, true), T);
+                test_layer.W = W_down;
+                I_copy = Utils.copy(I);
+                Tensor L_down = loss_layer.loss(test_layer.forward(I_copy, true), T);
+                test_layer.W = W_old;
 
                 numeric_dW.values[i] = Utils.sum(Utils.subtract(L_up, L_down)) / (2 * h);
             }
@@ -179,8 +183,8 @@ namespace Conv_Net {
                 I_up.values[i] += h;
                 I_down.values[i] -= h;
 
-                Tensor L_up = MSE.loss(Conv.forward(I_up, true), T);
-                Tensor L_down = MSE.loss(Conv.forward(I_down, true), T);
+                Tensor L_up = loss_layer.loss(test_layer.forward(I_up, true), T);
+                Tensor L_down = loss_layer.loss(test_layer.forward(I_down, true), T);
 
                 numeric_dI.values[i] = Utils.sum(Utils.subtract(L_up, L_down)) / (2 * h);
             }
@@ -338,27 +342,14 @@ namespace Conv_Net {
 
 
 
-            /*
-            // BN analytic and numeric gradients
-            Tensor I_copy = Utils.copy(I_BN);
-            Tuple<Tensor, Tensor, Tensor> analytic_gradients = analytic_grad(BN, MSE, I_copy, T_BN);
-            //Tuple<Tensor, Tensor, Tensor> numeric_gradients = numeric_grad(Conv, MSE, I_Conv, T_Conv);
-
-            Console.WriteLine("Analytic dB\n" + analytic_gradients.Item1);
-            //Console.WriteLine("Numeric dB\n" + numeric_gradients.Item1);
-            //Console.WriteLine("Difference\n" + analytic_gradients.Item1.difference(numeric_gradients.Item1));
-            Console.WriteLine("Analytic dW\n" + analytic_gradients.Item2);
-            //Console.WriteLine("Numeric dW\n" + numeric_gradients.Item2);
-            //Console.WriteLine("Difference\n" + analytic_gradients.Item2.difference(numeric_gradients.Item2));
-            Console.WriteLine("Analytic dI\n" + analytic_gradients.Item3);
-            //Console.WriteLine("Numeric dI\n" + numeric_gradients.Item3);
-            //Console.WriteLine("Difference\n" + analytic_gradients.Item3.difference(numeric_gradients.Item3));
-            */
-
             
-            // Conv analytic and numeric gradients
-            Tuple<Tensor, Tensor, Tensor> analytic_gradients = analytic_grad(Conv, MSE, I_Conv, T_Conv);
-            Tuple<Tensor, Tensor, Tensor> numeric_gradients = numeric_grad(Conv, MSE, I_Conv, T_Conv);
+            // BN analytic and numeric gradients
+            Tensor I_BN_copy = Utils.copy(I_BN);
+            Tuple<Tensor, Tensor, Tensor> numeric_gradients = numeric_grad(BN, MSE, I_BN_copy, T_BN);
+             I_BN_copy = Utils.copy(I_BN);
+             Tuple<Tensor, Tensor, Tensor> analytic_gradients = analytic_grad(BN, MSE, I_BN_copy, T_BN);
+            
+            
 
             Console.WriteLine("Analytic dB\n" + analytic_gradients.Item1);
             Console.WriteLine("Numeric dB\n" + numeric_gradients.Item1);
@@ -369,28 +360,75 @@ namespace Conv_Net {
             Console.WriteLine("Analytic dI\n" + analytic_gradients.Item3);
             Console.WriteLine("Numeric dI\n" + numeric_gradients.Item3);
             Console.WriteLine("Difference\n" + analytic_gradients.Item3.difference(numeric_gradients.Item3));
-            
 
 
-            
+
+
+
+            //Tensor numeric_d_beta = new Tensor(1, d, 1, 1, 1);
+            //Double h = 0.00001;
+            //for (int i = 0; i < d; i++) {
+
+            //    Double loss_up = 0.0;
+            //    Double loss_down = 0.0;
+
+            //    Tensor I_BN_copy1 = Utils.copy(I_BN);
+            //    Tensor I_BN_copy2 = Utils.copy(I_BN);
+
+            //    BN.B.values[i] += h;
+            //    loss_up += MSE.loss(BN.forward(I_BN_copy1, true), T_BN).values[0];
+                
+            //    BN.B.values[i] -= 2 * h;
+            //    loss_down += MSE.loss(BN.forward(I_BN_copy2, true), T_BN).values[0];
+                
+            //    BN.B.values[i] += h;
+            //    numeric_d_beta.values[i] = (loss_up - loss_down) / (2 * h);
+            //}
+                        
+
+            //Console.WriteLine("Numeric d_beta:");
+            //Console.WriteLine(numeric_d_beta);
+
+
+
+
+
+
+            // Conv analytic and numeric gradients
+            //Tuple<Tensor, Tensor, Tensor> analytic_gradients = analytic_grad(Conv, MSE, I_Conv, T_Conv);
+            //Tuple<Tensor, Tensor, Tensor> numeric_gradients = numeric_grad(Conv, MSE, I_Conv, T_Conv);
+
+            //Console.WriteLine("Analytic dB\n" + analytic_gradients.Item1);
+            //Console.WriteLine("Numeric dB\n" + numeric_gradients.Item1);
+            //Console.WriteLine("Difference\n" + analytic_gradients.Item1.difference(numeric_gradients.Item1));
+            //Console.WriteLine("Analytic dW\n" + analytic_gradients.Item2);
+            //Console.WriteLine("Numeric dW\n" + numeric_gradients.Item2);
+            //Console.WriteLine("Difference\n" + analytic_gradients.Item2.difference(numeric_gradients.Item2));
+            //Console.WriteLine("Analytic dI\n" + analytic_gradients.Item3);
+            //Console.WriteLine("Numeric dI\n" + numeric_gradients.Item3);
+            //Console.WriteLine("Difference\n" + analytic_gradients.Item3.difference(numeric_gradients.Item3));
+
+
+
+
             // Conv + BN analytic and numeric gradients
-            Tuple<Tensor, Tensor, Tensor> analytic_gradients2 = analytic_grad_conv_BN(Conv, Input, MSE, I_Conv, T_Conv);
-            Tuple<Tensor, Tensor, Tensor> numeric_gradients2 = numeric_grad_conv_BN(Conv, Input, MSE, I_Conv, T_Conv);
+            //Tuple<Tensor, Tensor, Tensor> analytic_gradients2 = analytic_grad_conv_BN(Conv, Input, MSE, I_Conv, T_Conv);
+            //Tuple<Tensor, Tensor, Tensor> numeric_gradients2 = numeric_grad_conv_BN(Conv, Input, MSE, I_Conv, T_Conv);
 
-            Console.WriteLine("Analytic dB\n" + analytic_gradients2.Item1);
-            Console.WriteLine("Numeric dB\n" + numeric_gradients2.Item1);
-            Console.WriteLine("Difference\n" + analytic_gradients2.Item1.difference(numeric_gradients2.Item1));
-            Console.WriteLine("Analytic dW\n" + analytic_gradients2.Item2);
-            Console.WriteLine("Numeric dW\n" + numeric_gradients2.Item2);
-            Console.WriteLine("Difference\n" + analytic_gradients2.Item2.difference(numeric_gradients2.Item2));
-            Console.WriteLine("Analytic dI\n" + analytic_gradients2.Item3);
-            Console.WriteLine("Numeric dI\n" + numeric_gradients2.Item3);
-            Console.WriteLine("Difference\n" + analytic_gradients2.Item3.difference(numeric_gradients2.Item3));
+            //Console.WriteLine("Analytic dB\n" + analytic_gradients2.Item1);
+            //Console.WriteLine("Numeric dB\n" + numeric_gradients2.Item1);
+            //Console.WriteLine("Difference\n" + analytic_gradients2.Item1.difference(numeric_gradients2.Item1));
+            //Console.WriteLine("Analytic dW\n" + analytic_gradients2.Item2);
+            //Console.WriteLine("Numeric dW\n" + numeric_gradients2.Item2);
+            //Console.WriteLine("Difference\n" + analytic_gradients2.Item2.difference(numeric_gradients2.Item2));
+            //Console.WriteLine("Analytic dI\n" + analytic_gradients2.Item3);
+            //Console.WriteLine("Numeric dI\n" + numeric_gradients2.Item3);
+            //Console.WriteLine("Difference\n" + analytic_gradients2.Item3.difference(numeric_gradients2.Item3));
 
-            Console.WriteLine("\n\n\n\n\n\n\n");
-            Console.WriteLine(analytic_gradients.Item1.difference(analytic_gradients2.Item1));
-            Console.WriteLine(analytic_gradients.Item2.difference(analytic_gradients2.Item2));
-            Console.WriteLine(analytic_gradients.Item3.difference(analytic_gradients2.Item3));
+            //Console.WriteLine("\n\n\n\n\n\n\n");
+            //Console.WriteLine(analytic_gradients.Item1.difference(analytic_gradients2.Item1));
+            //Console.WriteLine(analytic_gradients.Item2.difference(analytic_gradients2.Item2));
+            //Console.WriteLine(analytic_gradients.Item3.difference(analytic_gradients2.Item3));
 
 
 

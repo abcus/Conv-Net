@@ -17,7 +17,7 @@ namespace Conv_Net {
         private Tensor I_hat;
         private Tensor mean;
         private Tensor variance;
-        public Tensor inverse_stdev; // 1/Sqrt(variance + epsilon)
+        public Tensor inverse_stdev; // 1 / Sqrt(variance + epsilon)
         public Tensor B; // beta
         public Tensor W; // gamma
 
@@ -25,7 +25,7 @@ namespace Conv_Net {
         public Tensor dW;
         
 
-        private Double EPSILON = 0.00000001;
+        private Double EPSILON = 0.00001;
         public Batch_Normalization_Layer(int element) {
             W = new Tensor(1, element);
             B = new Tensor(1, element);

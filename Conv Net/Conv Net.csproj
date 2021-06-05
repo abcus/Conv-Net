@@ -74,6 +74,7 @@
     <Compile Include="Conv_Net.cs" />
     <Compile Include="Grad_Check.cs" />
     <Compile Include="Layers\Batch Normalization_Layer.cs" />
+    <Compile Include="Layers\Layer.cs" />
     <Compile Include="Layers\Mean_Squared_Loss_Layer.cs" />
     <Compile Include="Optimizer.cs" />
     <Compile Include="Layers\Convolution_Layer.cs" />

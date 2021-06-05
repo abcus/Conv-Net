@@ -196,7 +196,7 @@ namespace Conv_Net {
                         if (this.dimensions == 4) {sb.Append("<");}
 
                         for (int l = 0; l < this.dim_4; l++) {
-                            sb.AppendFormat("{0:0.000000000000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
+                            sb.AppendFormat("{0:0.00000000000000}", this.values[i * this.dim_2 * this.dim_3 * this.dim_4 + j * this.dim_3 * this.dim_4 + k * this.dim_4 + l]);
                             if (this.dimensions == 4 && l < this.dim_4 - 1) {sb.Append(", ");}
                             else if (this.dimensions == 3 && k < this.dim_3 - 1) {sb.Append(", ");}
                             else if (this.dimensions == 2 && j < this.dim_2 - 1) {sb.Append(", ");}

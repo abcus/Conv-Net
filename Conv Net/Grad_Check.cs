@@ -118,6 +118,17 @@ namespace Conv_Net {
             return numeric_gradient;
         }
 
+        public static Tensor analytic_grad(Func<Tensor, bool, Tensor> layer_forward, Func<Tensor, Tensor, Tensor> loss_forward, Func<Tensor> loss_backwards, Func<Tensor, Tensor> layer_backwards, Tensor I, Tensor T) {
+            Tensor I_copy = Utils.copy(I);
+            Tensor analytic_dI;
+
+            loss_forward(layer_forward(I_copy, true), T);
+            analytic_dI = layer_backwards(loss_backwards());
+
+            return analytic_dI;
+        }
+
+
         public static Tensor numeric_grad_conv_BN(Func<Tensor, bool, Tensor> forward_conv, Func<Tensor, bool, Tensor> forward_BN, Func<Tensor, Tensor, Tensor> loss, Tensor I, Tensor T, Double h = 0.00001) {
             Tensor numeric_gradient = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4);
 
@@ -136,26 +147,7 @@ namespace Conv_Net {
             return numeric_gradient;
         }
 
-        public static Tensor analytic_grad_BN(Batch_Normalization_Layer BN, Mean_Squared_Loss_Layer MSE, Tensor I, Tensor T) {
-            Tensor I_copy = Utils.copy(I);
-            Tensor analytic_dI;
-
-            MSE.loss(BN.forward(I_copy, true), T);
-            analytic_dI = BN.backward(MSE.backward());
-
-            return analytic_dI;
-        }
-
-        public static Tensor analytic_grad_conv(Convolution_Layer Conv, Mean_Squared_Loss_Layer MSE, Tensor I, Tensor T) {
-            Tensor I_copy = Utils.copy(I);
-            Tensor analytic_dI;
-
-            MSE.loss(Conv.forward(I_copy), T);
-            analytic_dI = Conv.backward(MSE.backward());
-
-            return analytic_dI;
-        }
-
+        
         public static Tensor analytic_grad_conv_BN(Convolution_Layer Conv, Batch_Normalization_Layer BN, Mean_Squared_Loss_Layer MSE, Tensor I, Tensor T) {
             Tensor I_copy = Utils.copy(I);
             Tensor analytic_dI;
@@ -235,25 +227,25 @@ namespace Conv_Net {
 
 
             // Batch norm analytic and numeric gradients
-            Tensor analytic_dI_BN = analytic_grad_BN(BN, MSE, I_BN, T_BN);
-            Tensor numeric_dI_BN1 = numeric_grad_1(BN.forward, I_BN, dO_BN);
-            Tensor numeric_dI_BN2 = numeric_grad_2(BN.forward, MSE.loss, I_BN, T_BN);
+            // Tensor analytic_dI_BN = analytic_grad(BN.forward, MSE.loss, MSE.backward, BN.backward, I_BN, T_BN);
+            // Tensor numeric_dI_BN1 = numeric_grad_1(BN.forward, I_BN, dO_BN);
+            // Tensor numeric_dI_BN2 = numeric_grad_2(BN.forward, MSE.loss, I_BN, T_BN);
             // Console.WriteLine(analytic_dI_BN.difference(numeric_dI_BN1)); // Larger error due to precion with dO values
             // Console.WriteLine(analytic_dI_BN.difference(numeric_dI_BN2));
 
             // Conv analytic and numeric gradients
-            Tensor analytic_dI_conv = analytic_grad_conv(Conv, MSE, I_Conv, T_Conv);
+            Tensor analytic_dI_conv = analytic_grad(Conv.forward, MSE.loss, MSE.backward, Conv.backward, I_Conv, T_Conv);
             Tensor numeric_dI_conv = numeric_grad_2(Conv.forward, MSE.loss, I_Conv, T_Conv);
             // Console.WriteLine(analytic_dI_conv);
             // Console.WriteLine(numeric_dI_conv);
-            // Console.WriteLine(analytic_dI_conv.difference(numeric_dI_conv));
+            Console.WriteLine(analytic_dI_conv.difference(numeric_dI_conv));
 
             // Conv + BN analytic and numeric gradients
-            Tensor analytic_dI_conv_BN = analytic_grad_conv_BN(Conv, BN, MSE, I_Conv, T_Conv);
-            Tensor numeric_dI_conv_BN = numeric_grad_conv_BN(Conv.forward, BN.forward, MSE.loss, I_Conv, T_Conv);
-            Console.WriteLine(analytic_dI_conv_BN);
-            Console.WriteLine(numeric_dI_conv_BN);
-            Console.WriteLine(numeric_dI_conv_BN.difference(analytic_dI_conv_BN));
+            // Tensor analytic_dI_conv_BN = analytic_grad_conv_BN(Conv, BN, MSE, I_Conv, T_Conv);
+            // Tensor numeric_dI_conv_BN = numeric_grad_conv_BN(Conv.forward, BN.forward, MSE.loss, I_Conv, T_Conv);
+            // Console.WriteLine(analytic_dI_conv_BN);
+            // Console.WriteLine(numeric_dI_conv_BN);
+            // Console.WriteLine(numeric_dI_conv_BN.difference(analytic_dI_conv_BN));
 
 
 

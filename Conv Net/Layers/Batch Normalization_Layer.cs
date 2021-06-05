@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class Batch_Normalization_Layer {
+    class Batch_Normalization_Layer : Layer {
 
         private int effective_sample_size;
         private int element;
@@ -18,11 +18,10 @@ namespace Conv_Net {
         private Tensor mean;
         private Tensor variance;
         public Tensor inverse_stdev; // 1 / Sqrt(variance + epsilon)
-        public Tensor B; // beta
-        public Tensor W; // gamma
-
-        public Tensor dB;
-        public Tensor dW;
+        public override Tensor B { get; set; } // beta
+        public override Tensor W { get; set; } // gamma
+        public override Tensor dB { get; set; }
+        public override Tensor dW { get; set; }
         
 
         private Double EPSILON = 0.00001;
@@ -38,7 +37,7 @@ namespace Conv_Net {
             }
         }
 
-        public Tensor forward(Tensor I, bool is_training) {
+        override public Tensor forward(Tensor I, bool is_training) {
 
             this.is_training = is_training;
 
@@ -114,7 +113,7 @@ namespace Conv_Net {
         }
 
 
-        public Tensor backward (Tensor dO) {
+        override public Tensor backward (Tensor dO) {
 
  
             if (this.is_conv == true) {

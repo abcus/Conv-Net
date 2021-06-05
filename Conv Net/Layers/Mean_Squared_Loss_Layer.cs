@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class Mean_Squared_Loss_Layer {
+    class Mean_Squared_Loss_Layer : Layer {
 
         private int I_dimensions, I_samples, I_rows, I_columns, I_channels, I_elements;
 
@@ -13,7 +13,7 @@ namespace Conv_Net {
         public Mean_Squared_Loss_Layer () {
         }
 
-        public Tensor loss (Tensor I, Tensor T) {
+        override public Tensor loss (Tensor I, Tensor T) {
             this.I = I;
             this.T = T;
             
@@ -30,7 +30,7 @@ namespace Conv_Net {
             return L;
         }
 
-        public Tensor backward () {
+        override public Tensor backward () {
             int batch_size = this.I_samples;
             
             Tensor dI = new Tensor(this.I_dimensions, this.I_samples, this.I_rows, this.I_columns, this.I_channels);

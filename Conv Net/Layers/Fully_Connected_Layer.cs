@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Threading;
 
 namespace Conv_Net {
-    class Fully_Connected_Layer {
+    class Fully_Connected_Layer : Layer {
 
         private int previous_layer_size, layer_size;
         private bool needs_gradient;

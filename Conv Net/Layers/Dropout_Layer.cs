@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class Dropout_Layer {
+    class Dropout_Layer : Layer {
 
         // Probability that inputs are set to 0
         private Double p;

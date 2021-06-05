@@ -5,13 +5,16 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class Input_Layer {
+    class Input_Layer : Layer {
 
         public Input_Layer() {
         }
 
-        public Tensor forward(Tensor I) {
+        public override Tensor forward(Tensor I, bool is_training = false) {
             return I;
+        }
+        public override Tensor backward (Tensor dO) {
+            return dO;
         }
     }
 }

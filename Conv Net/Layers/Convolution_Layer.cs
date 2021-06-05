@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Threading;
 
 namespace Conv_Net {
-    class Convolution_Layer {
+    class Convolution_Layer : Layer {
 
         private int I_samples, I_rows, I_columns, I_channels;
         private int B_num;
@@ -24,8 +24,11 @@ namespace Conv_Net {
         public int stride;
         public int dilation;
 
-        public Tensor I, B, W;
-        public Tensor dB, dW;
+        public Tensor I;
+        public override Tensor B { get; set; }
+        public override Tensor W { get; set; }
+        public override Tensor dB { get; set; }
+        public override Tensor dW { get; set; }
         public Tensor V_dB, S_dB, V_dW, S_dW;
 
         public Convolution_Layer(int I_channels, int W_num, int W_rows, int W_columns, bool needs_gradient, int pad_size = 0, int stride = 1, int dilation = 1) {
@@ -59,7 +62,7 @@ namespace Conv_Net {
             }
         }
 
-        public Tensor forward(Tensor I, bool is_training = false) {
+        override public Tensor forward(Tensor I, bool is_training = false) {
             
             this.I = I.pad(this.pad_size); 
             
@@ -79,7 +82,7 @@ namespace Conv_Net {
             return O;
         }
         
-        public Tensor backward(Tensor dO) {
+        override public Tensor backward(Tensor dO) {
 
             this.dO_samples = dO.dim_1; this.dO_rows = dO.dim_2; this.dO_columns = dO.dim_3;       
             Tensor dO_matrix = Utils.dO_to_matrix(dO);
@@ -118,5 +121,13 @@ namespace Conv_Net {
                 return null;
             }
         }
+
+
+
+        
+
+
+        
+
     }
 }

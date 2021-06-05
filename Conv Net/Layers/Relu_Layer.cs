@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class Relu_Layer {
+    class Relu_Layer : Layer{
 
         // ∂O/∂I
         Tensor d_local; 

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 
 namespace Conv_Net {
-    class Softmax_Loss_Layer {
+    class Softmax_Loss_Layer : Layer {
 
         private int I_samples, I_rows, I_columns, I_channels;
         private Tensor O, T;

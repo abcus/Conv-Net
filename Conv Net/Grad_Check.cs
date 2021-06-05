@@ -118,19 +118,69 @@ namespace Conv_Net {
             return numeric_gradient;
         }
 
-        public static Tensor analytic_grad(Func<Tensor, bool, Tensor> layer_forward, Func<Tensor, Tensor, Tensor> loss_forward, Func<Tensor> loss_backwards, Func<Tensor, Tensor> layer_backwards, Tensor I, Tensor T) {
+        public static Tuple <Tensor, Tensor, Tensor> analytic_grad(Layer test_layer, Layer loss_layer, Tensor I, Tensor T) {
             Tensor I_copy = Utils.copy(I);
-            Tensor analytic_dI;
+            Tensor analytic_dI, analytic_dB, analytic_dW; 
 
-            loss_forward(layer_forward(I_copy, true), T);
-            analytic_dI = layer_backwards(loss_backwards());
+            loss_layer.loss(test_layer.forward(I_copy, true), T);
+            analytic_dI = test_layer.backward(loss_layer.backward());
+            analytic_dB = test_layer.dB;
+            analytic_dW = test_layer.dW;
 
-            return analytic_dI;
+
+
+            return Tuple.Create(analytic_dB, analytic_dW, analytic_dI);
         }
 
 
-        public static Tensor numeric_grad_conv_BN(Func<Tensor, bool, Tensor> forward_conv, Func<Tensor, bool, Tensor> forward_BN, Func<Tensor, Tensor, Tensor> loss, Tensor I, Tensor T, Double h = 0.00001) {
-            Tensor numeric_gradient = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4);
+
+
+
+
+
+
+
+
+
+
+
+
+        public static Tuple<Tensor, Tensor, Tensor> numeric_grad_conv_BN(Layer Conv, Layer BN, Layer MSE, Tensor I, Tensor T, Double h = 0.00001) {
+            Tensor B = Conv.B;
+            Tensor numeric_dB = new Tensor(B.dimensions, B.dim_1, B.dim_2, B.dim_3, B.dim_4);
+            Tensor W = Conv.W;
+            Tensor numeric_dW = new Tensor(W.dimensions, W.dim_1, W.dim_2, W.dim_3, W.dim_4);
+            Tensor numeric_dI = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4);
+
+            for (int i=0; i < B.values.Length; i++) {
+                Tensor B_up = Utils.copy(B);
+                Tensor B_down = Utils.copy(B);
+
+                B_up.values[i] += h;
+                B_down.values[i] -= h;
+
+                Conv.B = B_up;
+                Tensor L_up = MSE.loss(BN.forward(Conv.forward(I, true), true), T);
+                Conv.B = B_down;
+                Tensor L_down = MSE.loss(BN.forward(Conv.forward(I, true), true), T);
+
+                numeric_dB.values[i] = Utils.sum(Utils.subtract(L_up, L_down)) / (2 * h);
+            }
+
+            for (int i=0; i < W.values.Length; i++) {
+                Tensor W_up = Utils.copy(W);
+                Tensor W_down = Utils.copy(W);
+
+                W_up.values[i] += h;
+                W_down.values[i] -= h;
+
+                Conv.W = W_up;
+                Tensor L_up = MSE.loss(BN.forward(Conv.forward(I, true), true), T);
+                Conv.W = W_down;
+                Tensor L_down = MSE.loss(BN.forward(Conv.forward(I, true), true), T);
+
+                numeric_dW.values[i] = Utils.sum(Utils.subtract(L_up, L_down)) / (2 * h);
+            }
 
             for (int i = 0; i < I.values.Length; i++) {
                 Tensor I_up = Utils.copy(I);
@@ -139,23 +189,26 @@ namespace Conv_Net {
                 I_up.values[i] += h;
                 I_down.values[i] -= h;
 
-                Tensor L_up = loss(forward_BN(forward_conv(I_up, true), true), T);
-                Tensor L_down = loss(forward_BN(forward_conv(I_down, true), true), T);
+                Tensor L_up = MSE.loss(BN.forward(Conv.forward(I_up, true), true), T);
+                Tensor L_down = MSE.loss(BN.forward(Conv.forward(I_down, true), true), T);
 
-                numeric_gradient.values[i] = Utils.sum(Utils.subtract(L_up, L_down)) / (2 * h);
+                numeric_dI.values[i] = Utils.sum(Utils.subtract(L_up, L_down)) / (2 * h);
             }
-            return numeric_gradient;
+
+            return Tuple.Create(numeric_dB, numeric_dW, numeric_dI);
         }
 
         
-        public static Tensor analytic_grad_conv_BN(Convolution_Layer Conv, Batch_Normalization_Layer BN, Mean_Squared_Loss_Layer MSE, Tensor I, Tensor T) {
+        public static Tuple <Tensor, Tensor, Tensor> analytic_grad_conv_BN(Layer Conv, Layer BN, Layer MSE, Tensor I, Tensor T) {
             Tensor I_copy = Utils.copy(I);
-            Tensor analytic_dI;
+            Tensor analytic_dI, analytic_dB, analytic_dW;
 
             MSE.loss(BN.forward(Conv.forward(I_copy), true), T);
             analytic_dI = Conv.backward(BN.backward(MSE.backward()));
+            analytic_dB = Conv.dB;
+            analytic_dW = Conv.dW;
 
-            return analytic_dI;
+            return Tuple.Create(analytic_dB, analytic_dW, analytic_dI);
         }
 
         public static void test () {
@@ -224,30 +277,40 @@ namespace Conv_Net {
             Batch_Normalization_Layer BN = new Batch_Normalization_Layer(d);
             Convolution_Layer Conv = new Convolution_Layer(I_channels, F_num, F_rows, F_columns, true, pad_size, stride, dilation);
             Mean_Squared_Loss_Layer MSE = new Mean_Squared_Loss_Layer();
-
+            Input_Layer Input = new Input_Layer();
 
             // Batch norm analytic and numeric gradients
-            // Tensor analytic_dI_BN = analytic_grad(BN.forward, MSE.loss, MSE.backward, BN.backward, I_BN, T_BN);
-            // Tensor numeric_dI_BN1 = numeric_grad_1(BN.forward, I_BN, dO_BN);
+            // Tensor analytic_dI_BN = analytic_grad(BN, MSE, I_BN, T_BN).Item3;
+            // // Tensor numeric_dI_BN1 = numeric_grad_1(BN.forward, I_BN, dO_BN);
             // Tensor numeric_dI_BN2 = numeric_grad_2(BN.forward, MSE.loss, I_BN, T_BN);
-            // Console.WriteLine(analytic_dI_BN.difference(numeric_dI_BN1)); // Larger error due to precion with dO values
-            // Console.WriteLine(analytic_dI_BN.difference(numeric_dI_BN2));
+            //// Console.WriteLine(analytic_dI_BN.difference(numeric_dI_BN1)); // Larger error due to precion with dO values
+            //Console.WriteLine(analytic_dI_BN);
+            //Console.WriteLine(numeric_dI_BN2);
+            //Console.WriteLine(analytic_dI_BN.difference(numeric_dI_BN2));
+
+
 
             // Conv analytic and numeric gradients
-            Tensor analytic_dI_conv = analytic_grad(Conv.forward, MSE.loss, MSE.backward, Conv.backward, I_Conv, T_Conv);
-            Tensor numeric_dI_conv = numeric_grad_2(Conv.forward, MSE.loss, I_Conv, T_Conv);
+            // Tensor analytic_dI_conv = analytic_grad(Conv.forward, MSE.loss, MSE.backward, Conv.backward, I_Conv, T_Conv);
+            // Tensor numeric_dI_conv = numeric_grad_2(Conv.forward, MSE.loss, I_Conv, T_Conv);
             // Console.WriteLine(analytic_dI_conv);
             // Console.WriteLine(numeric_dI_conv);
-            Console.WriteLine(analytic_dI_conv.difference(numeric_dI_conv));
+            // Console.WriteLine(analytic_dI_conv.difference(numeric_dI_conv));
 
             // Conv + BN analytic and numeric gradients
-            // Tensor analytic_dI_conv_BN = analytic_grad_conv_BN(Conv, BN, MSE, I_Conv, T_Conv);
-            // Tensor numeric_dI_conv_BN = numeric_grad_conv_BN(Conv.forward, BN.forward, MSE.loss, I_Conv, T_Conv);
-            // Console.WriteLine(analytic_dI_conv_BN);
-            // Console.WriteLine(numeric_dI_conv_BN);
-            // Console.WriteLine(numeric_dI_conv_BN.difference(analytic_dI_conv_BN));
+            Tuple<Tensor, Tensor, Tensor> analytic_gradients = analytic_grad_conv_BN(Conv, BN, MSE, I_Conv, T_Conv);
+            Tuple<Tensor, Tensor, Tensor> numeric_gradients = numeric_grad_conv_BN(Conv, BN, MSE, I_Conv, T_Conv);
 
-
+            Console.WriteLine("Analytic dB\n" + analytic_gradients.Item1);
+            Console.WriteLine("Numeric dB\n" + numeric_gradients.Item1);
+            Console.WriteLine("Difference\n" + analytic_gradients.Item1.difference(numeric_gradients.Item1));
+            Console.WriteLine("Analytic dW\n" + analytic_gradients.Item2);
+            Console.WriteLine("Numeric dW\n" + numeric_gradients.Item2);
+            Console.WriteLine("Difference\n" + analytic_gradients.Item2.difference(numeric_gradients.Item2));
+            Console.WriteLine("Analytic dI\n" + analytic_gradients.Item3);
+            Console.WriteLine("Numeric dI\n" + numeric_gradients.Item3);
+            Console.WriteLine("Difference\n" + analytic_gradients.Item3.difference(numeric_gradients.Item3));
+            
 
             //Double loss_up = 0.0;
             //Double loss_down = 0.0;
@@ -270,7 +333,7 @@ namespace Conv_Net {
             // numeric_d_I_BN = grad_check(test_CNN.BN.forward, test_CNN.BN_I, test_CNN.dO);
             // Console.WriteLine(numeric_d_I_BN);
 
-           
+
 
 
 
@@ -280,7 +343,7 @@ namespace Conv_Net {
             //analytic_d_I_BN = test_CNN.backward();
             //analytic_d_gamma = test_CNN.BN.d_gamma;
             //analytic_d_beta = test_CNN.BN.d_beta;
-            
+
 
             //Console.WriteLine(analytic_d_I_BN.difference(numeric_d_I_BN));
 
@@ -294,7 +357,7 @@ namespace Conv_Net {
 
 
 
-           
+
 
 
             // Numerical gradient of loss with respect to gamma
@@ -404,7 +467,7 @@ namespace Conv_Net {
             //Console.WriteLine(numeric_dF);
             //Console.WriteLine(analytic_dF.difference(numeric_dF));
 
-          
+
         }
     }
 }

@@ -54,16 +54,16 @@ namespace Conv_Net {
         /// L = - ln(predicted probability[class with target probability of 1])
         /// </summary>
         /// <param name="T"></param>
-        /// <returns></returns>
+        /// <returns name="L"> Scalar </returns>
         public Tensor loss(Tensor T) {
             this.T = T;
-                        
-            Tensor L = new Tensor(1, this.I_samples);
-            Parallel.For(0, this.I_samples, i=> {
-                for (int j = 0; j < this.I_rows; j++) {
-                    L.values[i] -= (this.T.values[i * this.I_rows + j] * Math.Log(this.O.values[i * this.I_rows + j]));
-                }
-            });
+            Tensor L = new Tensor(1, 1);
+
+            Double difference = 0.0;
+            for (int i=0; i < O.values.Length; i++) {
+                difference -= (this.T.values[i] * Math.Log(this.O.values[i]));
+            }
+            L.values[0] = difference / this.I_samples;
             return L;
         }
         /// <summary>

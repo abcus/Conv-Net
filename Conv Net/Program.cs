@@ -23,7 +23,7 @@ namespace Conv_Net {
         public static int epochs = 20;
         public static int CNN_training_sample_size = 600;
         public static int batch_size = 32;
-        public static int test_batch_size = 1000;
+        public static int test_batch_size = 1001;
 
         public static Double ALPHA = 0.01; // learning rate
         public static Double BETA_1 = 0.9; // momentum
@@ -38,6 +38,8 @@ namespace Conv_Net {
 
 
             // Grad_Check.test();
+
+   
 
 
             Tuple<Tensor, Tensor, Tensor, Tensor> data = Utils.load_MNIST(60000, 10000, 28, 28, 1, 10);
@@ -86,8 +88,10 @@ namespace Conv_Net {
                 B = testing_labels.subset(i * test_batch_size, test_batch_size);
                 R = CNN.forward(A, B, false);
 
+                total_cross_entropy_loss += R.Item1.values[0];
+
                 for (int j = 0; j < test_batch_size; j++) {
-                    total_cross_entropy_loss += R.Item1.values[j];
+                    
 
                     int index_max_value_output = -1;
                     Double max_output = Double.MinValue;
@@ -115,9 +119,10 @@ namespace Conv_Net {
                 B = testing_labels.subset(num_batches * test_batch_size, remainder);
                 R = CNN.forward(A, B, false);
 
-                for (int j = 0; j < remainder; j++) {
-                    total_cross_entropy_loss += R.Item1.values[j];
+                total_cross_entropy_loss += R.Item1.values[0];
 
+                for (int j = 0; j < remainder; j++) {
+                    
                     int index_max_value_output = -1;
                     Double max_output = Double.MinValue;
                     int index_max_value_label = -1;
@@ -142,7 +147,7 @@ namespace Conv_Net {
             stopwatch.Stop();
             Console.WriteLine("Testing time:\t" + stopwatch.Elapsed);
             Console.WriteLine("Accuracy:\t" + (Double)correct / testing_sample_size * 100 + "% (" + correct + " correct out of " + testing_sample_size + ")");
-            Console.WriteLine("Average loss:\t" + total_cross_entropy_loss / testing_sample_size);
+            Console.WriteLine("Average loss:\t" + total_cross_entropy_loss);
             stopwatch.Reset();
         }
 

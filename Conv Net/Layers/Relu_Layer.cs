@@ -12,7 +12,7 @@ namespace Conv_Net {
         public Relu_Layer() {
         }
 
-        public Tensor forward(Tensor I) {
+        public override Tensor forward(Tensor I) {
             this.d_local = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4);
 
             Parallel.For(0, I.values.Length, i => {
@@ -27,7 +27,7 @@ namespace Conv_Net {
             return I; 
         }
 
-        public Tensor backward (Tensor dO) {
+        public override Tensor backward (Tensor dO) {
             Parallel.For(0, this.d_local.values.Length, i => {
 
                 // ∂L/∂I = ∂L/∂O * ∂O/∂I

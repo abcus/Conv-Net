@@ -19,7 +19,7 @@ namespace Conv_Net {
             this.scaling_factor = 1 / (1 - this.p);
         }
 
-        public Tensor forward(Tensor I, bool is_training) {
+        public override Tensor forward(Tensor I, bool is_training) {
             this.d_local = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4);
             
             if (is_training) {
@@ -40,7 +40,7 @@ namespace Conv_Net {
             return I;
         }
 
-        public Tensor backward(Tensor dO) {
+        public override Tensor backward(Tensor dO) {
             Parallel.For(0, this.d_local.values.Length, i => {
 
                 // ∂L/∂I = ∂L/∂O * ∂O/∂I

@@ -13,7 +13,7 @@ namespace Conv_Net {
         public Mean_Squared_Loss_Layer () {
         }
 
-        override public Tensor loss (Tensor I, Tensor T) {
+        public override Tensor loss (Tensor I, Tensor T) {
             this.I = I;
             this.T = T;
             
@@ -30,7 +30,7 @@ namespace Conv_Net {
             return L;
         }
 
-        override public Tensor backward () {
+        public override Tensor backward () {
             int batch_size = this.I_samples;
             
             Tensor dI = new Tensor(this.I_dimensions, this.I_samples, this.I_rows, this.I_columns, this.I_channels);

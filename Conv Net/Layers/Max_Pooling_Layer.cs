@@ -20,7 +20,7 @@ namespace Conv_Net {
             this.stride = stride;
         }
         
-        public Tensor forward(Tensor I) {
+        public override Tensor forward(Tensor I) {
             this.I_dimensions = I.dimensions;  this.I_samples = I.dim_1; this.I_rows = I.dim_2; this.I_columns = I.dim_3; this.I_channels = I.dim_4;
             this.d_local = new Tensor(4, this.I_samples, this.I_rows, this.I_columns, this.I_channels);
 
@@ -58,7 +58,7 @@ namespace Conv_Net {
             return O;
         }
 
-        public Tensor backward(Tensor dO) {
+        public override Tensor backward(Tensor dO) {
 
             Tensor dI = new Tensor(this.I_dimensions, this.I_samples, this.I_rows, this.I_columns, this.I_channels);
 

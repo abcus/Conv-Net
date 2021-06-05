@@ -37,7 +37,7 @@ namespace Conv_Net {
             }
         }
 
-        override public Tensor forward(Tensor I, bool is_training) {
+        public override Tensor forward(Tensor I, bool is_training) {
 
             this.is_training = is_training;
 
@@ -113,7 +113,7 @@ namespace Conv_Net {
         }
 
 
-        override public Tensor backward (Tensor dO) {
+        public override Tensor backward (Tensor dO) {
 
  
             if (this.is_conv == true) {

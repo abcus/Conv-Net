@@ -40,7 +40,7 @@ namespace Conv_Net {
                 this.W.values[i] = Utils.next_normal(Program.rand, 0, 1) * Math.Sqrt(2 / (Double)previous_layer_size);
             }
         }
-        public Tensor forward(Tensor I) {
+        public override Tensor forward(Tensor I) {
             this.I = I;
             this.I_samples = I.dim_1;
 
@@ -53,7 +53,7 @@ namespace Conv_Net {
             return O;
         }
 
-        public Tensor backward (Tensor dO) {
+        public override Tensor backward (Tensor dO) {
 
             // Calculates ∂L/∂B and ∂L/∂W and stores these for gradient descent
             // Don't have to set values of dB and dW to 0.0 after updating because a new gradient tensor is created during each backward pass

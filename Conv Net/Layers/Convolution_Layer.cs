@@ -62,7 +62,7 @@ namespace Conv_Net {
             }
         }
 
-        override public Tensor forward(Tensor I, bool is_training = false) {
+        public override Tensor forward(Tensor I) {
             
             this.I = I.pad(this.pad_size); 
             
@@ -82,7 +82,7 @@ namespace Conv_Net {
             return O;
         }
         
-        override public Tensor backward(Tensor dO) {
+        public override Tensor backward(Tensor dO) {
 
             this.dO_samples = dO.dim_1; this.dO_rows = dO.dim_2; this.dO_columns = dO.dim_3;       
             Tensor dO_matrix = Utils.dO_to_matrix(dO);

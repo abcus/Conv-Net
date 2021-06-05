@@ -14,7 +14,7 @@ namespace Conv_Net {
         public Softmax_Loss_Layer() {
         }
 
-        public Tensor forward(Tensor I) {
+        public override Tensor forward(Tensor I) {
             this.I_samples = I.dim_1; this.I_rows = I.dim_2; this.I_columns = I.dim_3; this.I_channels = I.dim_4;
 
             Parallel.For(0, this.I_samples, i => {
@@ -55,7 +55,7 @@ namespace Conv_Net {
         /// </summary>
         /// <param name="T"></param>
         /// <returns name="L"> Scalar </returns>
-        public Tensor loss(Tensor T) {
+        public override Tensor loss(Tensor T) {
             this.T = T;
             Tensor L = new Tensor(1, 1);
 
@@ -70,7 +70,7 @@ namespace Conv_Net {
         /// Combined backpropagation for categorical cross entropy loss and softmax to increase numerical stability 
         /// </summary>
         /// <returns></returns>
-        public Tensor backward () {
+        public override Tensor backward () {
 
             int batch_size = this.I_samples;
 

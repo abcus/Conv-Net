@@ -16,6 +16,7 @@ namespace Conv_Net {
         public Flatten_Layer Flatten_3;
         public Fully_Connected_Layer FC_3;
         public Softmax_Loss_Layer Softmax_Loss;
+        public Layer[] list = new Layer[10];
 
         public Optimizer Optim;
 
@@ -39,6 +40,8 @@ namespace Conv_Net {
         public Conv_Net () {
 
             Input = new Input_Layer();
+
+            list[0] = Input;
 
             Conv_1 = new Convolution_Layer(1, 16, 5, 5, false, 0, 1, 1); 
             Relu_1 = new Relu_Layer();
@@ -68,7 +71,7 @@ namespace Conv_Net {
             Tensor output;
             Tensor loss;
 
-            output = Input.forward(input);
+            output = list[0].forward(input);
 
             output = Conv_1.forward(output);
             output = Relu_1.forward(output);
@@ -112,9 +115,9 @@ namespace Conv_Net {
         }
 
         public void update () {
-            Optim.SGD_FC(FC_3);
-            Optim.SGD_Conv(Conv_2);
-            Optim.SGD_Conv(Conv_1);
+            Optim.SGD(FC_3);
+            Optim.SGD(Conv_2);
+            Optim.SGD(Conv_1);
             Optim.t += 1; // iterate t for bias correction
         }
 

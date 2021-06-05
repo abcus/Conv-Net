@@ -13,8 +13,11 @@ namespace Conv_Net {
 
         private int I_samples;
 
-        public Tensor I, B, W;
-        public Tensor dB, dW;
+        public Tensor I;
+        public override Tensor B { get; set; }
+        public override Tensor W { get; set; }
+        public override Tensor dB { get; set; }
+        public override Tensor dW { get; set; }
         public Tensor V_dB, S_dB, V_dW, S_dW;
 
         public Fully_Connected_Layer(int previous_layer_size, int layer_size, bool needs_gradient) {

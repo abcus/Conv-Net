@@ -13,25 +13,18 @@ namespace Conv_Net {
             t = 1;
         }
 
-        /// <summary>
-        /// Updates the biases and weights of the fully connected layer
-        /// Don't need to divide by batch size because this was done in softmax layer
-        /// </summary>
-        public void SGD_FC(Fully_Connected_Layer FC) {
-            for (int i=0; i < FC.dB.values.Length; i++) {
-                FC.B.values[i] -= (Program.ALPHA * FC.dB.values[i]);
-            }
-            for (int i = 0; i < FC.W.values.Length; i++) {
-                FC.W.values[i] -= (Program.ALPHA * FC.dW.values[i]);
-            }
-        }
 
-        public void SGD_Conv(Convolution_Layer Conv) {
-            for (int i=0; i < Conv.B.values.Length; i++) {
-                Conv.B.values[i] -= Program.ALPHA * Conv.dB.values[i];
+        /// <summary>
+        /// Stochastic gradient descent to update weights and biases of layers with trainable parameters (Fully connected, Convolution)
+        /// Don't need to divide by batch size because this was done in loss layer
+        /// </summary>
+        /// <param name="layer"></param>
+        public void SGD(Layer layer) {
+            for (int i=0; i < layer.B.values.Length; i++) {
+                layer.B.values[i] -= Program.ALPHA * layer.dB.values[i];
             }
-            for (int i=0; i < Conv.W.values.Length; i++) {
-                Conv.W.values[i] -= Program.ALPHA * Conv.dW.values[i];
+            for (int i=0; i < layer.W.values.Length; i++) {
+                layer.W.values[i] -= Program.ALPHA * layer.dW.values[i];
             }
         }
 

@@ -40,52 +40,37 @@ namespace Conv_Net {
         /// <param name="h"></param>
         /// <returns> Tuple of analytic gradients <dB, dW, dI> </returns>
         public static Tuple<Tensor, Tensor, Tensor> numeric_grad(Layer test_layer_1, Layer test_layer_2, Layer loss_layer, Tensor I, Tensor T, Double h = 0.00001) {
+            Tensor I_copy; 
             Tensor B = test_layer_1.B;
-            Tensor numeric_dB = new Tensor(B.dimensions, B.dim_1, B.dim_2, B.dim_3, B.dim_4);
             Tensor W = test_layer_1.W;
+            Tensor numeric_dB = new Tensor(B.dimensions, B.dim_1, B.dim_2, B.dim_3, B.dim_4);
             Tensor numeric_dW = new Tensor(W.dimensions, W.dim_1, W.dim_2, W.dim_3, W.dim_4);
             Tensor numeric_dI = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4);
 
             for (int i=0; i < B.values.Length; i++) {
-                Tensor I_copy;
-                Tensor B_up = Utils.copy(B);
-                Tensor B_down = Utils.copy(B);
-                Tensor B_old = Utils.copy(B);
-
-                B_up.values[i] += h;
-                B_down.values[i] -= h;
-
-                test_layer_1.B = B_up;
                 I_copy = Utils.copy(I);
+                test_layer_1.B.values[i] += h;
                 Tensor L_up = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy, true), true), T);
-                
-                test_layer_1.B = B_down;
+
                 I_copy = Utils.copy(I);
+                test_layer_1.B.values[i] -= 2 * h;
                 Tensor L_down = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy, true), true), T);
-                
-                test_layer_1.B = B_old;
+
+                test_layer_1.B.values[i] += h;
 
                 numeric_dB.values[i] = Utils.sum(Utils.subtract(L_up, L_down)) / (2 * h);
             }
 
             for (int i=0; i < W.values.Length; i++) {
-                Tensor I_copy;
-                Tensor W_up = Utils.copy(W);
-                Tensor W_down = Utils.copy(W);
-                Tensor W_old = Utils.copy(W);
-
-                W_up.values[i] += h;
-                W_down.values[i] -= h;
-                
-                test_layer_1.W = W_up;
                 I_copy = Utils.copy(I);
+                test_layer_1.W.values[i] += h;
                 Tensor L_up = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy, true), true), T);
-                
-                test_layer_1.W = W_down;
+
                 I_copy = Utils.copy(I);
+                test_layer_1.W.values[i] -= 2 * h;
                 Tensor L_down = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy, true), true), T);
-                
-                test_layer_1.W = W_old;
+
+                test_layer_1.W.values[i] += h;
 
                 numeric_dW.values[i] = Utils.sum(Utils.subtract(L_up, L_down)) / (2 * h);
             }
@@ -141,10 +126,9 @@ namespace Conv_Net {
             Tuple<Tensor, Tensor, Tensor> analytic_gradients = analytic_grad(Conv, BN, MSE, I_Conv, T_Conv);
             Tuple<Tensor, Tensor, Tensor> numeric_gradients = numeric_grad(Conv, BN, MSE, I_Conv, T_Conv);
 
-            Console.WriteLine("Difference in bias gradients\n" + analytic_gradients.Item1.difference(numeric_gradients.Item1));
-            Console.WriteLine("Difference in weight gradients\n" + analytic_gradients.Item2.difference(numeric_gradients.Item2));
-            Console.WriteLine("Difference in input gradients\n" + analytic_gradients.Item3.difference(numeric_gradients.Item3));
-
+            Console.WriteLine("Difference in bias gradients\n" + Utils.sum(analytic_gradients.Item1.difference(numeric_gradients.Item1)) + "\n");
+            Console.WriteLine("Difference in weight gradients\n" + Utils.sum(analytic_gradients.Item2.difference(numeric_gradients.Item2)) + "\n");
+            Console.WriteLine("Difference in input gradients\n" + Utils.sum(analytic_gradients.Item3.difference(numeric_gradients.Item3)) + "\n");
         }
     }
 }

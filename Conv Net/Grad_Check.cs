@@ -126,9 +126,9 @@ namespace Conv_Net {
             Tuple<Tensor, Tensor, Tensor> analytic_gradients = analytic_grad(Conv, BN, MSE, I_Conv, T_Conv);
             Tuple<Tensor, Tensor, Tensor> numeric_gradients = numeric_grad(Conv, BN, MSE, I_Conv, T_Conv);
 
-            Console.WriteLine("Difference in bias gradients\n" + Utils.sum(analytic_gradients.Item1.difference(numeric_gradients.Item1)) + "\n");
-            Console.WriteLine("Difference in weight gradients\n" + Utils.sum(analytic_gradients.Item2.difference(numeric_gradients.Item2)) + "\n");
-            Console.WriteLine("Difference in input gradients\n" + Utils.sum(analytic_gradients.Item3.difference(numeric_gradients.Item3)) + "\n");
+            Console.WriteLine("Average L2 difference in bias gradients\n" + Utils.Average_L2_Distance(analytic_gradients.Item1, numeric_gradients.Item1) + "\n");
+            Console.WriteLine("Agerage L2 difference in weight gradients\n" + Utils.Average_L2_Distance(analytic_gradients.Item2, numeric_gradients.Item2) + "\n");
+            Console.WriteLine("Average L2 difference in input gradients\n" + Utils.Average_L2_Distance(analytic_gradients.Item3, numeric_gradients.Item3) + "\n");
         }
     }
 }

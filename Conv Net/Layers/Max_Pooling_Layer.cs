@@ -42,10 +42,10 @@ namespace Conv_Net {
 
                             for (int m = 0; m < this.F_rows; m++) {
                                 for (int n = 0; n < this.F_columns; n++) {
-                                    if (I.values[I.index(i, (j * stride + m), (k * stride + n), l)] > max_value) {
-                                        max_value = I.values[I.index(i, (j * stride + m), (k * stride + n), l)];
-                                        max_row = j * stride + m;
-                                        max_column = k * stride + n;
+                                    if (I.values[I.index(i, (j * this.stride + m), (k * this.stride + n), l)] > max_value) {
+                                        max_value = I.values[I.index(i, (j * this.stride + m), (k * this.stride + n), l)];
+                                        max_row = j * this.stride + m;
+                                        max_column = k * this.stride + n;
                                     }
                                 }
                             }

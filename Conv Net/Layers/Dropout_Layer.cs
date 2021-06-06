@@ -22,7 +22,7 @@ namespace Conv_Net {
         public override Tensor forward(Tensor I, bool is_training) {
             this.d_local = new Tensor(I.dimensions, I.dim_1, I.dim_2, I.dim_3, I.dim_4);
             
-            if (is_training) {
+            if (is_training == true) {
                 // Do not parallelize because of random number generation
                 for (int i = 0; i < I.values.Length; i++) {
                     if (Program.dropout_rand.NextDouble() < this.p) {

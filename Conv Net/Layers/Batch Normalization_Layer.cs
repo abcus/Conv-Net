@@ -111,8 +111,6 @@ namespace Conv_Net {
                     }
                 }
                 
-
-                
             } else {
                 
                 for (int i=0; i < this.N; i++) {
@@ -157,7 +155,6 @@ namespace Conv_Net {
             // dI [N x D] = 1 / N * (1_column [N x 1] * (W [1 x D] / Sqrt(variance [1 x D] + epsilon))) * ((N * dO [N x D]) - (column_1 [N x 1] * dB [1 x D]) - ((column_1 [N x 1] * dW [1 x D]) * I_hat [N x D]))
             Tensor dI = new Tensor(2, this.N, this.D);
           
-
 
             Tensor left_side = new Tensor(2, this.N, this.D);        
             left_side = Utils.scalar_product(1.0/this.N, Utils.dgemm_cs(column_vector_1, Utils.elementwise_product(this.W, this.inverse_stdev), left_side));

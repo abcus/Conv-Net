@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 using System.IO;
 
 namespace Conv_Net {
-    class Conv_Net {
+    class Net {
 
         public Input_Layer Input;
         public Convolution_Layer Conv_1, Conv_2;
+        public Batch_Normalization_Layer BN_1, BN_2;
         public Relu_Layer Relu_1, Relu_2;
         public Max_Pooling_Layer Pool_1, Pool_2;
         public Dropout_Layer Dropout_1, Dropout_2;
@@ -37,18 +38,20 @@ namespace Conv_Net {
         /// Output of FC_3: [batch size x 10 x 1 x 1]
         /// Output of Softmax: [batch size x 10 x 1 x 1]
         /// </summary>
-        public Conv_Net () {
+        public Net () {
 
             Input = new Input_Layer();
 
             list[0] = Input;
 
-            Conv_1 = new Convolution_Layer(1, 16, 5, 5, false, 0, 1, 1); 
+            Conv_1 = new Convolution_Layer(1, 16, 5, 5, false, 0, 1, 1);
+            BN_1 = new Batch_Normalization_Layer(16);
             Relu_1 = new Relu_Layer();
             Pool_1 = new Max_Pooling_Layer(2, 2, 2);
             Dropout_1 = new Dropout_Layer(0.2);
 
-            Conv_2 = new Convolution_Layer(16, 32, 5, 5, true, 0, 1, 1); 
+            Conv_2 = new Convolution_Layer(16, 32, 5, 5, true, 0, 1, 1);
+            BN_2 = new Batch_Normalization_Layer(32);
             Relu_2 = new Relu_Layer();
             Pool_2 = new Max_Pooling_Layer(2, 2, 2);
             Dropout_2 = new Dropout_Layer(0.2);
@@ -74,11 +77,13 @@ namespace Conv_Net {
             output = list[0].forward(input);
 
             output = Conv_1.forward(output);
+            output = BN_1.forward(output, is_train);
             output = Relu_1.forward(output);
             output = Pool_1.forward(output);
             output = Dropout_1.forward(output, is_train);
 
             output = Conv_2.forward(output);
+            output = BN_2.forward(output, is_train);
             output = Relu_2.forward(output);
             output = Pool_2.forward(output);
             output = Dropout_2.forward(output, is_train);
@@ -106,17 +111,21 @@ namespace Conv_Net {
             grad = Dropout_2.backward(grad);
             grad = Pool_2.backward(grad);
             grad = Relu_2.backward(grad);
+            grad = BN_2.backward(grad);
             grad = Conv_2.backward(grad);
 
             grad = Dropout_1.backward(grad);
             grad = Pool_1.backward(grad);
             grad = Relu_1.backward(grad);
+            grad = BN_1.backward(grad);
             grad = Conv_1.backward(grad);
         }
 
         public void update () {
             Optim.SGD(FC_3);
+            Optim.SGD(BN_2);
             Optim.SGD(Conv_2);
+            Optim.SGD(BN_1);
             Optim.SGD(Conv_1);
             Optim.t += 1; // iterate t for bias correction
         }

@@ -27,20 +27,20 @@ namespace Conv_Net {
 
         private Double EPSILON = 0.00001;
         public Batch_Normalization_Layer(int element) {
-            B = new Tensor(2, 1, element);
-            W = new Tensor(2, 1, element);
+            this.B = new Tensor(2, 1, element);
+            this.W = new Tensor(2, 1, element);
             
-            running_mean = new Tensor(2, 1, element);
-            running_variance = new Tensor(2, 1, element);
+            this.running_mean = new Tensor(2, 1, element);
+            this.running_variance = new Tensor(2, 1, element);
 
-            momentum = 0.9;
+            this.momentum = 0.9;
 
             // gamma initialized to 1, beta initialized to 0
-            for (int i = 0; i < W.values.Length; i++) {
-                W.values[i] = 1;
+            for (int i = 0; i < this.W.values.Length; i++) {
+                this.W.values[i] = 1;
             }
-            for (int i=0; i < B.values.Length; i++) {
-                B.values[i] = 0;
+            for (int i=0; i < this.B.values.Length; i++) {
+                this.B.values[i] = 0;
             }
         }
 

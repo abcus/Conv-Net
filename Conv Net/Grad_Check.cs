@@ -22,7 +22,7 @@ namespace Conv_Net {
             Tensor I_copy = Utils.copy(I);
             Tensor analytic_dI, analytic_dB, analytic_dW;
 
-            loss_layer.loss(layer_2.forward(layer_1.forward(I_copy, true), true), T);
+            loss_layer.loss(layer_2.forward(layer_1.forward(I_copy), true), T);
             analytic_dI = layer_1.backward(layer_2.backward(loss_layer.backward()));
             analytic_dB = layer_1.dB;
             analytic_dW = layer_1.dW;
@@ -50,11 +50,11 @@ namespace Conv_Net {
             for (int i=0; i < B.values.Length; i++) {
                 I_copy = Utils.copy(I);
                 test_layer_1.B.values[i] += h;
-                Tensor L_up = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy, true), true), T);
+                Tensor L_up = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy), true), T);
 
                 I_copy = Utils.copy(I);
                 test_layer_1.B.values[i] -= 2 * h;
-                Tensor L_down = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy, true), true), T);
+                Tensor L_down = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy), true), T);
 
                 test_layer_1.B.values[i] += h;
 
@@ -64,11 +64,11 @@ namespace Conv_Net {
             for (int i=0; i < W.values.Length; i++) {
                 I_copy = Utils.copy(I);
                 test_layer_1.W.values[i] += h;
-                Tensor L_up = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy, true), true), T);
+                Tensor L_up = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy), true), T);
 
                 I_copy = Utils.copy(I);
                 test_layer_1.W.values[i] -= 2 * h;
-                Tensor L_down = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy, true), true), T);
+                Tensor L_down = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy), true), T);
 
                 test_layer_1.W.values[i] += h;
 
@@ -82,8 +82,8 @@ namespace Conv_Net {
                 I_up.values[i] += h;
                 I_down.values[i] -= h;
 
-                Tensor L_up = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_up, true), true), T);
-                Tensor L_down = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_down, true), true), T);
+                Tensor L_up = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_up), true), T);
+                Tensor L_down = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_down), true), T);
 
                 numeric_dI.values[i] = Utils.sum(Utils.subtract(L_up, L_down)) / (2 * h);
             }

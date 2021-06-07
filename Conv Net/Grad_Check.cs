@@ -18,7 +18,7 @@ namespace Conv_Net {
         /// <param name="I"></param>
         /// <param name="T"></param>
         /// <returns > Tuple of analytic gradients <dB, dW, dI> </returns>
-        public static Tuple<Tensor, Tensor, Tensor> analytic_grad(Layer layer_1, Layer layer_2, Layer loss_layer, Tensor I, Tensor T) {
+        public static Tuple<Tensor, Tensor, Tensor> analytic_grad(Base_Layer layer_1, Base_Layer layer_2, Base_Layer loss_layer, Tensor I, Tensor T) {
             Tensor I_copy = Utils.copy(I);
             Tensor analytic_dI, analytic_dB, analytic_dW;
 
@@ -39,7 +39,7 @@ namespace Conv_Net {
         /// <param name="T"></param>
         /// <param name="h"></param>
         /// <returns> Tuple of analytic gradients <dB, dW, dI> </returns>
-        public static Tuple<Tensor, Tensor, Tensor> numeric_grad(Layer test_layer_1, Layer test_layer_2, Layer loss_layer, Tensor I, Tensor T, Double h = 0.00001) {
+        public static Tuple<Tensor, Tensor, Tensor> numeric_grad(Base_Layer test_layer_1, Base_Layer test_layer_2, Base_Layer loss_layer, Tensor I, Tensor T, Double h = 0.00001) {
             Tensor I_copy; 
             Tensor B = test_layer_1.B;
             Tensor W = test_layer_1.W;

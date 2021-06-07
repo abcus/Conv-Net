@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class Flatten_Layer : Layer {
+    class Flatten_Layer : Base_Layer {
 
         private int I_dimensions, I_samples, I_rows, I_columns, I_channels;
 

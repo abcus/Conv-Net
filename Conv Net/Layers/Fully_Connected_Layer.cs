@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 using System.Threading;
 
 namespace Conv_Net {
-    class Fully_Connected_Layer : Layer {
+    class Fully_Connected_Layer : Base_Layer {
 
         private int previous_layer_size, layer_size;
         private bool needs_gradient;
-
         private int I_samples;
+
+        public override bool trainable_parameters { get; }
 
         public Tensor I;
         public override Tensor B { get; set; }
@@ -21,6 +22,7 @@ namespace Conv_Net {
         public Tensor V_dB, S_dB, V_dW, S_dW;
 
         public Fully_Connected_Layer(int previous_layer_size, int layer_size, bool needs_gradient) {
+            this.trainable_parameters = true;
             this.previous_layer_size = previous_layer_size;
             this.layer_size = layer_size;
             this.needs_gradient = needs_gradient;

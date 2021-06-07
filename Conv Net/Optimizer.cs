@@ -15,11 +15,11 @@ namespace Conv_Net {
 
 
         /// <summary>
-        /// Stochastic gradient descent to update weights and biases of layers with trainable parameters (Fully connected, Convolution)
+        /// Stochastic gradient descent to update weights and biases of layers with trainable parameters (Fully connected, Convolution, Batch normalization)
         /// Don't need to divide by batch size because this was done in loss layer
         /// </summary>
         /// <param name="layer"></param>
-        public void SGD(Layer layer) {
+        public void SGD(Base_Layer layer) {
             for (int i=0; i < layer.B.values.Length; i++) {
                 layer.B.values[i] -= Program.ALPHA * layer.dB.values[i];
             }

@@ -5,14 +5,16 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net{
-    class Layer {
+    class Base_Layer {
 
         public virtual Tensor B { get; set; }
         public virtual Tensor W { get; set; }
         public virtual Tensor dB { get; set; }
         public virtual Tensor dW { get; set; }
+        public virtual bool trainable_parameters { get; }
+        public virtual bool test_train_mode { get; }
 
-        public Layer() {}
+        public Base_Layer() {}
         public virtual Tensor forward (Tensor I) {return null;}
         public virtual Tensor forward(Tensor I, bool is_training = false) {return null;}
         public virtual Tensor backward() {return null;}

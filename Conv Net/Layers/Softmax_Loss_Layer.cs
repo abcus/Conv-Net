@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 
 namespace Conv_Net {
-    class Softmax_Loss_Layer : Layer {
+    class Softmax_Loss_Layer : Base_Layer {
 
         private int I_samples, I_rows, I_columns, I_channels;
         private Tensor O, T;
@@ -70,7 +70,7 @@ namespace Conv_Net {
         /// Combined backpropagation for categorical cross entropy loss and softmax to increase numerical stability 
         /// </summary>
         /// <returns></returns>
-        public override Tensor backward () {
+        public override Tensor backward (Tensor dO) {
 
             int batch_size = this.I_samples;
 

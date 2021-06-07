@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class Input_Layer : Layer {
+    class Input_Layer : Base_Layer {
 
         public Input_Layer() {
         }

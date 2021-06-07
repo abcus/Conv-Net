@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class Mean_Squared_Loss_Layer : Layer {
+    class Mean_Squared_Loss_Layer : Base_Layer {
 
         private int I_dimensions, I_samples, I_rows, I_columns, I_channels, I_elements;
 

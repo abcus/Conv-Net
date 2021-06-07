@@ -7,7 +7,9 @@ using System.Diagnostics;
 using System.Threading;
 
 namespace Conv_Net {
-    class Convolution_Layer : Layer {
+    class Convolution_Layer : Base_Layer {
+
+        public override bool trainable_parameters { get; }
 
         private int I_samples, I_rows, I_columns, I_channels;
         private int B_num;
@@ -32,6 +34,8 @@ namespace Conv_Net {
         public Tensor V_dB, S_dB, V_dW, S_dW;
 
         public Convolution_Layer(int I_channels, int W_num, int W_rows, int W_columns, bool needs_gradient, int pad_size = 0, int stride = 1, int dilation = 1) {
+
+            this.trainable_parameters = true;
 
             this.I_channels = I_channels;
             this.B_num = W_num;

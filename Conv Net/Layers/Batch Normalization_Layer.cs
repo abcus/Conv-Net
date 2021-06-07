@@ -5,7 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class Batch_Normalization_Layer : Layer {
+    class Batch_Normalization_Layer : Base_Layer {
+
+        public override bool trainable_parameters { get; }
+        public override bool test_train_mode { get; }
 
         private int N; // effective batch size
         private int D; // elements in a single sample
@@ -27,6 +30,10 @@ namespace Conv_Net {
 
         private Double EPSILON = 0.00001;
         public Batch_Normalization_Layer(int element) {
+
+            this.trainable_parameters = true;
+            this.test_train_mode = true;
+
             this.B = new Tensor(2, 1, element);
             this.W = new Tensor(2, 1, element);
             

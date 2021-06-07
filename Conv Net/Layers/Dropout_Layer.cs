@@ -5,7 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class Dropout_Layer : Layer {
+    class Dropout_Layer : Base_Layer {
+
+        public override bool test_train_mode { get; }
 
         // Probability that inputs are set to 0
         private Double p;
@@ -15,6 +17,7 @@ namespace Conv_Net {
         private Tensor d_local;
 
         public Dropout_Layer(Double p) {
+            this.test_train_mode = true;
             this.p = p;
             this.scaling_factor = 1 / (1 - this.p);
         }

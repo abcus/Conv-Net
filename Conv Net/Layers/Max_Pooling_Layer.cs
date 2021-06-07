@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Conv_Net {
-    class Max_Pooling_Layer : Layer {
+    class Max_Pooling_Layer : Base_Layer {
 
         private int I_dimensions, I_samples, I_rows, I_columns, I_channels;
         private int F_rows, F_columns;

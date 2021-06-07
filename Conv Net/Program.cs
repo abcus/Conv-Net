@@ -28,7 +28,7 @@ namespace Conv_Net {
         public static Double ALPHA = 0.01; // learning rate
         public static Double BETA_1 = 0.9; // momentum
         public static Double BETA_2 = 0.999; // RMS prop
-        public static Double EPSILON = 0.00000001;
+        public static Double EPSILON = 0.00001;
 
         static void Main() {
 

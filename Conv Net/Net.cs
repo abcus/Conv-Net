@@ -8,17 +8,7 @@ using System.IO;
 namespace Conv_Net {
     class Net {
 
-        public Input_Layer Input;
-        public Convolution_Layer Conv_1, Conv_2;
-        public Batch_Normalization_Layer BN_1, BN_2;
-        public Relu_Layer Relu_1, Relu_2;
-        public Max_Pooling_Layer Pool_1, Pool_2;
-        public Dropout_Layer Dropout_1, Dropout_2;
-        public Flatten_Layer Flatten_3;
-        public Fully_Connected_Layer FC_3;
-        public Softmax_Loss_Layer Softmax_Loss;
-        public Layer[] list = new Layer[10];
-
+        public Base_Layer[] layer_list = new Base_Layer[14];
         public Optimizer Optim;
 
         /// <summary>
@@ -40,25 +30,22 @@ namespace Conv_Net {
         /// </summary>
         public Net () {
 
-            Input = new Input_Layer();
+            layer_list[0] = new Input_Layer();
+            layer_list[1] = new Convolution_Layer(1, 16, 5, 5, false, 0, 1, 1);
+            layer_list[2] = new Batch_Normalization_Layer(16);
+            layer_list[3] = new Relu_Layer();
+            layer_list[4] = new Max_Pooling_Layer(2, 2, 2);
+            layer_list[5] = new Dropout_Layer(0.2);
 
-            list[0] = Input;
+            layer_list[6] = new Convolution_Layer(16, 32, 5, 5, true, 0, 1, 1);
+            layer_list[7] = new Batch_Normalization_Layer(32);
+            layer_list[8] = new Relu_Layer();
+            layer_list[9] = new Max_Pooling_Layer(2, 2, 2);
+            layer_list[10] = new Dropout_Layer(0.2);
 
-            Conv_1 = new Convolution_Layer(1, 16, 5, 5, false, 0, 1, 1);
-            BN_1 = new Batch_Normalization_Layer(16);
-            Relu_1 = new Relu_Layer();
-            Pool_1 = new Max_Pooling_Layer(2, 2, 2);
-            Dropout_1 = new Dropout_Layer(0.2);
-
-            Conv_2 = new Convolution_Layer(16, 32, 5, 5, true, 0, 1, 1);
-            BN_2 = new Batch_Normalization_Layer(32);
-            Relu_2 = new Relu_Layer();
-            Pool_2 = new Max_Pooling_Layer(2, 2, 2);
-            Dropout_2 = new Dropout_Layer(0.2);
-
-            Flatten_3 = new Flatten_Layer(); 
-            FC_3 = new Fully_Connected_Layer(4 * 4 * 32, 10, true); 
-            Softmax_Loss = new Softmax_Loss_Layer();
+            layer_list[11] = new Flatten_Layer(); 
+            layer_list[12] = new Fully_Connected_Layer(4 * 4 * 32, 10, true); 
+            layer_list[13] = new Softmax_Loss_Layer();
 
             Optim = new Optimizer();
         }
@@ -71,29 +58,17 @@ namespace Conv_Net {
         /// <param name="is_train"></param>
         /// <returns></returns>
         public Tuple<Tensor, Tensor> forward (Tensor input, Tensor target, bool is_train) {
-            Tensor output;
+            Tensor output = input;
             Tensor loss;
 
-            output = list[0].forward(input);
-
-            output = Conv_1.forward(output);
-            output = BN_1.forward(output, is_train);
-            output = Relu_1.forward(output);
-            output = Pool_1.forward(output);
-            output = Dropout_1.forward(output, is_train);
-
-            output = Conv_2.forward(output);
-            output = BN_2.forward(output, is_train);
-            output = Relu_2.forward(output);
-            output = Pool_2.forward(output);
-            output = Dropout_2.forward(output, is_train);
-
-            output = Flatten_3.forward(output);
-            output = FC_3.forward(output);
-            output = Softmax_Loss.forward(output);
-
-            loss = Softmax_Loss.loss(target);
-
+            for (int i=0; i < layer_list.Length; i++) {
+                if (layer_list[i].test_train_mode == false) {
+                    output = layer_list[i].forward(output);
+                } else {
+                    output = layer_list[i].forward(output, is_train);
+                }
+            }
+            loss = layer_list[layer_list.Length - 1].loss(target);
             return Tuple.Create(loss, output);
         }
 
@@ -102,80 +77,91 @@ namespace Conv_Net {
         /// Output of Conv_1 is null (dL/dI is not needed because Conv_1 is the first layer)
         /// </summary>
         public void backward(int batch_size) {
-            Tensor grad;
-            
-            grad = Softmax_Loss.backward();
-            grad = FC_3.backward(grad);
-            grad = Flatten_3.backward(grad);
-
-            grad = Dropout_2.backward(grad);
-            grad = Pool_2.backward(grad);
-            grad = Relu_2.backward(grad);
-            grad = BN_2.backward(grad);
-            grad = Conv_2.backward(grad);
-
-            grad = Dropout_1.backward(grad);
-            grad = Pool_1.backward(grad);
-            grad = Relu_1.backward(grad);
-            grad = BN_1.backward(grad);
-            grad = Conv_1.backward(grad);
+            Tensor grad = new Tensor(1, 1);
+            for (int i = layer_list.Length - 1; i >= 0; i--) {
+                grad = layer_list[i].backward(grad);
+            }
         }
 
         public void update () {
-            Optim.SGD(FC_3);
-            Optim.SGD(BN_2);
-            Optim.SGD(Conv_2);
-            Optim.SGD(BN_1);
-            Optim.SGD(Conv_1);
+            for (int i=0; i < layer_list.Length; i++) {
+                if (layer_list[i].trainable_parameters == true) {
+                    Optim.SGD(layer_list[i]);
+                }
+            }
             Optim.t += 1; // iterate t for bias correction
         }
 
-        public void save_parameters(int epoch) {
-            StreamWriter writer = new StreamWriter("parameters " + epoch + ".txt", false);
+        //public void save_parameters(int epoch) {
+        //    StreamWriter writer = new StreamWriter("parameters " + epoch + ".txt", false);
 
-            foreach(Double b in Conv_1.B.values) {
-                writer.WriteLine(b);
-            }
-            foreach (Double b in Conv_1.W.values) {
-                writer.WriteLine(b);
-            }
-            foreach (Double b in Conv_2.B.values) {
-                writer.WriteLine(b);
-            }
-            foreach (Double b in Conv_2.W.values) {
-                writer.WriteLine(b);
-            }
-            foreach (Double b in FC_3.B.values) {
-                writer.WriteLine(b);
-            }
-            foreach (Double b in FC_3.W.values) {
-                writer.WriteLine(b);
-            }
-            writer.Close();
-        }
+        //    foreach(Double b in Conv_1.B.values) {
+        //        writer.WriteLine(b);
+        //    }
+        //    foreach (Double b in Conv_1.W.values) {
+        //        writer.WriteLine(b);
+        //    }
+        //    foreach(Double b in BN_1.B.values) {
+        //        writer.WriteLine(b);
+        //    }
+        //    foreach (Double b in BN_1.W.values) {
+        //        writer.WriteLine(b);
+        //    }
+        //    foreach (Double b in Conv_2.B.values) {
+        //        writer.WriteLine(b);
+        //    }
+        //    foreach (Double b in Conv_2.W.values) {
+        //        writer.WriteLine(b);
+        //    }
+        //    foreach (Double b in BN_2.B.values) {
+        //        writer.WriteLine(b);
+        //    }
+        //    foreach (Double b in BN_2.W.values) {
+        //        writer.WriteLine(b);
+        //    }
+        //    foreach (Double b in FC_3.B.values) {
+        //        writer.WriteLine(b);
+        //    }
+        //    foreach (Double b in FC_3.W.values) {
+        //        writer.WriteLine(b);
+        //    }
+        //    writer.Close();
+        //}
 
 
-        public void load_parameters() {
-            System.IO.StreamReader reader = new System.IO.StreamReader(@"parameters 997.txt");
+        //public void load_parameters() {
+        //    System.IO.StreamReader reader = new System.IO.StreamReader(@"parameters 997.txt");
 
-            for (int i=0; i < Conv_1.B.values.Length; i++) {
-                Conv_1.B.values[i] = Convert.ToDouble(reader.ReadLine());
-            }
-            for (int i = 0; i < Conv_1.W.values.Length; i++) {
-                Conv_1.W.values[i] = Convert.ToDouble(reader.ReadLine());
-            }
-            for (int i = 0; i < Conv_2.B.values.Length; i++) {
-                Conv_2.B.values[i] = Convert.ToDouble(reader.ReadLine());
-            }
-            for (int i = 0; i < Conv_2.W.values.Length; i++) {
-                Conv_2.W.values[i] = Convert.ToDouble(reader.ReadLine());
-            }
-            for (int i = 0; i < FC_3.B.values.Length; i++) {
-                FC_3.B.values[i] = Convert.ToDouble(reader.ReadLine());
-            }
-            for (int i = 0; i < FC_3.W.values.Length; i++) {
-                FC_3.W.values[i] = Convert.ToDouble(reader.ReadLine());
-            }
-        }
+        //    for (int i=0; i < Conv_1.B.values.Length; i++) {
+        //        Conv_1.B.values[i] = Convert.ToDouble(reader.ReadLine());
+        //    }
+        //    for (int i = 0; i < Conv_1.W.values.Length; i++) {
+        //        Conv_1.W.values[i] = Convert.ToDouble(reader.ReadLine());
+        //    }
+        //    for (int i=0; i < BN_1.B.values.Length; i++) {
+        //        BN_1.B.values[i] = Convert.ToDouble(reader.ReadLine());
+        //    }
+        //    for (int i = 0; i < BN_1.W.values.Length; i++) {
+        //        BN_1.W.values[i] = Convert.ToDouble(reader.ReadLine());
+        //    }
+        //    for (int i = 0; i < Conv_2.B.values.Length; i++) {
+        //        Conv_2.B.values[i] = Convert.ToDouble(reader.ReadLine());
+        //    }
+        //    for (int i = 0; i < Conv_2.W.values.Length; i++) {
+        //        Conv_2.W.values[i] = Convert.ToDouble(reader.ReadLine());
+        //    }
+        //    for (int i = 0; i < BN_2.B.values.Length; i++) {
+        //        BN_2.B.values[i] = Convert.ToDouble(reader.ReadLine());
+        //    }
+        //    for (int i = 0; i < BN_2.W.values.Length; i++) {
+        //        BN_2.W.values[i] = Convert.ToDouble(reader.ReadLine());
+        //    }
+        //    for (int i = 0; i < FC_3.B.values.Length; i++) {
+        //        FC_3.B.values[i] = Convert.ToDouble(reader.ReadLine());
+        //    }
+        //    for (int i = 0; i < FC_3.W.values.Length; i++) {
+        //        FC_3.W.values[i] = Convert.ToDouble(reader.ReadLine());
+        //    }
+        //}
     }
 }

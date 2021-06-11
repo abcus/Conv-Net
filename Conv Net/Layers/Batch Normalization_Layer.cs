@@ -26,7 +26,8 @@ namespace Conv_Net {
         public override Tensor W { get; set; } // gamma
         public override Tensor dB { get; set; }
         public override Tensor dW { get; set; }
-        
+        public override Tensor V_dB { get; set; }
+        public override Tensor V_dW { get; set; }
 
         private Double EPSILON = 0.00001;
         public Batch_Normalization_Layer(int element) {
@@ -35,8 +36,10 @@ namespace Conv_Net {
             this.test_train_mode = true;
 
             this.B = new Tensor(2, 1, element);
+            this.V_dB = new Tensor(2, 1, element);
             this.W = new Tensor(2, 1, element);
-            
+            this.V_dW = new Tensor(2, 1, element);
+
             this.running_mean = new Tensor(2, 1, element);
             this.running_variance = new Tensor(2, 1, element);
 

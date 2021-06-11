@@ -28,32 +28,17 @@ namespace Conv_Net {
             }
         }
 
-        //public void Momentum_FC(Fully_Connected_Layer FC) {
-        //    int I_samples = FC.dW.dim_1; int layer_size = FC.dW.dim_2; int previous_layer_size = FC.dW.dim_3;
-        //    Double V_bias_correction = (1 - Math.Pow(Program.BETA_1, this.t));
-
-        //    for (int i = 0; i < layer_size; i++) {
-
-        //        Double dB_sum = 0;
-
-        //        for (int s = 0; s < I_samples; s++) {
-        //            dB_sum += FC.dB.values[s * layer_size + i];
-        //        }
-        //        FC.V_dB.values[i] = Program.BETA_1 * FC.V_dB.values[i] + (1 - Program.BETA_1) * dB_sum;
-        //        FC.B.values[i] -= Program.ALPHA * FC.V_dB.values[i] / V_bias_correction;
-
-        //        for (int j = 0; j < previous_layer_size; j++) {
-                    
-        //            Double dW_sum = 0.0;
-                    
-        //            for (int s = 0; s < I_samples; s++) {
-        //                dW_sum += FC.dW.values[s * layer_size * previous_layer_size + i * previous_layer_size + j];
-        //            }
-        //            FC.V_dW.values[i * previous_layer_size + j] = Program.BETA_1 * FC.V_dW.values[i * previous_layer_size + j] + (1 - Program.BETA_1) * dW_sum;
-        //            FC.W.values[i * previous_layer_size + j] -= Program.ALPHA * FC.V_dW.values[i * previous_layer_size + j]/V_bias_correction;
-        //        }
-        //    }
-        //}
+        public void Momentum(Base_Layer layer) {
+            Double V_bias_correction = (1 - Math.Pow(Program.BETA_1, this.t));
+            for (int i=0; i < layer.B.values.Length; i++) {
+                layer.V_dB.values[i] = Program.BETA_1 * layer.V_dB.values[i] + (1 - Program.BETA_1) * layer.dB.values[i];
+                layer.B.values[i] -= Program.ALPHA * layer.V_dB.values[i] / V_bias_correction;
+            }
+            for (int i=0; i < layer.W.values.Length; i++) {
+                layer.V_dW.values[i] = Program.BETA_1 * layer.V_dW.values[i] + (1 - Program.BETA_1) * layer.dW.values[i];
+                layer.W.values[i] -= Program.ALPHA * layer.V_dW.values[i] / V_bias_correction;
+            }
+        }
 
         //public void Momentum_Conv(Convolution_Layer Conv) {
         //    int F_num = Conv.dW.dim_1; int F_rows = Conv.dW.dim_2; int F_columns = Conv.dW.dim_3; int F_channels = Conv.dW.dim_4;
@@ -73,7 +58,7 @@ namespace Conv_Net {
         //        }
         //    }
         //}
-        
+
         ///// <summary>   
         ///// Update biases and filters
         ///// </summary>
@@ -117,7 +102,7 @@ namespace Conv_Net {
         //    });
         //}
 
-        
+
 
         ///// <summary>
         ///// Updates the biases and weights of the fully connected layer

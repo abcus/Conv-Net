@@ -11,6 +11,9 @@ namespace Conv_Net{
         public virtual Tensor W { get; set; }
         public virtual Tensor dB { get; set; }
         public virtual Tensor dW { get; set; }
+        public virtual Tensor V_dB { get; set; }
+        public virtual Tensor V_dW { get; set; }
+
         public virtual bool trainable_parameters { get; }
         public virtual bool test_train_mode { get; }
 

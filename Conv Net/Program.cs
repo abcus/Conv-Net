@@ -19,19 +19,18 @@ namespace Conv_Net {
 
         public static Tensor training_images, training_labels, testing_images, testing_labels;
        
-        public static int testing_sample_size = 1000;
+        public static int testing_sample_size = 10000;
+        public static int test_batch_size = 10000;
         public static int epochs = 20;
         public static int CNN_training_sample_size = 600;
         public static int batch_size = 32;
-        public static int test_batch_size = 1001;
 
         public static Double ALPHA = 0.01; // learning rate
-        public static Double BETA_1 = 0.9; // momentum
+        public static Double BETA_1 = 0.8; // momentum
         public static Double BETA_2 = 0.999; // RMS prop
         public static Double EPSILON = 0.00001;
 
         static void Main() {
-
             /*Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());*/
@@ -80,8 +79,13 @@ namespace Conv_Net {
             Tuple<Tensor, Tensor> R;
 
             for (int i = 0; i < num_batches; i++) {
-                A = testing_images.subset(i * test_batch_size, test_batch_size);
-                B = testing_labels.subset(i * test_batch_size, test_batch_size);
+                if (num_batches >1) {
+                    A = testing_images.subset(i * test_batch_size, test_batch_size);
+                    B = testing_labels.subset(i * test_batch_size, test_batch_size);
+                } else {
+                    A = testing_images;
+                    B = testing_labels;
+                }
                 R = CNN.forward(A, B, false);
 
                 total_cross_entropy_loss += R.Item1.values[0];

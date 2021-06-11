@@ -19,7 +19,9 @@ namespace Conv_Net {
         public override Tensor W { get; set; }
         public override Tensor dB { get; set; }
         public override Tensor dW { get; set; }
-        public Tensor V_dB, S_dB, V_dW, S_dW;
+        public override Tensor V_dB { get; set; }
+        public override Tensor V_dW { get; set; }
+        public Tensor S_dB, S_dW;
 
         public Fully_Connected_Layer(int previous_layer_size, int layer_size, bool needs_gradient) {
             this.trainable_parameters = true;

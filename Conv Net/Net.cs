@@ -86,7 +86,7 @@ namespace Conv_Net {
         public void update () {
             for (int i=0; i < layer_list.Length; i++) {
                 if (layer_list[i].trainable_parameters == true) {
-                    Optim.Momentum(layer_list[i]);
+                    Optim.SGD(layer_list[i]);
                 }
             }
             Optim.t += 1; // iterate t for bias correction

@@ -8,11 +8,15 @@ namespace Conv_Net{
     class Base_Layer {
 
         public virtual Tensor B { get; set; }
-        public virtual Tensor W { get; set; }
         public virtual Tensor dB { get; set; }
-        public virtual Tensor dW { get; set; }
         public virtual Tensor V_dB { get; set; }
+        public virtual Tensor S_dB { get; set; }
+
+
+        public virtual Tensor W { get; set; }
+        public virtual Tensor dW { get; set; }
         public virtual Tensor V_dW { get; set; }
+        public virtual Tensor S_dW { get; set; }
 
         public virtual bool trainable_parameters { get; }
         public virtual bool test_train_mode { get; }

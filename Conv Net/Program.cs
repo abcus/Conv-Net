@@ -19,8 +19,8 @@ namespace Conv_Net {
 
         public static Tensor training_images, training_labels, testing_images, testing_labels;
        
-        public static int testing_sample_size = 10000;
-        public static int test_batch_size = 10000;
+        public static int testing_sample_size = 1000;
+        public static int test_batch_size = 1001;
         public static int epochs = 20;
         public static int CNN_training_sample_size = 600;
         public static int batch_size = 32;

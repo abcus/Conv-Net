@@ -28,13 +28,15 @@ namespace Conv_Net {
 
         public Tensor I;
         public override Tensor B { get; set; }
-        public override Tensor W { get; set; }
         public override Tensor dB { get; set; }
-        public override Tensor dW { get; set; }
         public override Tensor V_dB { get; set; }
-        public override Tensor V_dW { get; set; }
+        public override Tensor S_dB { get; set; }
 
-        public Tensor S_dB, S_dW;
+        public override Tensor W { get; set; }
+        public override Tensor dW { get; set; }
+        public override Tensor V_dW { get; set; }
+        public override Tensor S_dW { get; set; }
+
 
         public Convolution_Layer(int I_channels, int W_num, int W_rows, int W_columns, bool needs_gradient, int pad_size = 0, int stride = 1, int dilation = 1) {
 

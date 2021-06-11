@@ -16,12 +16,13 @@ namespace Conv_Net {
 
         public Tensor I;
         public override Tensor B { get; set; }
-        public override Tensor W { get; set; }
         public override Tensor dB { get; set; }
-        public override Tensor dW { get; set; }
         public override Tensor V_dB { get; set; }
+        public override Tensor S_dB { get; set; }
+        public override Tensor W { get; set; }
+        public override Tensor dW { get; set; }
         public override Tensor V_dW { get; set; }
-        public Tensor S_dB, S_dW;
+        public override Tensor S_dW { get; set; }
 
         public Fully_Connected_Layer(int previous_layer_size, int layer_size, bool needs_gradient) {
             this.trainable_parameters = true;

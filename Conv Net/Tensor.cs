@@ -180,13 +180,13 @@ namespace Conv_Net {
 
             if (this.dimensions == 4) {sb.Append("("); }
             else if (this.dimensions == 3) {sb.Append("[");}
-            //else if (this.dimensions == 2) {sb.Append("{");}
+            else if (this.dimensions == 2) {sb.Append("{");}
             else if (this.dimensions == 1) {sb.Append("<");}
 
             for (int i = 0; i < this.dim_1; i++) {
                 if (this.dimensions == 4) {sb.Append("[");}
                 else if (this.dimensions == 3) {sb.Append("{");} 
-                //else if (this.dimensions == 2) {sb.Append("<");}
+                else if (this.dimensions == 2) {sb.Append("<");}
                 
                 for (int j = 0; j < this.dim_2; j++) {
                     if (this.dimensions == 4) {sb.Append("{");}
@@ -222,14 +222,14 @@ namespace Conv_Net {
                     sb.Append("}");
                     if (i < this.dim_1 - 1) {sb.Append(",\n");}
                 } else if (this.dimensions == 2) {
-                    //sb.Append(">");
+                    sb.Append(">");
                     if (i < this.dim_1 - 1) {sb.Append(",\n");}
                 }
             }
 
             if (this.dimensions == 4) {sb.Append(")");}
             else if (this.dimensions == 3) {sb.Append("]");}
-            //else if (this.dimensions == 2) {sb.Append("}");} 
+            else if (this.dimensions == 2) {sb.Append("}");} 
             else if (this.dimensions == 1) {sb.Append(">");}
             
             sb.Append("\n\ndimensions: " + this.dimensions);

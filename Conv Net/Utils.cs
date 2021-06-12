@@ -165,7 +165,95 @@ namespace Conv_Net {
             return O;
         }
 
-        
+
+        static public Tensor forward_Conv_CPU(Convolution_Layer conv) {
+            Tensor[] I_group = Utils.split_I(conv.I, conv.groups);            
+            Tensor[] W_group = Utils.split_W(conv.W, conv.groups);
+            Tensor[] O_groups = new Tensor[conv.groups];
+            Tensor B_matrix = Utils.B_to_matrix(conv.B, conv.I_samples, conv.I_rows, conv.I_columns, conv.W_rows, conv.W_columns, conv.stride, conv.dilation);
+
+            for (int i=0; i < conv.groups; i++) {
+                Tensor W_matrix = Utils.F_to_matrix(W_group[i]);
+                Tensor I_matrix = Utils.I_to_matrix(I_group[i], conv.W_rows, conv.W_columns, conv.W_channels, conv.stride, conv.dilation);               
+                Tensor dummy = new Tensor(B_matrix.dimensions, B_matrix.dim_1 / conv.groups, B_matrix.dim_2);
+                O_groups[i] = Utils.dgemm_cs(W_matrix, I_matrix, dummy);
+            }
+            Tensor output = Utils.concatenate(O_groups);
+            output = Utils.add(output, B_matrix);
+            return output;
+        }
+
+        /// <summary>
+        /// Splits input/gradient output tensor for grouped convolution
+        /// </summary>
+        /// <param name="I"></param>
+        /// <param name="groups"></param>
+        /// <returns></returns>
+        public static Tensor[] split_I(Tensor I, int groups) {
+            Tensor[] split_list = new Tensor[groups];
+            for (int i = 0; i < groups; i++) {
+                Tensor split_I = new Tensor(4, I.dim_1, I.dim_2, I.dim_3, I.dim_4 / groups);
+
+                for (int j = 0; j < split_I.dim_1; j++) {
+                    for (int k = 0; k < split_I.dim_2; k++) {
+                        for (int l = 0; l < split_I.dim_3; l++) {
+                            for (int m = 0; m < split_I.dim_4; m++) {
+                                split_I.values[split_I.index(j, k, l, m)] = I.values[I.index(j, k, l, m + i * (I.dim_4 / groups))];
+                            }
+                        }
+                    }
+                }
+
+                split_list[i] = split_I;
+            }
+            return split_list;
+        }
+
+        public static Tensor[] split_W (Tensor W, int groups) {
+            Tensor[] split_list = new Tensor[groups];
+            for (int i=0; i < groups; i++) {
+                Tensor split_W = new Tensor(4, W.dim_1 / groups, W.dim_2, W.dim_3, W.dim_4);
+            
+                for (int j=0; j < split_W.dim_1; j++) {
+                    for (int k=0; k < split_W.dim_2; k++) {
+                        for (int l = 0; l < split_W.dim_3; l++) {
+                            for (int m = 0; m < split_W.dim_4; m++) {
+                                split_W.values[split_W.index(j, k, l, m)] = W.values[W.index(j + i * (W.dim_1 / groups), k, l, m)];
+                            }
+                        }
+                    }
+                }
+                split_list[i] = split_W;
+            }
+            return split_list;
+        }
+
+
+        public static Tensor concatenate(Tensor[] T) {
+            int split_tensor_samples = T[0].dim_1;
+            int split_tensor_rows = T[0].dim_2;
+            int split_tensor_columns = T[0].dim_3;
+            int split_tensor_channels = T[0].dim_4;
+            int groups = T.Length;
+
+            Tensor concat = new Tensor(4, split_tensor_samples, split_tensor_rows, split_tensor_columns, split_tensor_channels * groups);
+
+
+            for (int i = 0; i < concat.dim_1; i++) {
+                for (int j = 0; j < concat.dim_2; j++) {
+                    for (int k = 0; k < concat.dim_3; k++) {
+                        for (int l = 0; l < concat.dim_4; l++) {
+                            Tensor split = T[l / split_tensor_channels];
+                            concat.values[concat.index(i, j, k, l)] = split.values[split.index(i, j, k, l % split_tensor_channels)];
+                        }
+                    }
+                }
+            }
+            return concat;
+        }
+
+
+
         /// <summary>
         /// Convolution forward propagation, converts filter tensor into 2D matrix
         /// </summary>
@@ -261,6 +349,8 @@ namespace Conv_Net {
         }
 
        
+        
+
         /// <summary>
         /// Convolution backward propagation to calculate ∂L/∂F, converts ∂L/∂O tensor into 2D matrix
         /// </summary>

@@ -96,7 +96,7 @@ namespace Conv_Net {
             Random rand = new Random(0);
 
             // Batch norm test
-            int n = 8; int d = 3;
+            int n = 8; int d = 6;
 
             Tensor I_BN = new Tensor(2, n, d);
             Tensor T_BN = new Tensor(2, n, d);
@@ -104,8 +104,8 @@ namespace Conv_Net {
             for (int i = 0; i < T_BN.values.Length; i++) { T_BN.values[i] = rand.NextDouble(); }
 
             // Conv test
-            int I_samples = 2; int I_rows = 8; int I_columns = 8; int I_channels = 4;
-            int F_num = 3; int F_rows = 3; int F_columns = 3; int F_channels = 4;
+            int I_samples = 2; int I_rows = 8; int I_columns = 8; int I_channels = 12;
+            int F_num = 6; int F_rows = 3; int F_columns = 3; int F_channels = 12;
             int pad_size = 9; int stride = 3; int dilation = 2;
             int O_samples = I_samples; 
             int O_rows = (I_rows + 2 * pad_size - F_rows * dilation + dilation - 1) / stride + 1;
@@ -123,8 +123,8 @@ namespace Conv_Net {
             Input_Layer Input = new Input_Layer();
             
             // Gradient Test
-            Tuple<Tensor, Tensor, Tensor> analytic_gradients = analytic_grad(Conv, BN, MSE, I_Conv, T_Conv);
-            Tuple<Tensor, Tensor, Tensor> numeric_gradients = numeric_grad(Conv, BN, MSE, I_Conv, T_Conv);
+            Tuple<Tensor, Tensor, Tensor> analytic_gradients = analytic_grad(Conv, Input, MSE, I_Conv, T_Conv);
+            Tuple<Tensor, Tensor, Tensor> numeric_gradients = numeric_grad(Conv, Input, MSE, I_Conv, T_Conv);
 
             Console.WriteLine("Average L2 difference in bias gradients\n" + Utils.Average_L2_Distance(analytic_gradients.Item1, numeric_gradients.Item1) + "\n");
             Console.WriteLine("Agerage L2 difference in weight gradients\n" + Utils.Average_L2_Distance(analytic_gradients.Item2, numeric_gradients.Item2) + "\n");

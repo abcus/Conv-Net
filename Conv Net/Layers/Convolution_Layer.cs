@@ -11,20 +11,21 @@ namespace Conv_Net {
 
         public override bool trainable_parameters { get; }
 
-        private int I_samples, I_rows, I_columns, I_channels;
-        private int B_num;
-        private int W_num, W_rows, W_columns, W_channels;
-        private int O_samples, O_rows, O_columns, O_channels;
+        public int I_samples, I_rows, I_columns, I_channels;
+        public int B_num;
+        public int W_num, W_rows, W_columns, W_channels;
+        public int O_samples, O_rows, O_columns, O_channels;
 
-        private int dI_samples, dI_rows, dI_columns, dI_channels;
-        private int dB_num;
-        private int dW_num, dW_rows, dW_columns, dW_channels;
-        private int dO_samples, dO_rows, dO_columns;
+        public int dI_samples, dI_rows, dI_columns, dI_channels;
+        public int dB_num;
+        public int dW_num, dW_rows, dW_columns, dW_channels;
+        public int dO_samples, dO_rows, dO_columns;
 
         public bool needs_gradient;
         public int pad_size;
         public int stride;
         public int dilation;
+        public int groups;
 
         public Tensor I;
         public override Tensor B { get; set; }
@@ -38,13 +39,13 @@ namespace Conv_Net {
         public override Tensor S_dW { get; set; }
 
 
-        public Convolution_Layer(int I_channels, int W_num, int W_rows, int W_columns, bool needs_gradient, int pad_size = 0, int stride = 1, int dilation = 1) {
+        public Convolution_Layer(int I_channels, int W_num, int W_rows, int W_columns, bool needs_gradient, int pad_size = 0, int stride = 1, int dilation = 1, int groups = 1) {
 
             this.trainable_parameters = true;
 
             this.I_channels = I_channels;
             this.B_num = W_num;
-            this.W_num = W_num; this.W_rows = W_rows; this.W_columns = W_columns; this.W_channels = I_channels;
+            this.W_num = W_num; this.W_rows = W_rows; this.W_columns = W_columns; this.W_channels = I_channels / groups;
 
             this.dB_num = this.B_num;
             this.dW_num = this.W_num; this.dW_rows = this.W_rows; this.dW_columns = this.W_columns; this.dW_channels = this.W_channels;
@@ -53,6 +54,7 @@ namespace Conv_Net {
             this.pad_size = pad_size;
             this.stride = stride;
             this.dilation = dilation;
+            this.groups = groups;
 
             this.B = new Tensor(2, this.B_num, 1);
             this.V_dB = new Tensor(2, this.dB_num, 1);
@@ -81,12 +83,9 @@ namespace Conv_Net {
             this.O_rows = (this.I_rows - this.W_rows * this.dilation + this.dilation - 1) / this.stride + 1;
             this.O_columns = (this.I_columns - this.W_columns * this.dilation + this.dilation - 1) / this.stride + 1;
             this.O_channels = this.W_num;
-            
+
             // O_matrix = F_matrix * I_matrix + B_matrix
-            Tensor F_matrix = Utils.F_to_matrix(this.W);
-            Tensor I_matrix = Utils.I_to_matrix(this.I, this.W_rows, this.W_columns, this.W_channels, this.stride, this.dilation);
-            Tensor B_matrix = Utils.B_to_matrix(this.B, this.I_samples, this.I_rows, this.I_columns, this.W_rows, this.W_columns, this.stride, this.dilation);
-            Tensor O_matrix = Utils.dgemm_cs(F_matrix, I_matrix, B_matrix);
+            Tensor O_matrix = Utils.forward_Conv_CPU(this);
             Tensor O = Utils.matrix_to_tensor(O_matrix, O_samples, O_rows, O_columns, O_channels);
             return O;
         }

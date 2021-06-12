@@ -92,7 +92,7 @@ namespace Conv_Net {
             for (int i = 0; i < this.groups; i++) {
                 Tensor I_matrix = Utils.I_to_matrix(I_group[i], this.W_rows, this.W_columns, this.W_channels, this.stride, this.dilation);
                 Tensor B_matrix = Utils.B_to_matrix(B_group[i], this.I_samples, this.I_rows, this.I_columns, this.W_rows, this.W_columns, this.stride, this.dilation);
-                Tensor W_matrix = Utils.W_to_matrix(W_group[i]);
+                Tensor W_matrix = Utils.kernel_to_matrix(W_group[i], 1);
                 Tensor O_matrix = Utils.dgemm_cs(W_matrix, I_matrix, B_matrix);
                 O_groups[i] = Utils.matrix_to_tensor(O_matrix, O_samples, O_rows, O_columns, O_channels / this.groups);
             }
@@ -104,7 +104,7 @@ namespace Conv_Net {
         public override Tensor backward(Tensor dO) {
 
             int dO_samples = dO.dim_1; int dO_rows = dO.dim_2; int dO_columns = dO.dim_3;       
-            Tensor dO_matrix = Utils.dO_to_matrix(dO);
+            Tensor dO_matrix = Utils.kernel_to_matrix(dO, 4);
 
             // Calculate ∂L/∂B
             // dB [dB_num x 1] = 
@@ -127,7 +127,7 @@ namespace Conv_Net {
 
             // For each dO and I tensor in the group, convert to matrix, calculate dW, then convert back to tensor
             for (int i=0; i < this.groups; i++) {
-                Tensor dO_matrix2 = Utils.dO_to_matrix(dO_group[i]);
+                Tensor dO_matrix2 = Utils.kernel_to_matrix(dO_group[i], 4);
                 Tensor I_matrix = Utils.I_to_matrix_backprop(I_group[i], dO_rows, dO_columns, this.W_rows, this.W_columns, this.W_channels, this.dilation, this.stride);
                 Tensor dF_matrix = new Tensor(2, this.W_num / this.groups, this.W_rows * this.W_columns * this.W_channels);
                 dF_matrix = Utils.dgemm_cs(dO_matrix2, I_matrix, dF_matrix);
@@ -156,7 +156,7 @@ namespace Conv_Net {
                     int dI_samples = this.I_samples; int dI_rows = this.I_rows - 2 * this.pad_size; int dI_columns = this.I_columns - 2 * this.pad_size; int dI_channels = this.I_channels / this.groups;
 
                     // For dO, dilate by S and pad for full convolution, then unpad by pad_size to avoid performing extra calculations, then convert to matrix
-                    Tensor W_rotated_matrix = Utils.W_rotated_to_matrix(W_group[i]);
+                    Tensor W_rotated_matrix = Utils.kernel_to_matrix(W_group[i], 4);
                     Tensor dO_dilated_padded_matrix = Utils.dO_dilated_padded_to_matrix(dO_group2[i], this.W_num / this.groups, this.W_rows, this.W_columns, dI_samples, dI_rows, dI_columns, this.dilation);
                     Tensor dI_matrix = new Tensor(2, dI_channels, dI_samples * (dI_rows) * (dI_columns));
                     dI_matrix = Utils.dgemm_cs(W_rotated_matrix, dO_dilated_padded_matrix, dI_matrix);

@@ -293,14 +293,7 @@ namespace Conv_Net {
         }
 
 
-        /// <summary>
-        /// Convolution forward propagation, converts filter tensor into 2D matrix
-        /// </summary>
-        public static Tensor W_to_matrix(Tensor F) {
-            Tensor F_matrix = new Tensor(2, F.dim_1, F.dim_2 * F.dim_3 * F.dim_4);
-            F_matrix.values = F.values;
-            return F_matrix;
-        }
+        
         /// <summary>
         /// Convolution forward propagation, converts padded input tensor into 2D matrix
         /// </summary>
@@ -391,31 +384,46 @@ namespace Conv_Net {
         
 
         /// <summary>
-        /// Convolution backward propagation to calculate ∂L/∂F, converts ∂L/∂O tensor into 2D matrix
+        /// Converts a kernel tensor into a kernel matrix
         /// </summary>
-        public static Tensor dO_to_matrix(Tensor dO) {
-            int dO_sample = dO.dim_1;
-            int dO_rows = dO.dim_2;
-            int dO_columns = dO.dim_3;
-            int dO_channels = dO.dim_4;
+        /// <param name="kernel"> kernel tensor </param>
+        /// <param name="dim"> dimension of the kernel tensor that will be the row of the kernel matrix </param>
+        /// <returns></returns>
+        public static Tensor kernel_to_matrix(Tensor kernel, int dim) {
+            int kernel_dim_1 = kernel.dim_1;
+            int kernel_dim_2 = kernel.dim_2;
+            int kernel_dim_3 = kernel.dim_3;
+            int kernel_dim_4 = kernel.dim_4;
 
-            int dO_matrix_rows = dO_channels;
-            int dO_matrix_columns = dO_sample * dO_rows * dO_columns;
+            int kernel_matrix_rows;
+            int kernel_matrix_columns;
+            Tensor kernel_matrix = null;
 
-            Tensor dO_matrix = new Tensor(2, dO_matrix_rows, dO_matrix_columns);
+            if (dim == 1) {
+                kernel_matrix_rows = kernel_dim_1;
+                kernel_matrix_columns = kernel_dim_2 * kernel_dim_3 * kernel_dim_4;
 
-            Parallel.For(0, dO_channels, i => {
-                for (int j = 0; j < dO_sample; j++) {
-                    for (int k = 0; k < dO_rows; k++) {
-                        for (int l = 0; l < dO_columns; l++) {
-                            dO_matrix.values[i * dO_matrix_columns + (j * dO_rows * dO_columns + k * dO_columns + l)] = dO.values[dO.index(j, k, l, i)];
+                kernel_matrix = new Tensor(2, kernel_matrix_rows, kernel_matrix_columns);
+                kernel_matrix.values = kernel.values;
+            } else if (dim == 4) {
+                kernel_matrix_rows = kernel_dim_4;
+                kernel_matrix_columns = kernel_dim_1 * kernel_dim_2 * kernel_dim_3;
+                
+                kernel_matrix = new Tensor(2, kernel_matrix_rows, kernel_matrix_columns);
+
+                Parallel.For(0, kernel_dim_4, i => {
+                    for (int j = 0; j < kernel_dim_1; j++) {
+                        for (int k = 0; k < kernel_dim_2; k++) {
+                            for (int l = 0; l < kernel_dim_3; l++) {
+                                kernel_matrix.values[i * kernel_matrix_columns + (j * kernel_dim_2 * kernel_dim_3 + k * kernel_dim_3 + l)] = kernel.values[kernel.index(j, k, l, i)];
+                            }
                         }
                     }
-                }
-            });
-            return dO_matrix;
+                });
+            }            
+            return kernel_matrix;
         }
-
+    
         /// <summary>
         /// Convolution backward propagation to calculate ∂L/∂F, converts I tensor into 2D matrix
         /// </summary>
@@ -451,31 +459,7 @@ namespace Conv_Net {
             return dF;
         }
 
-        /// <summary>
-        /// Convolution backward propagation to calculate ∂L/∂I, converts 180 rotated F tensor into 2D matrix
-        /// </summary>
-        public static Tensor W_rotated_to_matrix(Tensor F_rotated) {
-            int F_rotated_num = F_rotated.dim_1;
-            int F_rotated_rows = F_rotated.dim_2;
-            int F_rotated_columns = F_rotated.dim_3;
-            int F_rotated_channels = F_rotated.dim_4;
-
-            int F_rotated_matrix_rows = F_rotated_channels;
-            int F_rotated_matrix_columns = F_rotated_num * F_rotated_rows * F_rotated_columns;
-
-            Tensor F_rotated_matrix = new Tensor(2, F_rotated_matrix_rows, F_rotated_matrix_columns);
-
-            Parallel.For(0, F_rotated_channels, i => {
-                for (int j = 0; j < F_rotated_num; j++) {
-                    for (int k = 0; k < F_rotated_rows; k++) {
-                        for (int l = 0; l < F_rotated_columns; l++) {
-                            F_rotated_matrix.values[(i) * (F_rotated_matrix_columns) + (j * F_rotated_rows * F_rotated_columns + k * F_rotated_columns + l)] = F_rotated.values[F_rotated.index(j, k, l, i)];
-                        }
-                    }
-                }
-            });
-            return F_rotated_matrix;
-        }
+        
 
 
         /// <summary>

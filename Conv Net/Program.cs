@@ -38,12 +38,13 @@ namespace Conv_Net {
 
 
 
-            Tensor I = new Tensor(4, 5, 4, 4, 12);
-            for (int i=0; i < I.values.Length; i++) { I.values[i] = i; }
-            Convolution_Layer test = new Convolution_Layer(12, 6, 3, 3, true, 0, 1, 1, 3);
-            test.forward(I);
+            //Tensor I = new Tensor(4, 1, 3, 3, 4);
+            //for (int i=0; i < I.values.Length; i++) { I.values[i] = i; }
+            //Convolution_Layer test = new Convolution_Layer(4, 4, 2, 2, true, 0, 1, 1, 2);
+            //test.B.values[0] = 1.0; test.B.values[1] = 2.0; test.B.values[2] = 3.0; test.B.values[3] = 4.0;
+            //Console.WriteLine(test.forward(I));
 
-            //Grad_Check.test();
+            Grad_Check.test();
 
             //Tuple<Tensor, Tensor, Tensor, Tensor> data = IO.load_MNIST(60000, 10000, 28, 28, 1, 10);
             //training_images = data.Item1;

@@ -85,8 +85,7 @@ namespace Conv_Net {
             this.O_channels = this.W_num;
 
             // O_matrix = F_matrix * I_matrix + B_matrix
-            Tensor O_matrix = Utils.forward_Conv_CPU(this);
-            Tensor O = Utils.matrix_to_tensor(O_matrix, O_samples, O_rows, O_columns, O_channels);
+            Tensor O = Utils.forward_Conv_CPU(this);
             return O;
         }
         

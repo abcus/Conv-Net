@@ -167,19 +167,24 @@ namespace Conv_Net {
 
 
         static public Tensor forward_Conv_CPU(Convolution_Layer conv) {
-            Tensor[] I_group = Utils.split_I(conv.I, conv.groups);            
+            Tensor[] I_group = Utils.split_I(conv.I, conv.groups);
+            Tensor[] B_group = Utils.split_W(conv.B, conv.groups);
             Tensor[] W_group = Utils.split_W(conv.W, conv.groups);
             Tensor[] O_groups = new Tensor[conv.groups];
-            Tensor B_matrix = Utils.B_to_matrix(conv.B, conv.I_samples, conv.I_rows, conv.I_columns, conv.W_rows, conv.W_columns, conv.stride, conv.dilation);
+
+
+           
 
             for (int i=0; i < conv.groups; i++) {
+                
+                Tensor B_matrix = Utils.B_to_matrix(B_group[i], conv.I_samples, conv.I_rows, conv.I_columns, conv.W_rows, conv.W_columns, conv.stride, conv.dilation);
                 Tensor W_matrix = Utils.F_to_matrix(W_group[i]);
-                Tensor I_matrix = Utils.I_to_matrix(I_group[i], conv.W_rows, conv.W_columns, conv.W_channels, conv.stride, conv.dilation);               
-                Tensor dummy = new Tensor(B_matrix.dimensions, B_matrix.dim_1 / conv.groups, B_matrix.dim_2);
-                O_groups[i] = Utils.dgemm_cs(W_matrix, I_matrix, dummy);
+                Tensor I_matrix = Utils.I_to_matrix(I_group[i], conv.W_rows, conv.W_columns, conv.W_channels, conv.stride, conv.dilation);              
+                O_groups[i] = Utils.dgemm_cs(W_matrix, I_matrix, B_matrix);
+                O_groups[i] = Utils.matrix_to_tensor(O_groups[i], conv.O_samples, conv.O_rows, conv.O_columns, conv.O_channels / conv.groups);
+                
             }
             Tensor output = Utils.concatenate(O_groups);
-            output = Utils.add(output, B_matrix);
             return output;
         }
 

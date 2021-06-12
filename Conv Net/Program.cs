@@ -35,7 +35,7 @@ namespace Conv_Net {
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());*/
 
-            //Grad_Check.test();
+            Grad_Check.test();
 
             Tuple<Tensor, Tensor, Tensor, Tensor> data = IO.load_MNIST(60000, 10000, 28, 28, 1, 10);
             training_images = data.Item1;

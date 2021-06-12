@@ -362,7 +362,7 @@ namespace Conv_Net {
                 for (int j = 0; j < X_rows; j++) {
                     for (int k = 0; k < X_columns; k++) {
                         for (int l = 0; l < X_channels; l++) {
-                            X.values[X.index(i, j, k, l)] = X_matrix.values[l * X_sample * X_columns * X_rows + i * X_columns * X_rows + j * X_columns + k];
+                            X.values[X.index(i, j, k, l)] = X_matrix.values[l * X_sample * X_rows * X_columns + i * X_rows * X_columns + j * X_columns + k];
                         }
                     }
                 }
@@ -454,7 +454,7 @@ namespace Conv_Net {
         /// <summary>
         /// Convolution backward propagation to calculate ∂L/∂I, converts 180 rotated F tensor into 2D matrix
         /// </summary>
-        public static Tensor F_rotated_to_matrix(Tensor F_rotated) {
+        public static Tensor W_rotated_to_matrix(Tensor F_rotated) {
             int F_rotated_num = F_rotated.dim_1;
             int F_rotated_rows = F_rotated.dim_2;
             int F_rotated_columns = F_rotated.dim_3;

@@ -90,7 +90,7 @@ namespace Conv_Net {
             //      I_matrix [(W_rows * W_columns * W_channels) x (I_samples * O_rows * O_columns)] + 
             //      B_matrix [B_num x (I_samples * O_rows * O_columns)]
             for (int i = 0; i < this.groups; i++) {
-                Tensor I_matrix = Utils.I_to_matrix(I_group[i], this.W_rows, this.W_columns, this.W_channels, this.stride, this.dilation);
+                Tensor I_matrix = Utils.image_to_matrix(I_group[i], this.W_rows, this.W_columns, this.stride, this.dilation, Utils.OUTPUT_TYPE.OUTPUT);
                 Tensor B_matrix = Utils.B_to_matrix(B_group[i], this.I_samples, this.I_rows, this.I_columns, this.W_rows, this.W_columns, this.stride, this.dilation);
                 Tensor W_matrix = Utils.kernel_to_matrix(W_group[i], 1);
                 Tensor O_matrix = Utils.dgemm_cs(W_matrix, I_matrix, B_matrix);
@@ -107,6 +107,7 @@ namespace Conv_Net {
             Tensor dO_matrix = Utils.kernel_to_matrix(dO, 4);
 
             // Calculate ∂L/∂B
+            // ∂L/∂B is the convolution of ∂L/∂O over a tensor of 1s
             // dB [dB_num x 1] = 
             //      dO_matrix [dO_channels x (dO_sample * dO_rows * dO_columns)] * 
             //      column_1 [(dO_sample * dO_rows * dO_columns) x 1]
@@ -128,7 +129,7 @@ namespace Conv_Net {
             // For each dO and I tensor in the group, convert to matrix, calculate dW, then convert back to tensor
             for (int i=0; i < this.groups; i++) {
                 Tensor dO_matrix2 = Utils.kernel_to_matrix(dO_group[i], 4);
-                Tensor I_matrix = Utils.I_to_matrix_backprop(I_group[i], dO_rows, dO_columns, this.W_rows, this.W_columns, this.W_channels, this.dilation, this.stride);
+                Tensor I_matrix = Utils.image_to_matrix(I_group[i], dO_rows, dO_columns, this.dilation, this.stride, Utils.OUTPUT_TYPE.GRADIENT_WEIGHT);
                 Tensor dF_matrix = new Tensor(2, this.W_num / this.groups, this.W_rows * this.W_columns * this.W_channels);
                 dF_matrix = Utils.dgemm_cs(dO_matrix2, I_matrix, dF_matrix);
                 dW_group[i] = Utils.dF_matrix_to_tensor(dF_matrix, this.W_num / this.groups, this.W_rows, this.W_columns, this.W_channels);
@@ -157,7 +158,7 @@ namespace Conv_Net {
 
                     // For dO, dilate by S and pad for full convolution, then unpad by pad_size to avoid performing extra calculations, then convert to matrix
                     Tensor W_rotated_matrix = Utils.kernel_to_matrix(W_group[i], 4);
-                    Tensor dO_dilated_padded_matrix = Utils.dO_dilated_padded_to_matrix(dO_group2[i], this.W_num / this.groups, this.W_rows, this.W_columns, dI_samples, dI_rows, dI_columns, this.dilation);
+                    Tensor dO_dilated_padded_matrix = Utils.image_to_matrix(dO_group2[i], this.W_rows, this.W_columns, 1, this.dilation, Utils.OUTPUT_TYPE.GRADIENT_INPUT);
                     Tensor dI_matrix = new Tensor(2, dI_channels, dI_samples * (dI_rows) * (dI_columns));
                     dI_matrix = Utils.dgemm_cs(W_rotated_matrix, dO_dilated_padded_matrix, dI_matrix);
                     dI_group[i] = Utils.matrix_to_tensor(dI_matrix, dI_samples, dI_rows, dI_columns, dI_channels);

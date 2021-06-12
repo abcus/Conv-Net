@@ -71,6 +71,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IO.cs" />
     <Compile Include="Net.cs" />
     <Compile Include="Grad_Check.cs" />
     <Compile Include="Layers\Batch Normalization_Layer.cs" />

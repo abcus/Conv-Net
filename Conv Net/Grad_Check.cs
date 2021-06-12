@@ -106,7 +106,7 @@ namespace Conv_Net {
             // Conv test
             int I_samples = 2; int I_rows = 8; int I_columns = 8; int I_channels = 12;
             int F_num = 6; int F_rows = 3; int F_columns = 3; int F_channels = 12;
-            int pad_size = 9; int stride = 3; int dilation = 2;
+            int pad_size = 9; int stride = 3; int dilation = 2; int groups = 3;
             int O_samples = I_samples; 
             int O_rows = (I_rows + 2 * pad_size - F_rows * dilation + dilation - 1) / stride + 1;
             int O_columns = (I_columns + 2 * pad_size - F_columns * dilation + dilation - 1) / stride + 1;
@@ -118,7 +118,7 @@ namespace Conv_Net {
             for (int i=0; i < T_Conv.values.Length; i++) {T_Conv.values[i] = rand.NextDouble();}
 
             Batch_Normalization_Layer BN = new Batch_Normalization_Layer(d);
-            Convolution_Layer Conv = new Convolution_Layer(I_channels, F_num, F_rows, F_columns, true, pad_size, stride, dilation);
+            Convolution_Layer Conv = new Convolution_Layer(I_channels, F_num, F_rows, F_columns, false, pad_size, stride, dilation, groups);
             Mean_Squared_Loss_Layer MSE = new Mean_Squared_Loss_Layer();
             Input_Layer Input = new Input_Layer();
             
@@ -129,6 +129,8 @@ namespace Conv_Net {
             Console.WriteLine("Average L2 difference in bias gradients\n" + Utils.Average_L2_Distance(analytic_gradients.Item1, numeric_gradients.Item1) + "\n");
             Console.WriteLine("Agerage L2 difference in weight gradients\n" + Utils.Average_L2_Distance(analytic_gradients.Item2, numeric_gradients.Item2) + "\n");
             Console.WriteLine("Average L2 difference in input gradients\n" + Utils.Average_L2_Distance(analytic_gradients.Item3, numeric_gradients.Item3) + "\n");
+
+
         }
     }
 }

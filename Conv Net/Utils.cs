@@ -184,7 +184,7 @@ namespace Conv_Net {
                 O_groups[i] = Utils.matrix_to_tensor(O_groups[i], conv.O_samples, conv.O_rows, conv.O_columns, conv.O_channels / conv.groups);
                 
             }
-            Tensor output = Utils.concatenate(O_groups);
+            Tensor output = Utils.concatenate_I(O_groups);
             return output;
         }
 
@@ -234,7 +234,7 @@ namespace Conv_Net {
         }
 
 
-        public static Tensor concatenate(Tensor[] T) {
+        public static Tensor concatenate_I(Tensor[] T) {
             int split_tensor_samples = T[0].dim_1;
             int split_tensor_rows = T[0].dim_2;
             int split_tensor_columns = T[0].dim_3;
@@ -257,6 +257,26 @@ namespace Conv_Net {
             return concat;
         }
 
+        public static Tensor concatenate_W(Tensor[] T_list) {
+            int split_tensor_samples = T_list[0].dim_1;
+            int split_tensor_rows = T_list[0].dim_2;
+            int split_tensor_columns = T_list[0].dim_3;
+            int split_tensor_channels = T_list[0].dim_4;
+            int groups = T_list.Length;
+
+            Tensor concat = new Tensor(4, split_tensor_samples * groups, split_tensor_rows, split_tensor_columns, split_tensor_channels);
+            for (int i = 0; i < concat.dim_1; i++) {
+                for (int j = 0; j < concat.dim_2; j++) {
+                    for (int k = 0; k < concat.dim_3; k++) {
+                        for (int l = 0; l < concat.dim_4; l++) {
+                            Tensor split = T_list[i / split_tensor_samples];
+                            concat.values[concat.index(i, j, k, l)] = split.values[split.index(i % split_tensor_samples, j, k, l)];
+                        }
+                    }
+                }
+            }
+            return concat;
+        }
 
 
         /// <summary>

@@ -94,20 +94,39 @@ namespace Conv_Net {
             this.dO_samples = dO.dim_1; this.dO_rows = dO.dim_2; this.dO_columns = dO.dim_3;       
             Tensor dO_matrix = Utils.dO_to_matrix(dO);
 
+            
+
             // Calculate ∂L/∂B
             Tensor column_vector_1 = Utils.column_vector_1(this.dO_samples * this.dO_rows * this.dO_columns);
             this.dB = new Tensor(2, this.dB_num, 1);
             this.dB = Utils.dgemm_cs(dO_matrix, column_vector_1, this.dB);
 
+
+
             // Calculate ∂L/∂F
             // ∂L/∂F is the convolution of (∂L/∂O dilated by S) with stride D over I, or dF_matrix = dO_matrix * I_matrix
             // 2nd last parameter of I_to_matrix_backprop (stride of filter dO) is equal to dilation of F
-            // last parameter (dilation of filter dO) is equal to stride of F
-            Tensor I_matrix = Utils.I_to_matrix_backprop(this.I, this.dO_rows, this.dO_columns, this.W_rows, this.W_columns, this.W_channels, this.dilation, this.stride);        
-            Tensor dF_matrix = new Tensor(2, this.W_num, this.W_rows * this.W_columns * this.W_channels);
-            dF_matrix = Utils.dgemm_cs(dO_matrix, I_matrix, dF_matrix);
-            this.dW = Utils.dF_matrix_to_tensor(dF_matrix, this.W_num, this.W_rows, this.W_columns, this.W_channels);
+            // last parameter (dilation of filter dO) is equal to stride of F         
+            
+            Tensor[] I_group = Utils.split_I(this.I, this.groups);
+            Tensor[] dO_group = Utils.split_I(dO, this.groups);
+            Tensor[] dW_group = new Tensor[this.groups];
+
+            for (int i=0; i < this.groups; i++) {
+                Tensor dO_matrix2 = Utils.dO_to_matrix(dO_group[i]);
+                Tensor I_matrix = Utils.I_to_matrix_backprop(I_group[i], this.dO_rows, this.dO_columns, this.W_rows, this.W_columns, this.W_channels, this.dilation, this.stride);
+                Tensor dF_matrix = new Tensor(2, this.W_num / this.groups, this.W_rows * this.W_columns * this.W_channels);
+
+                //Console.WriteLine(dO_matrix2);
+                //Console.WriteLine(I_matrix);
+                //Console.WriteLine(dF_matrix);
+
+                dW_group[i] = Utils.dgemm_cs(dO_matrix2, I_matrix, dF_matrix);
+                dW_group[i] = Utils.dF_matrix_to_tensor(dW_group[i], this.W_num / this.groups, this.W_rows, this.W_columns, this.W_channels);
+            }
+            this.dW = Utils.concatenate_W(dW_group);
             this.I = null;
+
 
             // Calculate ∂L/∂I (if first layer, it is not needed and can return null)
             // ∂L/∂I is the full convolution of (180 rotated F dilated by D) over (∂L/∂O dilated by S and padded by (F_rows * D - D)), or dI_matrix = F_rotated_matrix * dO_dilated_padded_matrix
@@ -122,6 +141,7 @@ namespace Conv_Net {
                 Tensor dI_matrix = new Tensor(2, this.dI_channels, this.dI_samples * (this.dI_rows) * (this.dI_columns));
                 dI_matrix = Utils.dgemm_cs(F_rotated_matrix, dO_dilated_padded_matrix, dI_matrix);
                 Tensor dI = Utils.matrix_to_tensor(dI_matrix, this.dI_samples, this.dI_rows, this.dI_columns, this.dI_channels);
+
 
                 return dI;
             } else {

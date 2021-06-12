@@ -128,51 +128,7 @@ namespace Conv_Net {
             return C;
         }
 
-        /// <summary>
-        /// Returns Y = A * X + Y
-        /// </summary>
-        /// <param name="A"> m x n matrix </param>
-        /// <param name="X"> n x 1 vector </param>
-        /// <param name="Y"> m x 1 vector </param>
-        /// <returns></returns>
-        static public Tensor dgbmv_cs (Tensor A, Tensor X, Tensor Y) {
-            int A_row = A.dim_1;
-            int A_col = A.dim_2;
-
-            Parallel.For(0, A_row, i => {
-                Double temp = 0.0;
-                for (int j = 0; j < A_col; j++) {
-                    temp += A.values[i * A_col + j] * X.values[j];
-                }
-                Y.values[i] += temp;
-            });
-            
-            return Y;
-        }
-
-        /// <summary>
-        /// Returns Y = X * A + Y
-        /// </summary>
-        /// <param name="X"> 1 x n vector </param>
-        /// <param name="A"> n x m vector </param>
-        /// <param name="Y"> 1 x m vector </param>
-        /// <returns></returns>
-        static public Tensor dgbvm_cs (Tensor X, Tensor A, Tensor Y) {
-            int A_row = A.dim_1;
-            int A_col = A.dim_2;
-
-            Parallel.For(0, A_col, i => {
-                Double temp = 0.0;
-                for (int j = 0; j < A_row; j++) {
-                    temp += X.values[j] * A.values[j * A_col + i];
-                }
-                Y.values[i] += temp;
-            });
-            
-            return Y;
-        }
-
-
+        
         /// <summary>
         /// Returns C = A * B + C
         /// </summary>
@@ -287,13 +243,6 @@ namespace Conv_Net {
             return X;
         }
 
-        public static Tensor one_vector_1D(int size) {
-            Tensor one_vector = new Tensor(1, size);
-            for (int i=0; i < one_vector.values.Length; i++) {
-                one_vector.values[i] = 1.0;
-            }
-            return one_vector;
-        }
 
         public static Tensor column_vector_1 (int rows) {
             Tensor column_vector_1 = new Tensor(2, rows, 1);
@@ -311,18 +260,7 @@ namespace Conv_Net {
             return row_vector_1;
         }
 
-        /// <summary>
-        /// Convolution backward propagation to calculate ∂L/∂B, generates a matrix with all 1 to multiply with ∂L/∂O 
-        /// </summary>
-        public static Tensor one_vector_3D(int dO_sample, int dO_rows, int dO_columns) {
-            Tensor one_vector = new Tensor(1, dO_sample * dO_rows * dO_columns);
-            for (int i=0; i < one_vector.values.Length; i++) {
-                one_vector.values[i] = 1.0;
-            }
-            return one_vector;
-        }
-
-
+       
         /// <summary>
         /// Convolution backward propagation to calculate ∂L/∂F, converts ∂L/∂O tensor into 2D matrix
         /// </summary>

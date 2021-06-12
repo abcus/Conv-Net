@@ -54,9 +54,9 @@ namespace Conv_Net {
             this.stride = stride;
             this.dilation = dilation;
 
-            this.B = new Tensor(1, this.B_num);
-            this.V_dB = new Tensor(1, this.dB_num);
-            this.S_dB = new Tensor(1, this.dB_num);
+            this.B = new Tensor(2, this.B_num, 1);
+            this.V_dB = new Tensor(2, this.dB_num, 1);
+            this.S_dB = new Tensor(2, this.dB_num, 1);
 
             this.W = new Tensor(4, this.W_num, this.W_rows, this.W_columns, this.W_channels);
             this.V_dW = new Tensor(4, this.dW_num, this.dW_rows, this.dW_columns, this.dW_channels);
@@ -97,9 +97,9 @@ namespace Conv_Net {
             Tensor dO_matrix = Utils.dO_to_matrix(dO);
 
             // Calculate ∂L/∂B
-            Tensor one_vector = Utils.one_vector_3D(this.dO_samples, this.dO_rows, this.dO_columns);
-            this.dB = new Tensor(1, this.dB_num);
-            this.dB = Utils.dgbmv_cs(dO_matrix, one_vector, this.dB);
+            Tensor column_vector_1 = Utils.column_vector_1(this.dO_samples * this.dO_rows * this.dO_columns);
+            this.dB = new Tensor(2, this.dB_num, 1);
+            this.dB = Utils.dgemm_cs(dO_matrix, column_vector_1, this.dB);
 
             // Calculate ∂L/∂F
             // ∂L/∂F is the convolution of (∂L/∂O dilated by S) with stride D over I, or dF_matrix = dO_matrix * I_matrix

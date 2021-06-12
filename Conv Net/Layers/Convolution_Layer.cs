@@ -14,12 +14,6 @@ namespace Conv_Net {
         public int I_samples, I_rows, I_columns, I_channels;
         public int B_num;
         public int W_num, W_rows, W_columns, W_channels;
-        public int O_samples, O_rows, O_columns, O_channels;
-
-        public int dI_samples, dI_rows, dI_columns, dI_channels;
-        public int dB_num;
-        public int dW_num, dW_rows, dW_columns, dW_channels;
-        public int dO_samples, dO_rows, dO_columns;
 
         public bool needs_gradient;
         public int pad_size;
@@ -38,7 +32,6 @@ namespace Conv_Net {
         public override Tensor V_dW { get; set; }
         public override Tensor S_dW { get; set; }
 
-
         public Convolution_Layer(int I_channels, int W_num, int W_rows, int W_columns, bool needs_gradient, int pad_size = 0, int stride = 1, int dilation = 1, int groups = 1) {
 
             this.trainable_parameters = true;
@@ -47,9 +40,6 @@ namespace Conv_Net {
             this.B_num = W_num;
             this.W_num = W_num; this.W_rows = W_rows; this.W_columns = W_columns; this.W_channels = I_channels / groups;
 
-            this.dB_num = this.B_num;
-            this.dW_num = this.W_num; this.dW_rows = this.W_rows; this.dW_columns = this.W_columns; this.dW_channels = this.W_channels;
-
             this.needs_gradient = needs_gradient;
             this.pad_size = pad_size;
             this.stride = stride;
@@ -57,16 +47,17 @@ namespace Conv_Net {
             this.groups = groups;
 
             this.B = new Tensor(2, this.B_num, 1);
-            this.dB = new Tensor(2, this.dB_num, 1);
-            this.V_dB = new Tensor(2, this.dB_num, 1);
-            this.S_dB = new Tensor(2, this.dB_num, 1);
+            this.dB = new Tensor(2, this.B_num, 1);
+            this.V_dB = new Tensor(2, this.B_num, 1);
+            this.S_dB = new Tensor(2, this.B_num, 1);
 
             this.W = new Tensor(4, this.W_num, this.W_rows, this.W_columns, this.W_channels);
-            this.dW = new Tensor(4, this.dW_num, this.dW_rows, this.dW_columns, this.dW_channels);
-            this.V_dW = new Tensor(4, this.dW_num, this.dW_rows, this.dW_columns, this.dW_channels);
-            this.S_dW = new Tensor(4, this.dW_num, this.dW_rows, this.dW_columns, this.dW_channels);
+            this.dW = new Tensor(4, this.W_num, this.W_rows, this.W_columns, this.W_channels);
+            this.V_dW = new Tensor(4, this.W_num, this.W_rows, this.W_columns, this.W_channels);
+            this.S_dW = new Tensor(4, this.W_num, this.W_rows, this.W_columns, this.W_channels);
 
-            // Biases are initialized to 0, Filters are initializedto random value from normal distribution * sqrt(2/ (num_filters * filter_rows * filter_columns))
+            // Biases are initialized to 0
+            // Weights are initialized to random value from normal distribution * sqrt(2/ (num_weights * weight_rows * weight_columns))
             for (int i = 0; i < B.values.Length; i++) { 
                 B.values[i] = 0.0; 
             }
@@ -80,41 +71,42 @@ namespace Conv_Net {
             this.I = I.pad(this.pad_size);
             
             // Set I_samples, I_rows, and I_columns after padding
+            // Calculates O_samples, O_rows, O_columns, and O_channels
             this.I_samples = this.I.dim_1; this.I_rows = this.I.dim_2; this.I_columns = this.I.dim_3;
-            this.O_samples = this.I_samples;
-            this.O_rows = (this.I_rows - this.W_rows * this.dilation + this.dilation - 1) / this.stride + 1;
-            this.O_columns = (this.I_columns - this.W_columns * this.dilation + this.dilation - 1) / this.stride + 1;
-            this.O_channels = this.W_num;
+            int O_samples = this.I_samples;
+            int O_rows = (this.I_rows - this.W_rows * this.dilation + this.dilation - 1) / this.stride + 1;
+            int O_columns = (this.I_columns - this.W_columns * this.dilation + this.dilation - 1) / this.stride + 1;
+            int O_channels = this.W_num;
 
-
-
-            // O_matrix = F_matrix * I_matrix + B_matrix
+            // If groups > 1, split I along channel dimension, and B and W along num dimension
             Tensor[] I_group = Utils.split(this.I, 4, this.groups);
             Tensor[] B_group = Utils.split(this.B, 1, this.groups);
             Tensor[] W_group = Utils.split(this.W, 1, this.groups);
             Tensor[] O_groups = new Tensor[this.groups];
 
+            // For each tensor I, B, and W in the group, convert to matrix, calculate O, then convert back to tensor
+            // O_matrix = F_matrix * I_matrix + B_matrix
             for (int i = 0; i < this.groups; i++) {
-                Tensor B_matrix = Utils.B_to_matrix(B_group[i], this.I_samples, this.I_rows, this.I_columns, this.W_rows, this.W_columns, this.stride, this.dilation);
-                Tensor W_matrix = Utils.F_to_matrix(W_group[i]);
                 Tensor I_matrix = Utils.I_to_matrix(I_group[i], this.W_rows, this.W_columns, this.W_channels, this.stride, this.dilation);
-                O_groups[i] = Utils.dgemm_cs(W_matrix, I_matrix, B_matrix);
-                O_groups[i] = Utils.matrix_to_tensor(O_groups[i], this.O_samples, this.O_rows, this.O_columns, this.O_channels / this.groups);
-
+                Tensor B_matrix = Utils.B_to_matrix(B_group[i], this.I_samples, this.I_rows, this.I_columns, this.W_rows, this.W_columns, this.stride, this.dilation);
+                Tensor W_matrix = Utils.W_to_matrix(W_group[i]);
+                Tensor O_matrix = Utils.dgemm_cs(W_matrix, I_matrix, B_matrix);
+                O_groups[i] = Utils.matrix_to_tensor(O_matrix, O_samples, O_rows, O_columns, O_channels / this.groups);
             }
+            // Merge the list of output tensors into a single tensor
             Tensor O = Utils.merge(O_groups, 4);
             return O;
         }
         
         public override Tensor backward(Tensor dO) {
 
-            this.dO_samples = dO.dim_1; this.dO_rows = dO.dim_2; this.dO_columns = dO.dim_3;       
+            int dO_samples = dO.dim_1; int dO_rows = dO.dim_2; int dO_columns = dO.dim_3;       
             Tensor dO_matrix = Utils.dO_to_matrix(dO);
 
             
 
             // Calculate ∂L/∂B
-            Tensor column_vector_1 = Utils.column_vector_1(this.dO_samples * this.dO_rows * this.dO_columns);
+            Tensor column_vector_1 = Utils.column_vector_1(dO_samples * dO_rows * dO_columns);
             this.dB = Utils.dgemm_cs(dO_matrix, column_vector_1, this.dB);
 
 
@@ -130,7 +122,7 @@ namespace Conv_Net {
 
             for (int i=0; i < this.groups; i++) {
                 Tensor dO_matrix2 = Utils.dO_to_matrix(dO_group[i]);
-                Tensor I_matrix = Utils.I_to_matrix_backprop(I_group[i], this.dO_rows, this.dO_columns, this.W_rows, this.W_columns, this.W_channels, this.dilation, this.stride);
+                Tensor I_matrix = Utils.I_to_matrix_backprop(I_group[i], dO_rows, dO_columns, this.W_rows, this.W_columns, this.W_channels, this.dilation, this.stride);
                 Tensor dF_matrix = new Tensor(2, this.W_num / this.groups, this.W_rows * this.W_columns * this.W_channels);
                 dW_group[i] = Utils.dgemm_cs(dO_matrix2, I_matrix, dF_matrix);
                 dW_group[i] = Utils.dF_matrix_to_tensor(dW_group[i], this.W_num / this.groups, this.W_rows, this.W_columns, this.W_channels);
@@ -150,14 +142,14 @@ namespace Conv_Net {
                 for (int i=0; i < this.groups; i++) {
                     // Size of dI is set to the size of I (before padding in the forward pass)
                     // Divide by groups
-                    this.dI_samples = this.I_samples; this.dI_rows = this.I_rows - 2 * this.pad_size; this.dI_columns = this.I_columns - 2 * this.pad_size; this.dI_channels = this.I_channels / this.groups;
+                    int dI_samples = this.I_samples; int dI_rows = this.I_rows - 2 * this.pad_size; int dI_columns = this.I_columns - 2 * this.pad_size; int dI_channels = this.I_channels / this.groups;
 
                     // For dO, dilate by S and pad for full convolution, then unpad by pad_size to avoid performing extra calculations, then convert to matrix
                     Tensor F_rotated_matrix = Utils.F_rotated_to_matrix(W_group[i]);
-                    Tensor dO_dilated_padded_matrix = Utils.dO_dilated_padded_to_matrix(dO_group2[i], this.W_num / this.groups, this.W_rows, this.W_columns, this.dI_samples, this.dI_rows, this.dI_columns, this.dilation);
-                    Tensor dI_matrix = new Tensor(2, this.dI_channels, this.dI_samples * (this.dI_rows) * (this.dI_columns));
+                    Tensor dO_dilated_padded_matrix = Utils.dO_dilated_padded_to_matrix(dO_group2[i], this.W_num / this.groups, this.W_rows, this.W_columns, dI_samples, dI_rows, dI_columns, this.dilation);
+                    Tensor dI_matrix = new Tensor(2, dI_channels, dI_samples * (dI_rows) * (dI_columns));
                     dI_group[i] = Utils.dgemm_cs(F_rotated_matrix, dO_dilated_padded_matrix, dI_matrix);
-                    dI_group[i] = Utils.matrix_to_tensor(dI_group[i], this.dI_samples, this.dI_rows, this.dI_columns, this.dI_channels);
+                    dI_group[i] = Utils.matrix_to_tensor(dI_group[i], dI_samples, dI_rows, dI_columns, dI_channels);
                 }
                 Tensor dI = Utils.merge(dI_group, 4);                          
                 return dI;

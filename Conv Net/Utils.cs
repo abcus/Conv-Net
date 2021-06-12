@@ -175,53 +175,59 @@ namespace Conv_Net {
         /// <returns></returns>
         public static Tensor[] split(Tensor merge, int dim, int split_N) {
             Tensor[] split_list = new Tensor[split_N];
-            int split_dim_1 = 0, split_dim_2 = 0, split_dim_3 = 0, split_dim_4 = 0;
-            Tensor split;
+            
+            if (split_N == 1) {
+                split_list[0] = merge;
+                return split_list;
+            } else {
+                int split_dim_1 = 0, split_dim_2 = 0, split_dim_3 = 0, split_dim_4 = 0;
+                Tensor split;
 
-            for (int i = 0; i < split_N; i++) {
-                switch (dim) {
-                    case 1:
-                        split_dim_1 = merge.dim_1 / split_N;
-                        split_dim_2 = merge.dim_2;
-                        split_dim_3 = merge.dim_3;
-                        split_dim_4 = merge.dim_4;
-                        break;
-                    case 2:
-                        break;
-                    case 3:
-                        break;
-                    case 4:
-                        split_dim_1 = merge.dim_1;
-                        split_dim_2 = merge.dim_2;
-                        split_dim_3 = merge.dim_3;
-                        split_dim_4 = merge.dim_4 / split_N;
-                        break;
-                }
-                split = new Tensor(4, split_dim_1, split_dim_2, split_dim_3, split_dim_4);
+                for (int i = 0; i < split_N; i++) {
+                    switch (dim) {
+                        case 1:
+                            split_dim_1 = merge.dim_1 / split_N;
+                            split_dim_2 = merge.dim_2;
+                            split_dim_3 = merge.dim_3;
+                            split_dim_4 = merge.dim_4;
+                            break;
+                        case 2:
+                            break;
+                        case 3:
+                            break;
+                        case 4:
+                            split_dim_1 = merge.dim_1;
+                            split_dim_2 = merge.dim_2;
+                            split_dim_3 = merge.dim_3;
+                            split_dim_4 = merge.dim_4 / split_N;
+                            break;
+                    }
+                    split = new Tensor(4, split_dim_1, split_dim_2, split_dim_3, split_dim_4);
 
-                for (int j = 0; j < split_dim_1; j++) {
-                    for (int k = 0; k < split_dim_2; k++) {
-                        for (int l = 0; l < split_dim_3; l++) {
-                            for (int m = 0; m < split_dim_4; m++) {
-                                switch (dim) {
-                                    case 1:
-                                        split.values[split.index(j, k, l, m)] = merge.values[merge.index(j + i * (merge.dim_1 / split_N), k, l, m)];
-                                        break;
-                                    case 2:
-                                        break;
-                                    case 3:
-                                        break;
-                                    case 4:
-                                        split.values[split.index(j, k, l, m)] = merge.values[merge.index(j, k, l, m + i * (merge.dim_4 / split_N))];
-                                        break;
+                    for (int j = 0; j < split_dim_1; j++) {
+                        for (int k = 0; k < split_dim_2; k++) {
+                            for (int l = 0; l < split_dim_3; l++) {
+                                for (int m = 0; m < split_dim_4; m++) {
+                                    switch (dim) {
+                                        case 1:
+                                            split.values[split.index(j, k, l, m)] = merge.values[merge.index(j + i * (merge.dim_1 / split_N), k, l, m)];
+                                            break;
+                                        case 2:
+                                            break;
+                                        case 3:
+                                            break;
+                                        case 4:
+                                            split.values[split.index(j, k, l, m)] = merge.values[merge.index(j, k, l, m + i * (merge.dim_4 / split_N))];
+                                            break;
+                                    }
                                 }
                             }
                         }
                     }
+                    split_list[i] = split;
                 }
-                split_list[i] = split;
+                return split_list;
             }
-            return split_list;
         }
 
         /// <summary>
@@ -232,59 +238,65 @@ namespace Conv_Net {
         /// <returns></returns>
         public static Tensor merge(Tensor[] split_list, int dim) {
             int split_N = split_list.Length; int split_dim_1 = split_list[0].dim_1; int split_dim_2 = split_list[0].dim_2; int split_dim_3 = split_list[0].dim_3; int split_dim_4 = split_list[0].dim_4;
-            int merge_dim_1 = 0, merge_dim_2 = 0, merge_dim_3 = 0, merge_dim_4 = 0;
+            Tensor merge;
+            if (split_N == 1) {
+                merge = split_list[0];
+                return merge;
+            } else {
+                int merge_dim_1 = 0, merge_dim_2 = 0, merge_dim_3 = 0, merge_dim_4 = 0;
 
-            switch (dim) {
-                case 1:
-                    merge_dim_1 = split_dim_1 * split_N; 
-                    merge_dim_2 = split_dim_2;
-                    merge_dim_3 = split_dim_3;
-                    merge_dim_4 = split_dim_4;
-                    break;
-                case 2:
-                    break;
-                case 3:
-                    break;
-                case 4:
-                    merge_dim_1 = split_dim_1;
-                    merge_dim_2 = split_dim_2;
-                    merge_dim_3 = split_dim_3;
-                    merge_dim_4 = split_dim_4 * split_N;
-                    break;
-            }
-            Tensor merge = new Tensor(4, merge_dim_1, merge_dim_2, merge_dim_3, merge_dim_4);
-                        
-            for (int i = 0; i < merge_dim_1; i++) {
-                for (int j = 0; j < merge_dim_2; j++) {
-                    for (int k = 0; k < merge_dim_3; k++) {
-                        for (int l = 0; l < merge_dim_4; l++) {
-                            Tensor split;
-                            switch (dim) {
-                                case 1:
-                                    split = split_list[i / split_dim_1];
-                                    merge.values[merge.index(i, j, k, l)] = split.values[split.index(i % split_dim_1, j, k, l)];
-                                    break;
-                                case 2:
-                                    break;
-                                case 3:
-                                    break;
-                                case 4:
-                                    split = split_list[l / split_dim_4];
-                                    merge.values[merge.index(i, j, k, l)] = split.values[split.index(i, j, k, l % split_dim_4)];
-                                    break;
+                switch (dim) {
+                    case 1:
+                        merge_dim_1 = split_dim_1 * split_N;
+                        merge_dim_2 = split_dim_2;
+                        merge_dim_3 = split_dim_3;
+                        merge_dim_4 = split_dim_4;
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        merge_dim_1 = split_dim_1;
+                        merge_dim_2 = split_dim_2;
+                        merge_dim_3 = split_dim_3;
+                        merge_dim_4 = split_dim_4 * split_N;
+                        break;
+                }
+                merge = new Tensor(4, merge_dim_1, merge_dim_2, merge_dim_3, merge_dim_4);
+
+                for (int i = 0; i < merge_dim_1; i++) {
+                    for (int j = 0; j < merge_dim_2; j++) {
+                        for (int k = 0; k < merge_dim_3; k++) {
+                            for (int l = 0; l < merge_dim_4; l++) {
+                                Tensor split;
+                                switch (dim) {
+                                    case 1:
+                                        split = split_list[i / split_dim_1];
+                                        merge.values[merge.index(i, j, k, l)] = split.values[split.index(i % split_dim_1, j, k, l)];
+                                        break;
+                                    case 2:
+                                        break;
+                                    case 3:
+                                        break;
+                                    case 4:
+                                        split = split_list[l / split_dim_4];
+                                        merge.values[merge.index(i, j, k, l)] = split.values[split.index(i, j, k, l % split_dim_4)];
+                                        break;
+                                }
                             }
                         }
                     }
                 }
+                return merge;
             }
-            return merge;
         }
 
 
         /// <summary>
         /// Convolution forward propagation, converts filter tensor into 2D matrix
         /// </summary>
-        public static Tensor F_to_matrix(Tensor F) {
+        public static Tensor W_to_matrix(Tensor F) {
             Tensor F_matrix = new Tensor(2, F.dim_1, F.dim_2 * F.dim_3 * F.dim_4);
             F_matrix.values = F.values;
             return F_matrix;

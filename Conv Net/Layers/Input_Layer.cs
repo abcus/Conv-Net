@@ -10,7 +10,7 @@ namespace Conv_Net {
         public Input_Layer() {
         }
 
-        public override Tensor forward(Tensor I, bool is_training = false) {
+        public override Tensor forward(Tensor I) {
             return I;
         }
         public override Tensor backward (Tensor dO) {

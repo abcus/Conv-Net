@@ -166,116 +166,118 @@ namespace Conv_Net {
         }
 
 
-        static public Tensor forward_Conv_CPU(Convolution_Layer conv) {
-            Tensor[] I_group = Utils.split_I(conv.I, conv.groups);
-            Tensor[] B_group = Utils.split_W(conv.B, conv.groups);
-            Tensor[] W_group = Utils.split_W(conv.W, conv.groups);
-            Tensor[] O_groups = new Tensor[conv.groups];
+        /// <summary>
+        /// Splits one tensor into a list of tensors
+        /// </summary>
+        /// <param name="merge"> tensor to be split </param>
+        /// <param name="dim"> dimension to aplit across </param>
+        /// <param name="split_N"> number of tensors after split </param>
+        /// <returns></returns>
+        public static Tensor[] split(Tensor merge, int dim, int split_N) {
+            Tensor[] split_list = new Tensor[split_N];
+            int split_dim_1 = 0, split_dim_2 = 0, split_dim_3 = 0, split_dim_4 = 0;
+            Tensor split;
 
+            for (int i = 0; i < split_N; i++) {
+                switch (dim) {
+                    case 1:
+                        split_dim_1 = merge.dim_1 / split_N;
+                        split_dim_2 = merge.dim_2;
+                        split_dim_3 = merge.dim_3;
+                        split_dim_4 = merge.dim_4;
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        split_dim_1 = merge.dim_1;
+                        split_dim_2 = merge.dim_2;
+                        split_dim_3 = merge.dim_3;
+                        split_dim_4 = merge.dim_4 / split_N;
+                        break;
+                }
+                split = new Tensor(4, split_dim_1, split_dim_2, split_dim_3, split_dim_4);
 
-           
-
-            for (int i=0; i < conv.groups; i++) {
-                
-                Tensor B_matrix = Utils.B_to_matrix(B_group[i], conv.I_samples, conv.I_rows, conv.I_columns, conv.W_rows, conv.W_columns, conv.stride, conv.dilation);
-                Tensor W_matrix = Utils.F_to_matrix(W_group[i]);
-                Tensor I_matrix = Utils.I_to_matrix(I_group[i], conv.W_rows, conv.W_columns, conv.W_channels, conv.stride, conv.dilation);              
-                O_groups[i] = Utils.dgemm_cs(W_matrix, I_matrix, B_matrix);
-                O_groups[i] = Utils.matrix_to_tensor(O_groups[i], conv.O_samples, conv.O_rows, conv.O_columns, conv.O_channels / conv.groups);
-                
+                for (int j = 0; j < split_dim_1; j++) {
+                    for (int k = 0; k < split_dim_2; k++) {
+                        for (int l = 0; l < split_dim_3; l++) {
+                            for (int m = 0; m < split_dim_4; m++) {
+                                switch (dim) {
+                                    case 1:
+                                        split.values[split.index(j, k, l, m)] = merge.values[merge.index(j + i * (merge.dim_1 / split_N), k, l, m)];
+                                        break;
+                                    case 2:
+                                        break;
+                                    case 3:
+                                        break;
+                                    case 4:
+                                        split.values[split.index(j, k, l, m)] = merge.values[merge.index(j, k, l, m + i * (merge.dim_4 / split_N))];
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                }
+                split_list[i] = split;
             }
-            Tensor output = Utils.concatenate_I(O_groups);
-            return output;
+            return split_list;
         }
 
         /// <summary>
-        /// Splits input/gradient output tensor for grouped convolution
+        /// Merges a list of tensors into one tensor
         /// </summary>
-        /// <param name="I"></param>
-        /// <param name="groups"></param>
+        /// <param name="split_list"> list of tensors to be merged </param>
+        /// <param name="dim"> dimension to merge across </param>
         /// <returns></returns>
-        public static Tensor[] split_I(Tensor I, int groups) {
-            Tensor[] split_list = new Tensor[groups];
-            for (int i = 0; i < groups; i++) {
-                Tensor split_I = new Tensor(4, I.dim_1, I.dim_2, I.dim_3, I.dim_4 / groups);
+        public static Tensor merge(Tensor[] split_list, int dim) {
+            int split_N = split_list.Length; int split_dim_1 = split_list[0].dim_1; int split_dim_2 = split_list[0].dim_2; int split_dim_3 = split_list[0].dim_3; int split_dim_4 = split_list[0].dim_4;
+            int merge_dim_1 = 0, merge_dim_2 = 0, merge_dim_3 = 0, merge_dim_4 = 0;
 
-                for (int j = 0; j < split_I.dim_1; j++) {
-                    for (int k = 0; k < split_I.dim_2; k++) {
-                        for (int l = 0; l < split_I.dim_3; l++) {
-                            for (int m = 0; m < split_I.dim_4; m++) {
-                                split_I.values[split_I.index(j, k, l, m)] = I.values[I.index(j, k, l, m + i * (I.dim_4 / groups))];
+            switch (dim) {
+                case 1:
+                    merge_dim_1 = split_dim_1 * split_N; 
+                    merge_dim_2 = split_dim_2;
+                    merge_dim_3 = split_dim_3;
+                    merge_dim_4 = split_dim_4;
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    break;
+                case 4:
+                    merge_dim_1 = split_dim_1;
+                    merge_dim_2 = split_dim_2;
+                    merge_dim_3 = split_dim_3;
+                    merge_dim_4 = split_dim_4 * split_N;
+                    break;
+            }
+            Tensor merge = new Tensor(4, merge_dim_1, merge_dim_2, merge_dim_3, merge_dim_4);
+                        
+            for (int i = 0; i < merge_dim_1; i++) {
+                for (int j = 0; j < merge_dim_2; j++) {
+                    for (int k = 0; k < merge_dim_3; k++) {
+                        for (int l = 0; l < merge_dim_4; l++) {
+                            Tensor split;
+                            switch (dim) {
+                                case 1:
+                                    split = split_list[i / split_dim_1];
+                                    merge.values[merge.index(i, j, k, l)] = split.values[split.index(i % split_dim_1, j, k, l)];
+                                    break;
+                                case 2:
+                                    break;
+                                case 3:
+                                    break;
+                                case 4:
+                                    split = split_list[l / split_dim_4];
+                                    merge.values[merge.index(i, j, k, l)] = split.values[split.index(i, j, k, l % split_dim_4)];
+                                    break;
                             }
                         }
                     }
                 }
-
-                split_list[i] = split_I;
             }
-            return split_list;
-        }
-
-        public static Tensor[] split_W (Tensor W, int groups) {
-            Tensor[] split_list = new Tensor[groups];
-            for (int i=0; i < groups; i++) {
-                Tensor split_W = new Tensor(4, W.dim_1 / groups, W.dim_2, W.dim_3, W.dim_4);
-            
-                for (int j=0; j < split_W.dim_1; j++) {
-                    for (int k=0; k < split_W.dim_2; k++) {
-                        for (int l = 0; l < split_W.dim_3; l++) {
-                            for (int m = 0; m < split_W.dim_4; m++) {
-                                split_W.values[split_W.index(j, k, l, m)] = W.values[W.index(j + i * (W.dim_1 / groups), k, l, m)];
-                            }
-                        }
-                    }
-                }
-                split_list[i] = split_W;
-            }
-            return split_list;
-        }
-
-
-        public static Tensor concatenate_I(Tensor[] T) {
-            int split_tensor_samples = T[0].dim_1;
-            int split_tensor_rows = T[0].dim_2;
-            int split_tensor_columns = T[0].dim_3;
-            int split_tensor_channels = T[0].dim_4;
-            int groups = T.Length;
-
-            Tensor concat = new Tensor(4, split_tensor_samples, split_tensor_rows, split_tensor_columns, split_tensor_channels * groups);
-
-
-            for (int i = 0; i < concat.dim_1; i++) {
-                for (int j = 0; j < concat.dim_2; j++) {
-                    for (int k = 0; k < concat.dim_3; k++) {
-                        for (int l = 0; l < concat.dim_4; l++) {
-                            Tensor split = T[l / split_tensor_channels];
-                            concat.values[concat.index(i, j, k, l)] = split.values[split.index(i, j, k, l % split_tensor_channels)];
-                        }
-                    }
-                }
-            }
-            return concat;
-        }
-
-        public static Tensor concatenate_W(Tensor[] T_list) {
-            int split_tensor_samples = T_list[0].dim_1;
-            int split_tensor_rows = T_list[0].dim_2;
-            int split_tensor_columns = T_list[0].dim_3;
-            int split_tensor_channels = T_list[0].dim_4;
-            int groups = T_list.Length;
-
-            Tensor concat = new Tensor(4, split_tensor_samples * groups, split_tensor_rows, split_tensor_columns, split_tensor_channels);
-            for (int i = 0; i < concat.dim_1; i++) {
-                for (int j = 0; j < concat.dim_2; j++) {
-                    for (int k = 0; k < concat.dim_3; k++) {
-                        for (int l = 0; l < concat.dim_4; l++) {
-                            Tensor split = T_list[i / split_tensor_samples];
-                            concat.values[concat.index(i, j, k, l)] = split.values[split.index(i % split_tensor_samples, j, k, l)];
-                        }
-                    }
-                }
-            }
-            return concat;
+            return merge;
         }
 
 

@@ -22,7 +22,7 @@ namespace Conv_Net {
             Tensor I_copy = Utils.copy(I);
             Tensor analytic_dI, analytic_dB, analytic_dW;
 
-            loss_layer.loss(layer_2.forward(layer_1.forward(I_copy), true), T);
+            loss_layer.loss(layer_2.forward(layer_1.forward(I_copy)), T);
             analytic_dI = layer_1.backward(layer_2.backward(loss_layer.backward()));
             analytic_dB = layer_1.dB;
             analytic_dW = layer_1.dW;
@@ -50,11 +50,11 @@ namespace Conv_Net {
             for (int i=0; i < B.values.Length; i++) {
                 I_copy = Utils.copy(I);
                 test_layer_1.B.values[i] += h;
-                Tensor L_up = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy), true), T);
+                Tensor L_up = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy)), T);
 
                 I_copy = Utils.copy(I);
                 test_layer_1.B.values[i] -= 2 * h;
-                Tensor L_down = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy), true), T);
+                Tensor L_down = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy)), T);
 
                 test_layer_1.B.values[i] += h;
 
@@ -64,11 +64,11 @@ namespace Conv_Net {
             for (int i=0; i < W.values.Length; i++) {
                 I_copy = Utils.copy(I);
                 test_layer_1.W.values[i] += h;
-                Tensor L_up = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy), true), T);
+                Tensor L_up = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy)), T);
 
                 I_copy = Utils.copy(I);
                 test_layer_1.W.values[i] -= 2 * h;
-                Tensor L_down = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy), true), T);
+                Tensor L_down = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_copy)), T);
 
                 test_layer_1.W.values[i] += h;
 
@@ -82,8 +82,8 @@ namespace Conv_Net {
                 I_up.values[i] += h;
                 I_down.values[i] -= h;
 
-                Tensor L_up = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_up), true), T);
-                Tensor L_down = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_down), true), T);
+                Tensor L_up = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_up)), T);
+                Tensor L_down = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_down)), T);
 
                 numeric_dI.values[i] = Utils.sum(Utils.subtract(L_up, L_down)) / (2 * h);
             }
@@ -104,7 +104,7 @@ namespace Conv_Net {
             for (int i = 0; i < T_BN.values.Length; i++) { T_BN.values[i] = rand.NextDouble(); }
 
             // Conv test
-            int I_samples = 2; int I_rows = 8; int I_columns = 8; int I_channels = 12;
+            int I_samples = 5; int I_rows = 8; int I_columns = 8; int I_channels = 12;
             int F_num = 6; int F_rows = 3; int F_columns = 3; int F_channels = 12;
             int pad_size = 9; int stride = 3; int dilation = 2; int groups = 3;
             int O_samples = I_samples; 
@@ -118,7 +118,7 @@ namespace Conv_Net {
             for (int i=0; i < T_Conv.values.Length; i++) {T_Conv.values[i] = rand.NextDouble();}
 
             Batch_Normalization_Layer BN = new Batch_Normalization_Layer(d);
-            Convolution_Layer Conv = new Convolution_Layer(I_channels, F_num, F_rows, F_columns, false, pad_size, stride, dilation, groups);
+            Convolution_Layer Conv = new Convolution_Layer(I_channels, F_num, F_rows, F_columns, true, pad_size, stride, dilation, groups);
             Mean_Squared_Loss_Layer MSE = new Mean_Squared_Loss_Layer();
             Input_Layer Input = new Input_Layer();
             

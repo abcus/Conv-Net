@@ -38,10 +38,12 @@ namespace Conv_Net {
             this.test_train_mode = true;
 
             this.B = new Tensor(2, 1, element);
+            this.dB = new Tensor(2, 1, element);
             this.V_dB = new Tensor(2, 1, element);
             this.S_dB = new Tensor(2, 1, element);
 
             this.W = new Tensor(2, 1, element);
+            this.dW = new Tensor(2, 1, element);
             this.V_dW = new Tensor(2, 1, element);
             this.S_dW = new Tensor(2, 1, element);
 
@@ -160,16 +162,14 @@ namespace Conv_Net {
             
 
             // dB [1 x D] = 1_row [1 x N] * dO [N x D]
-            this.dB = new Tensor(2, 1, this.D);
+            
             this.dB = Utils.dgemm_cs(row_vector_1, dO, dB);
 
             // dW [1 x D] = 1_row [1 x N] * (dO [N x D] * I_hat [N x D])
-            this.dW = new Tensor(2, 1, this.D);
             this.dW = Utils.dgemm_cs(row_vector_1, Utils.elementwise_product(dO, this.I_hat), this.dW);
 
             // dI [N x D] = 1 / N * (1_column [N x 1] * (W [1 x D] / Sqrt(variance [1 x D] + epsilon))) * ((N * dO [N x D]) - (column_1 [N x 1] * dB [1 x D]) - ((column_1 [N x 1] * dW [1 x D]) * I_hat [N x D]))
             Tensor dI = new Tensor(2, this.N, this.D);
-          
 
             Tensor left_side = new Tensor(2, this.N, this.D);        
             left_side = Utils.scalar_product(1.0/this.N, Utils.dgemm_cs(column_vector_1, Utils.elementwise_product(this.W, this.inverse_stdev), left_side));

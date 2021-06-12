@@ -20,9 +20,11 @@ namespace Conv_Net {
         public void SGD(Base_Layer layer) {
             for (int i=0; i < layer.B.values.Length; i++) {
                 layer.B.values[i] -= Program.ALPHA * layer.dB.values[i];
+                layer.dB.values[i] = 0;
             }
             for (int i=0; i < layer.W.values.Length; i++) {
                 layer.W.values[i] -= Program.ALPHA * layer.dW.values[i];
+                layer.dW.values[i] = 0;
             }
         }
 
@@ -31,10 +33,12 @@ namespace Conv_Net {
             for (int i=0; i < layer.B.values.Length; i++) {
                 layer.V_dB.values[i] = Program.BETA_1 * layer.V_dB.values[i] + (1 - Program.BETA_1) * layer.dB.values[i];
                 layer.B.values[i] -= Program.ALPHA * layer.V_dB.values[i] / V_bias_correction;
+                layer.dB.values[i] = 0;
             }
             for (int i=0; i < layer.W.values.Length; i++) {
                 layer.V_dW.values[i] = Program.BETA_1 * layer.V_dW.values[i] + (1 - Program.BETA_1) * layer.dW.values[i];
                 layer.W.values[i] -= Program.ALPHA * layer.V_dW.values[i] / V_bias_correction;
+                layer.dW.values[i] = 0;
             }
         }
 
@@ -45,11 +49,13 @@ namespace Conv_Net {
                 layer.V_dB.values[i] = Program.BETA_1 * layer.V_dB.values[i] + (1 - Program.BETA_1) * layer.dB.values[i];
                 layer.S_dB.values[i] = Program.BETA_2 * layer.S_dB.values[i] + (1 - Program.BETA_2) * Math.Pow(layer.dB.values[i], 2);
                 layer.B.values[i] -= (Program.ALPHA * (layer.V_dB.values[i] / V_bias_correction) / (Math.Sqrt(layer.S_dB.values[i] / S_bias_correction) + Program.EPSILON));
+                layer.dB.values[i] = 0;
             }
             for (int i=0; i < layer.W.values.Length; i++) {
                 layer.V_dW.values[i] = Program.BETA_1 * layer.V_dW.values[i] + (1 - Program.BETA_1) * layer.dW.values[i];
                 layer.S_dW.values[i] = Program.BETA_2 * layer.S_dW.values[i] + (1 - Program.BETA_2) * Math.Pow(layer.dW.values[i], 2);
                 layer.W.values[i] -= (Program.ALPHA * (layer.V_dW.values[i] / V_bias_correction) / (Math.Sqrt(layer.S_dW.values[i] / S_bias_correction) + Program.EPSILON));
+                layer.dW.values[i] = 0;
             }
         }
 

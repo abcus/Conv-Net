@@ -31,10 +31,12 @@ namespace Conv_Net {
             this.needs_gradient = needs_gradient;
 
             this.B = new Tensor(2, this.layer_size, 1);
+            this.dB = new Tensor(2, this.layer_size, 1);
             this.V_dB = new Tensor(2, this.layer_size, 1);
             this.S_dB = new Tensor(2, this.layer_size, 1);
 
             this.W = new Tensor(2, this.layer_size, this.previous_layer_size);
+            this.dW = new Tensor(2, this.layer_size, this.previous_layer_size);
             this.V_dW = new Tensor(2, this.layer_size, this.previous_layer_size);
             this.S_dW = new Tensor(2, this.layer_size, this.previous_layer_size);
 
@@ -67,11 +69,9 @@ namespace Conv_Net {
             // Don't have to set values of dB and dW to 0.0 after updating because a new gradient tensor is created during each backward pass
 
             // dB [layer_size x 1] = dO_transposed [layer_size x sample] * 1_column [sample x 1]
-            this.dB = new Tensor(2, this.layer_size, 1);
             this.dB = Utils.dgemm_cs(dO.transpose_2D(), Utils.column_vector_1(this.I_samples), this.dB);
 
             // dW [layer_size x previous_layer_size] = dO_transposed [layer_size x samples] * I [samples x previous_layer_size]
-            this.dW = new Tensor(2, this.layer_size, this.previous_layer_size);
             this.dW = Utils.dgemm_cs(dO.transpose_2D(), this.I, this.dW);
             this.I = null;
 

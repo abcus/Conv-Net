@@ -152,24 +152,21 @@ namespace Conv_Net {
                 return output;
             }
         }
-
-        public Tensor difference (Tensor X) {
-            Tensor D = new Tensor(this.dimensions, this.dim_1, this.dim_2, this.dim_3, this.dim_4);
-            for (int i=0; i < this.dim_1 * this.dim_2 * this.dim_3 * this.dim_4 ; i++) {
-                D.values[i] = this.values[i] - X.values[i];
+        public bool Equals(Tensor t) {
+            if (this.dimensions != t.dimensions
+                || this.dim_1 != t.dim_1
+                || this.dim_2 != t.dim_2
+                || this.dim_3 != t.dim_3
+                || this.dim_4 != t.dim_4) {
+                return false;
             }
-            return D;
+            for (int i = 0; i < this.dim_1 * this.dim_2 * this.dim_3 * this.dim_4; i++) {
+                if ((float)this.values[i] != (float)t.values[i]) {
+                    return false;
+                }
+            }
+            return true;
         }
-
-        
-
-        
-
-        
-
-        
-
-        
 
         public override string ToString() {
             if (this.dimensions == 5) {
@@ -239,22 +236,6 @@ namespace Conv_Net {
             if (this.dimensions >= 4) {sb.Append("\ndimension 4 size: " + this.dim_4);}
             sb.Append("\n");
             return sb.ToString();            
-        }
-
-        public bool Equals(Tensor t) {
-            if (this.dimensions != t.dimensions 
-                || this.dim_1 != t.dim_1 
-                || this.dim_2 != t.dim_2 
-                || this.dim_3 != t.dim_3 
-                || this.dim_4 != t.dim_4) {
-                return false;
-            }
-            for (int i = 0; i < this.dim_1 * this.dim_2 * this.dim_3 * this.dim_4; i++) {
-                if ((float)this.values[i] != (float)t.values[i]) {
-                    return false;
-                }
-            }
-            return true;
         }
     }
 }

@@ -11,6 +11,7 @@ namespace Conv_Net {
         
        public enum OUTPUT_TYPE: int{
             OUTPUT,
+            GRADIENT_BIAS,
             GRADIENT_WEIGHT,
             GRADIENT_INPUT
         }
@@ -68,12 +69,11 @@ namespace Conv_Net {
                 y = 0;
                 return false;
             }
-            var fac = Math.Sqrt(-2.0 * Math.Log(r) / r);
+            var fac = System.Math.Sqrt(-2.0 * System.Math.Log(r) / r);
             x = v1 * fac;
             y = v2 * fac;
             return true;
         }
-       
 
         static public Tensor elementwise_product (Tensor A, Tensor B) {
             Tensor C = new Tensor(A.dimensions, A.dim_1, A.dim_2, A.dim_3, A.dim_4);
@@ -83,7 +83,7 @@ namespace Conv_Net {
             return C;
         }
 
-        static public Tensor add (Tensor A, Tensor B) {
+        static public Tensor elementwise_add (Tensor A, Tensor B) {
             Tensor C = new Tensor(A.dimensions, A.dim_1, A.dim_2, A.dim_3, A.dim_4);
             for (int i=0; i < C.values.Length; i++) {
                 C.values[i] = A.values[i] + B.values[i];   
@@ -91,7 +91,7 @@ namespace Conv_Net {
             return C;
         }
 
-        static public Tensor subtract(Tensor A, Tensor B) {
+        static public Tensor elementwise_subtract(Tensor A, Tensor B) {
             Tensor C = new Tensor(A.dimensions, A.dim_1, A.dim_2, A.dim_3, A.dim_4);
             for (int i = 0; i < C.values.Length; i++) {
                 C.values[i] = A.values[i] - B.values[i];
@@ -99,7 +99,7 @@ namespace Conv_Net {
             return C;
         }
 
-        static public Double sum (Tensor A) {
+        static public Double sum_of_elements (Tensor A) {
             Double sum = 0.0;
             for (int i=0; i < A.values.Length; i++) {
                 sum += A.values[i];
@@ -119,7 +119,7 @@ namespace Conv_Net {
             Double distance = 0.0;
 
             for (int i=0; i < A.values.Length; i++) {
-                distance += Math.Abs(A.values[i] - B.values[i]);
+                distance += System.Math.Abs(A.values[i] - B.values[i]);
             }
             return distance/A.values.Length;
         }
@@ -132,7 +132,22 @@ namespace Conv_Net {
             return C;
         }
 
-        
+        public static Tensor column_vector_1(int rows) {
+            Tensor column_vector_1 = new Tensor(2, rows, 1);
+            for (int i = 0; i < column_vector_1.values.Length; i++) {
+                column_vector_1.values[i] = 1.0;
+            }
+            return column_vector_1;
+        }
+
+        public static Tensor row_vector_1(int columns) {
+            Tensor row_vector_1 = new Tensor(2, 1, columns);
+            for (int i = 0; i < row_vector_1.values.Length; i++) {
+                row_vector_1.values[i] = 1.0;
+            }
+            return row_vector_1;
+        }
+
         /// <summary>
         /// Returns C = A * B + C
         /// </summary>
@@ -148,7 +163,6 @@ namespace Conv_Net {
             int B_transposed_row = B_col;
             int B_transposed_col = B_row;
             Tensor B_transposed = new Tensor(2, B_transposed_row, B_transposed_col);
-            Tensor O = new Tensor(2, A_row, B_col);
 
             // Transpose B
             Parallel.For(0, B_transposed_row, i => {
@@ -163,10 +177,15 @@ namespace Conv_Net {
                     for (int k = 0; k < A_col; k++) {
                         temp += A.values[i * A_col + k] * B_transposed.values[j * B_transposed_col + k];
                     }
-                    O.values[i * B_col + j] = (temp + C.values[i * B_col + j]);
+                    C.values[i * B_col + j] = (temp + C.values[i * B_col + j]);
                 }
             });
-            return O;
+            return C;
+        }
+
+
+        public static void CPU (Tensor A, Tensor B, Tensor C) {
+
         }
 
 
@@ -296,102 +315,19 @@ namespace Conv_Net {
             }
         }
 
-
-        
         /// <summary>
-        /// Convolution forward propagation, converts padded input tensor into 2D matrix
+        /// Converts a bias tensor into a bias matrix with same dimensions as output (for elementwise sum)        
         /// </summary>
-        /// <param name="image"> padded input tensor</param>
-        public static Tensor image_to_matrix(Tensor image, int kernel_dim_2, int kernel_dim_3, int stride, int dilation, Utils.OUTPUT_TYPE output_type) {
-            Tensor image_matrix = null;
-            int output_dim_2 = (image.dim_2 - kernel_dim_2 * dilation + dilation - 1) / stride + 1;
-            int output_dim_3 = (image.dim_3 - kernel_dim_3 * dilation + dilation - 1) / stride + 1;
-
-            if (output_type == Utils.OUTPUT_TYPE.OUTPUT) {
-                // image_dim_1 = output_dim_1
-                // image_dim_4 = kernel_dim_4
-                // kernel_dim_1 = output_dim_4
-                int kernel_dim_4 = image.dim_4;
-                int output_dim_1 = image.dim_1;
-                
-                int image_matrix_rows = kernel_dim_2 * kernel_dim_3 * kernel_dim_4;
-                int image_matrix_columns = output_dim_1 * output_dim_2 * output_dim_3;
-
-                image_matrix = new Tensor(2, image_matrix_rows, image_matrix_columns);
-
-                Parallel.For(0, kernel_dim_2, i => {
-                    for (int j = 0; j < kernel_dim_3; j++) {
-                        for (int m = 0; m < output_dim_2; m++) {
-                            for (int n = 0; n < output_dim_3; n++) {
-                                for (int k = 0; k < kernel_dim_4; k++) {
-                                    for (int l = 0; l < output_dim_1; l++) {
-                                        image_matrix.values[(i * kernel_dim_3 * kernel_dim_4 + j * kernel_dim_4 + k) * image_matrix_columns + (l * output_dim_2 * output_dim_3 + m * output_dim_3 + n)] = image.values[image.index(l, m * stride + i * dilation, n * stride + j * dilation, k)];
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            } else if (output_type == Utils.OUTPUT_TYPE.GRADIENT_WEIGHT) {
-                // image_dim_1 = kernel_dim_1
-                // image_dim_4 = output_dim_4
-                // kernel_dim_4 = output_dim_1
-                int kernel_dim_1 = image.dim_1;
-                int output_dim_4 = image.dim_4;
-
-                int image_matrix_rows = kernel_dim_1 * kernel_dim_2 * kernel_dim_3;
-                int image_matrix_columns = output_dim_2 * output_dim_3 * output_dim_4;
-
-                image_matrix = new Tensor(2, image_matrix_rows, image_matrix_columns);
-
-                for (int i=0; i < kernel_dim_1; i ++) {
-                    for (int j = 0; j < kernel_dim_2; j++) {
-                        for (int k = 0; k < kernel_dim_3; k++) {
-                            for (int l = 0; l < output_dim_2; l++) {
-                                for (int m = 0; m < output_dim_3; m++) {
-                                    for (int n = 0; n < output_dim_4; n++) {
-                                        image_matrix.values[(i * kernel_dim_2 * kernel_dim_3 + j * kernel_dim_3 + k) * (image_matrix_columns) + (l * output_dim_3 * output_dim_4 + m * output_dim_4 + n)] = image.values[image.index(i, l * stride + j * dilation, m * stride + k * dilation, n)];
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } else if (output_type == Utils.OUTPUT_TYPE.GRADIENT_INPUT) {
-                // image_dim_1 = output_dim_1
-                // image_dim_4 = kernel_dim_1
-                // kernel_dim_4 = output_dim_4
-                int kernel_dim_1 = image.dim_4;
-                int output_dim_1 = image.dim_1;
-
-                int image_matrix_rows = kernel_dim_1 * kernel_dim_2 * kernel_dim_3;
-                int image_matrix_columns = output_dim_1 * output_dim_2 * output_dim_3;
-
-                image_matrix = new Tensor(2, image_matrix_rows, image_matrix_columns);
-
-                for(int i = 0; i < kernel_dim_1; i++){
-                    for (int j = 0; j < kernel_dim_2; j++) {
-                        for (int k = 0; k < kernel_dim_3; k++) {
-                            for (int l = 0; l < output_dim_1; l++) {
-                                for (int m = 0; m < output_dim_2; m++) {
-                                    for (int n = 0; n < output_dim_3; n++) {
-                                        image_matrix.values[(i * kernel_dim_2 * kernel_dim_3 + j * kernel_dim_3 + k) * image_matrix_columns + (l * output_dim_2 * output_dim_3 + m * output_dim_3 + n)] = image.values[image.index(l, m + j * dilation, n + k * dilation, i)];
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            return image_matrix;
-        }
-
-       
-
-        /// <summary>
-        /// Convolution forward propagation, converts bias tensor into 2D matrix with same dimensions as output (to perform elementwise sum with output)
-        /// </summary>
-        public static Tensor B_to_matrix(Tensor B, int I_samples, int I_rows, int I_columns, int F_rows, int F_columns, int stride, int dilation) {
+        /// <param name="B"></param>
+        /// <param name="I_samples"></param>
+        /// <param name="I_rows"></param>
+        /// <param name="I_columns"></param>
+        /// <param name="F_rows"></param>
+        /// <param name="F_columns"></param>
+        /// <param name="stride"></param>
+        /// <param name="dilation"></param>
+        /// <returns></returns>
+        public static Tensor bias_to_matrix(Tensor B, int I_samples, int I_rows, int I_columns, int F_rows, int F_columns, int stride, int dilation) {
             int O_rows = (I_rows - F_rows * dilation + dilation - 1) / stride + 1;
             int O_columns = (I_columns - F_columns * dilation + dilation - 1) / stride + 1;
 
@@ -408,50 +344,12 @@ namespace Conv_Net {
         }
 
         /// <summary>
-        /// Convolution forward and backward propagation, converts 2D output matrix or 2D gradient input matrix into tensor
-        /// </summary>
-        public static Tensor matrix_to_tensor(Tensor X_matrix, int X_sample, int X_rows, int X_columns, int X_channels) {
-            Tensor X = new Tensor(4, X_sample, X_rows, X_columns, X_channels);
-
-            Parallel.For(0, X_sample, i => {
-                for (int j = 0; j < X_rows; j++) {
-                    for (int k = 0; k < X_columns; k++) {
-                        for (int l = 0; l < X_channels; l++) {
-                            X.values[X.index(i, j, k, l)] = X_matrix.values[l * X_sample * X_rows * X_columns + i * X_rows * X_columns + j * X_columns + k];
-                        }
-                    }
-                }
-            });
-            return X;
-        }
-
-
-        public static Tensor column_vector_1 (int rows) {
-            Tensor column_vector_1 = new Tensor(2, rows, 1);
-            for (int i=0; i < column_vector_1.values.Length; i++) {
-                column_vector_1.values[i] = 1.0;
-            }
-            return column_vector_1;
-        }
-
-        public static Tensor row_vector_1 (int columns) {
-            Tensor row_vector_1 = new Tensor(2, 1, columns);
-            for (int i=0; i < row_vector_1.values.Length; i++) {
-                row_vector_1.values[i] = 1.0;
-            }
-            return row_vector_1;
-        }
-
-       
-        
-
-        /// <summary>
         /// Converts a kernel tensor into a kernel matrix
         /// </summary>
         /// <param name="kernel"> kernel tensor </param>
         /// <param name="dim"> dimension of the kernel tensor that will be the row of the kernel matrix </param>
         /// <returns></returns>
-        public static Tensor kernel_to_matrix(Tensor kernel, int dim) {
+        public static Tensor kernel_to_matrix(Tensor kernel, Utils.OUTPUT_TYPE output_type) {
             int kernel_dim_1 = kernel.dim_1;
             int kernel_dim_2 = kernel.dim_2;
             int kernel_dim_3 = kernel.dim_3;
@@ -461,16 +359,18 @@ namespace Conv_Net {
             int kernel_matrix_columns;
             Tensor kernel_matrix = null;
 
-            if (dim == 1) {
+            if (output_type == Utils.OUTPUT_TYPE.OUTPUT) {
                 kernel_matrix_rows = kernel_dim_1;
                 kernel_matrix_columns = kernel_dim_2 * kernel_dim_3 * kernel_dim_4;
 
                 kernel_matrix = new Tensor(2, kernel_matrix_rows, kernel_matrix_columns);
                 kernel_matrix.values = kernel.values;
-            } else if (dim == 4) {
+            } else if (output_type == Utils.OUTPUT_TYPE.GRADIENT_BIAS || 
+                        output_type == Utils.OUTPUT_TYPE.GRADIENT_WEIGHT ||
+                        output_type == Utils.OUTPUT_TYPE.GRADIENT_INPUT) {
                 kernel_matrix_rows = kernel_dim_4;
                 kernel_matrix_columns = kernel_dim_1 * kernel_dim_2 * kernel_dim_3;
-                
+
                 kernel_matrix = new Tensor(2, kernel_matrix_rows, kernel_matrix_columns);
 
                 Parallel.For(0, kernel_dim_4, i => {
@@ -482,26 +382,108 @@ namespace Conv_Net {
                         }
                     }
                 });
-            }            
+            }
             return kernel_matrix;
         }
-    
-       
 
-        /// <summary>
-        /// Convolution backward propagation to calculate ∂L/∂F, converts 2D ∂L/∂F matrix into tensor
-        /// </summary>
-        public static Tensor dF_matrix_to_tensor(Tensor dF_matrix, int F_num, int F_rows, int F_columns, int F_channels) {
-            Tensor dF = new Tensor(4, F_num, F_rows, F_columns, F_channels);
-            dF.values = dF_matrix.values;
-            return dF;
+       /// <summary>
+       /// Converts an image tensor into an image matrix
+       /// </summary>
+       /// <param name="image"> inage tensor </param>
+       /// <param name="kernel_dim_2"></param>
+       /// <param name="kernel_dim_3"></param>
+       /// <param name="stride"></param>
+       /// <param name="dilation"></param>
+       /// <param name="output_type"> flag for output of convolution (output in forward pass, or gradient of weight or input in backward pass) </param>
+       /// <returns></returns>
+        public static Tensor image_to_matrix(Tensor image, int kernel_dim_2, int kernel_dim_3, int stride, int dilation, Utils.OUTPUT_TYPE output_type) {
+            
+            int output_dim_2 = (image.dim_2 - kernel_dim_2 * dilation + dilation - 1) / stride + 1;
+            int output_dim_3 = (image.dim_3 - kernel_dim_3 * dilation + dilation - 1) / stride + 1;
+            int kernel_dim_1 = 0; int kernel_dim_4 = 0; int output_dim_1 = 0; int output_dim_4 = 0;
+            int image_matrix_rows = 0; int image_matrix_columns = 0;
+            Tensor image_matrix = null;
+
+            // Sets 2 of kernel_dim_1, kernel_dim_4, output_dim_1, and output_dim_4 depending on output of convolution
+            // Sets image_matrix_rows and image_matrix_columns
+            if (output_type == Utils.OUTPUT_TYPE.OUTPUT) {
+                // image_dim_1 = output_dim_1, image_dim_4 = kernel_dim_4, kernel_dim_1 = output_dim_4
+                kernel_dim_4 = image.dim_4;
+                output_dim_1 = image.dim_1;
+                image_matrix_rows = kernel_dim_2 * kernel_dim_3 * kernel_dim_4;
+                image_matrix_columns = output_dim_1 * output_dim_2 * output_dim_3;
+                
+            } else if (output_type == Utils.OUTPUT_TYPE.GRADIENT_WEIGHT) {
+                // image_dim_1 = kernel_dim_1, image_dim_4 = output_dim_4, kernel_dim_4 = output_dim_1
+                kernel_dim_1 = image.dim_1;
+                output_dim_4 = image.dim_4;
+                image_matrix_rows = kernel_dim_1 * kernel_dim_2 * kernel_dim_3;
+                image_matrix_columns = output_dim_2 * output_dim_3 * output_dim_4;
+            } else if (output_type == Utils.OUTPUT_TYPE.GRADIENT_INPUT) {
+                // image_dim_1 = output_dim_1, image_dim_4 = kernel_dim_1, kernel_dim_4 = output_dim_4
+                kernel_dim_1 = image.dim_4;
+                output_dim_1 = image.dim_1;
+                image_matrix_rows = kernel_dim_1 * kernel_dim_2 * kernel_dim_3;
+                image_matrix_columns = output_dim_1 * output_dim_2 * output_dim_3;
+            }
+            image_matrix = new Tensor(2, image_matrix_rows, image_matrix_columns);
+
+            // Sets image_matrix values depending on output of convolution
+            Parallel.For(0, kernel_dim_2, i => {
+                for (int j = 0; j < kernel_dim_3; j++) {
+                    for (int k = 0; k < output_dim_2; k++) {
+                        for (int l = 0; l < output_dim_3; l++) {
+                            
+                            if (output_type == Utils.OUTPUT_TYPE.OUTPUT) {
+                                for (int m = 0; m < kernel_dim_4; m++) {
+                                    for (int n = 0; n < output_dim_1; n++) {
+                                        image_matrix.values[(i * kernel_dim_3 * kernel_dim_4 + j * kernel_dim_4 + m) * image_matrix_columns + (n * output_dim_2 * output_dim_3 + k * output_dim_3 + l)] = image.values[image.index(n, k * stride + i * dilation, l * stride + j * dilation, m)];
+                                    }
+                                }
+                            } else if (output_type == Utils.OUTPUT_TYPE.GRADIENT_WEIGHT) {
+                                for (int m = 0; m < kernel_dim_1; m++) {
+                                    for (int n = 0; n < output_dim_4; n++) {
+                                        image_matrix.values[(m * kernel_dim_2 * kernel_dim_3 + i * kernel_dim_3 + j) * image_matrix_columns + (k * output_dim_3 * output_dim_4 + l * output_dim_4 + n)] = image.values[image.index(m, k * stride + i * dilation, l * stride + j * dilation, n)];
+                                    }
+                                }
+                            } else if (output_type == Utils.OUTPUT_TYPE.GRADIENT_INPUT) {
+                                for (int m = 0; m < kernel_dim_1; m++) {
+                                    for (int n = 0; n < output_dim_1; n++) {
+                                        image_matrix.values[(m * kernel_dim_2 * kernel_dim_3 + i * kernel_dim_3 + j) * image_matrix_columns + (n * output_dim_2 * output_dim_3 + k * output_dim_3 + l)] = image.values[image.index(n, k + i * dilation, l + j * dilation, m)];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            return image_matrix;
         }
 
-        
 
-
-        
-
-
+        /// <summary>
+        /// Converts a matrix into a tensor with specified dimensions
+        /// </summary>
+        /// <param name="output_type">  flag for output of convolution (output in forward pass, or gradient of weight or input in backward pass</param>
+        /// <returns></returns>
+        public static Tensor matrix_to_tensor(Tensor matrix, int tensor_dim_1, int tensor_dim_2, int tensor_dim_3, int tensor_dim_4, Utils.OUTPUT_TYPE output_type) {
+            Tensor tensor = new Tensor(4, tensor_dim_1, tensor_dim_2, tensor_dim_3, tensor_dim_4);
+            
+            if (output_type == Utils.OUTPUT_TYPE.OUTPUT ||
+                output_type == Utils.OUTPUT_TYPE.GRADIENT_INPUT) {
+                Parallel.For(0, tensor_dim_1, i => {
+                    for (int j = 0; j < tensor_dim_2; j++) {
+                        for (int k = 0; k < tensor_dim_3; k++) {
+                            for (int l = 0; l < tensor_dim_4; l++) {
+                                tensor.values[tensor.index(i, j, k, l)] = matrix.values[l * tensor_dim_1 * tensor_dim_2 * tensor_dim_3 + i * tensor_dim_2 * tensor_dim_3 + j * tensor_dim_3 + k];
+                            }
+                        }
+                    }
+                });
+            } else  if (output_type == Utils.OUTPUT_TYPE.GRADIENT_WEIGHT) {
+                tensor.values = matrix.values;
+            }            
+            return tensor;
+        }
     }
 }

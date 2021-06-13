@@ -58,7 +58,7 @@ namespace Conv_Net {
 
                 test_layer_1.B.values[i] += h;
 
-                numeric_dB.values[i] = Utils.sum(Utils.subtract(L_up, L_down)) / (2 * h);
+                numeric_dB.values[i] = Utils.sum_of_elements(Utils.elementwise_subtract(L_up, L_down)) / (2 * h);
             }
 
             for (int i=0; i < W.values.Length; i++) {
@@ -72,7 +72,7 @@ namespace Conv_Net {
 
                 test_layer_1.W.values[i] += h;
 
-                numeric_dW.values[i] = Utils.sum(Utils.subtract(L_up, L_down)) / (2 * h);
+                numeric_dW.values[i] = Utils.sum_of_elements(Utils.elementwise_subtract(L_up, L_down)) / (2 * h);
             }
 
             for (int i = 0; i < I.values.Length; i++) {
@@ -85,7 +85,7 @@ namespace Conv_Net {
                 Tensor L_up = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_up)), T);
                 Tensor L_down = loss_layer.loss(test_layer_2.forward(test_layer_1.forward(I_down)), T);
 
-                numeric_dI.values[i] = Utils.sum(Utils.subtract(L_up, L_down)) / (2 * h);
+                numeric_dI.values[i] = Utils.sum_of_elements(Utils.elementwise_subtract(L_up, L_down)) / (2 * h);
             }
             return Tuple.Create(numeric_dB, numeric_dW, numeric_dI);
         }

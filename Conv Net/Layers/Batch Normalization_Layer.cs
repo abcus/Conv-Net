@@ -179,7 +179,7 @@ namespace Conv_Net {
             part2 = Utils.dgemm_cs(column_vector_1, this.dB, part2);
             Tensor part3 = new Tensor(2, this.N, this.D);
             part3 = Utils.elementwise_product(Utils.dgemm_cs(column_vector_1, this.dW, part3), this.I_hat);
-            Tensor right_side = Utils.subtract(Utils.subtract(part1, part2), part3);
+            Tensor right_side = Utils.elementwise_subtract(Utils.elementwise_subtract(part1, part2), part3);
 
             dI = Utils.elementwise_product(left_side, right_side);
 
